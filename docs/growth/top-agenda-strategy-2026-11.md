@@ -22,7 +22,7 @@ measured on 2026-11-15, and six 80/20 bets ordered by return per hour of work.
 | Generalitat Open Data | `analisi.transparenciacatalunya.cat` Socrata dataset `rhpv-yr4f`, queried live on 2026-11-15 | Covers events reported to Departament de Cultura |
 | Diputació de Barcelona | `do.diba.cat` / `opendata-api.diba.cat` catalog, checked 2026-11-15 | Barcelona province only |
 | Competitor pages | `vine.cat` home and `/explora/granollers/` fetched live on 2026-11-15; 15 Google SERPs from `competitor-features-research-2026-11.md` | No internal traffic numbers for competitors |
-| Codebase audit | `que-fer` (frontend), `esdeveniments-backend` (Spring Boot), and `gencat-cultural-agenda` (`Esdeveniments/cultural-agenda-sync`), read on 2026-11-15 | Local checkouts (`gencat-cultural-agenda` at `15d74a9` is current; `cultural-agenda-sync` is 5 commits behind) |
+| Codebase audit | `que-fer` (frontend), `esdeveniments-backend` (Spring Boot), and `cultural-agenda-sync` (`Esdeveniments/cultural-agenda-sync`, checked out locally under `gencat-cultural-agenda` at `15d74a9`), read on 2026-11-15 | Local checkouts |
 | Product brainstorm | Full 10-turn ChatGPT thread *Proposta de guies d'esdeveniments* (`6af730a4-44a0-83eb-893c-fb9e7b12cb6c`), 2026-11-15 | External brainstorm without repo or GA4 access |
 | Secondary critique | Independent review by Claude Opus 5.5 (`rubber-duck`) against all 3 repos and live feeds, 2026-11-15 | Incorporated into §3, §4, and §5 |
 
@@ -60,10 +60,10 @@ Monday.
   clean crawlable pages beat an on-site LLM query parser.
 - **B2G SaaS subscriptions for town halls:** Municipal procurement (*contracte
   menor* and invoicing) is slow. In 12 months `/patrocina` had 178 visitors and
-  6 reached `/patrocina/upload` after payment (`plans/2026-11-11-promotion-value.md`),
-  and checkout still lacks tax-ID (`NIF`) invoices. Keep municipal tools free
-  to earn `.cat` backlinks and sell self-serve promotions to private venues,
-  festivals, and local businesses.
+  6 reached `/patrocina/upload` after payment (GA4 property `406884331`, Spain,
+  checked 2026-11-11), and checkout still lacks tax-ID (`NIF`) invoices. Keep
+  municipal tools free to earn `.cat` backlinks and sell self-serve promotions
+  to private venues, festivals, and local businesses.
 
 ### 1.3 Logged-in interest tracking and interaction DB (Turns 9 to 10): defer
 
@@ -75,12 +75,11 @@ Monday.
   on 2 GB RAM and 1 CPU (`docs/self-hosted-resource-limits.md`). Streaming
   per-card view durations into Postgres adds write load and GDPR profiling
   scope for no gain.
-- Follow `personalization-plan-2026-11.md`: tag GA4 events with
-  `category_slug` (uses slot 49 of 50 standard event-scoped custom dimensions;
-  `place_slug` is already registered), collect 4 weeks of data, rank the
-  event-page related row first (`related_event_click` already gets 50 clicks,
-  3.9% of `view_event_page`), and keep any future user profile in
-  `localStorage`.
+- Tag GA4 events with `category_slug` (uses slot 49 of 50 standard event-scoped
+  custom dimensions; `place_slug` is already registered; tracked in `#807`),
+  collect 4 weeks of data, rank the event-page related row first
+  (`related_event_click` already gets 50 clicks, 3.9% of `view_event_page`),
+  and keep any future user profile in `localStorage`.
 
 ## 2. Four verified bottlenecks holding us back (2026-11-15)
 
@@ -105,9 +104,13 @@ on 2026-11-15), and 1,662 of them (41%) are in Barcelona alone.
 | Sabadell | 0 | 338 | 5th largest city in Catalonia (220k pop) |
 | Manresa | 0 | n/a | Capital of Bages (80k pop) |
 
-Indexing 947 town URLs while hundreds hold 0 to 3 events pulled Catalan town
-pages from average position 13.0 (Jul 2025) to 46.1 (Oct 2026) and cut town
-clicks from 255 to 23 a month (`traffic-decline-analysis-2026-11.md`).
+Catalan town pages fell from average position 13.0 (Jul 2025) to 46.1 (Oct
+2026) and town clicks fell from 255 to 23 a month (`traffic-decline-analysis-2026-11.md`).
+That analysis ruled out indexing bugs and overall inventory loss, and could not
+separate the December 2025 core update from overlapping site changes, framing
+the drop as a gradual quality re-rating of town pages. Whether hundreds of
+0-to-3-event village URLs weigh down town-page quality is a hypothesis to test
+with Search Console Page Indexing cohorts and `#706` / `#809`.
 
 ### 2.2 Missing images, venue coordinates, and prices
 
@@ -152,13 +155,12 @@ pages still render untranslated Catalan event titles and descriptions.
 ## 3. Six 80/20 bets verified against current code
 
 Every bet below was checked against `que-fer`, `esdeveniments-backend`, and
-`gencat-cultural-agenda` (`Esdeveniments/cultural-agenda-sync`) plus live HTTP
-responses on 2026-11-15.
+`cultural-agenda-sync` plus live HTTP responses on 2026-11-15.
 
 ### Bet 1: Structured open-data ingestion (`cultural-agenda-sync`)
 
 - **Already in code:** `esdeveniments-backend/importer/` runs internal `RSS`,
-  `SCRAPE`, and `JSON_API` sources. `gencat-cultural-agenda` runs in GitHub
+  `SCRAPE`, and `JSON_API` sources. `cultural-agenda-sync` runs in GitHub
   Actions (`POST /api/events` multipart with Logto PAT exchange and
   `X-Backend-Key`) for `gencat` (RSS + HTML detail scrape), `barcelona` (106 MB
   Open Data BCN JSON with Cloudflare WARP), and `telegram` (1 channel).
@@ -169,7 +171,7 @@ responses on 2026-11-15.
   price strings (`price: eventType === "FREE" ? "0" : null`), even though
   `CreateEventRequestDTO.price` and `que-fer/utils/event-price.ts` already render
   free-text prices and schema.org `offers`.
-- **Verified live feeds to add in `gencat-cultural-agenda`:**
+- **Verified live feeds to add in `cultural-agenda-sync`:**
   1. **Generalitat Socrata (`rhpv-yr4f.json`, kept under `source.id = "gencat"`):**
      1,257 upcoming rows across **1,093 distinct `codi`** (Manresa 27, Vic 24,
      Terrassa 23, Mataró 22, Granollers 19, Sabadell 16, Girona 62, Lleida 37,
@@ -285,5 +287,5 @@ responses on 2026-11-15.
 | --- | --- | --- |
 | 1 | `cultural-agenda-sync`: upgrade `gencat` to Socrata `rhpv-yr4f` (with RSS fallback), add `diba` (`turisme`, `museus`, `parcs`) and `reus`, normalise `price`, add cross-source `(city, date, title)` dedup and workflow `concurrency` | Unit tests + live `DRY_RUN=true` pass; `sync-diba.yml` excludes the 30 `#706` test towns until 2026-12-20 |
 | 2 | Diagnose town-page ranking drop in GSC Page Indexing + read `#706` test; ship winning town template + cached 15 km radius backfill + hysteresis `noindex` gate; fix accent-insensitive internal search | Catalan and Spanish town-page impressions and clicks rise over 28 days in Search Console |
-| 3 | Pilot ingestion-time Spanish translation (`titleEs`, `summaryEs`) + `VENUE` coordinates (`Event.java` migration + `EventSummaryResponseDTO`) | `/es/` clicks and rich-result impressions grow without raising Hetzner DB CPU |
+| 3 | Pilot ingestion-time Spanish translation (`titleEs`, `descriptionEs`) + `VENUE` coordinates (`Event.java` migration + `EventSummaryResponseDTO`) | `/es/` clicks and rich-result impressions grow without raising Hetzner DB CPU |
 | 4 | Revisit `/fires/<slug>`, `/espai/<slug>`, `actesbiblioteques_ca`, `.ics`, `/embed`, and `/tria` | Only after monthly Spain traffic passes 5,000 users or organic saves/shares 5x |
