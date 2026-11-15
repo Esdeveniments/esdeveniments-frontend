@@ -58,6 +58,11 @@ pipeline.
   2025, causes ruled out (indexing, robots, titles, inventory, GA4/Zaraz),
   Google updates, AI Mode, the event `noindex` lead and crawl health.
 
+- [`growth/top-agenda-strategy-2026-11.md`](./growth/top-agenda-strategy-2026-11.md)
+  — path to #1 agenda in Catalonia: ChatGPT brainstorm audit, live city supply
+  and metadata gaps (`vine.cat`, Socrata, DIBA, GA4, Search Console `ca`/`es`/`en`
+  CTRs), and six 80/20 bets ordered by ROI.
+
 ## Product
 
 - [`strategy-pricing.md`](./strategy-pricing.md) — self-service sponsor
