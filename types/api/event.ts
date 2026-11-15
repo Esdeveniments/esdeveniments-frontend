@@ -35,31 +35,11 @@ export interface ProvinceSummaryResponseDTO {
 // only the town is known (the map shows a town bubble, not a pin).
 export type EventLocationPrecision = "VENUE" | "CITY" | "UNKNOWN";
 
-export interface LocalizedEventText {
-  title: string;
-  description: string;
-  titleTranslated: boolean;
-  descriptionTranslated: boolean;
-}
-
-export interface EventSummaryTranslationDTO {
-  title?: string | null;
-}
-
-export interface EventDetailTranslationDTO extends EventSummaryTranslationDTO {
-  description?: string | null;
-}
-
-export type EventTranslationsMap<T = EventSummaryTranslationDTO> = Partial<
-  Record<import("types/i18n").NonDefaultLocale, T>
->;
-
 export interface EventSummaryResponseDTO {
   id: string; // UUID
   hash: string;
   slug: string;
   title: string;
-  translations?: EventTranslationsMap<EventSummaryTranslationDTO>;
   isPromoted: boolean;
   url: string | null;
   description: string;
@@ -123,12 +103,10 @@ export interface PagedResponseDTO<T> {
 export type EventCreatorResponseDTO = OwnerSummaryDTO;
 
 // Detail endpoint always includes location fields
-export interface EventDetailResponseDTO
-  extends Omit<EventSummaryResponseDTO, "translations"> {
+export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   city: CitySummaryResponseDTO;
   region: RegionSummaryResponseDTO;
   province: ProvinceSummaryResponseDTO;
-  translations?: EventTranslationsMap<EventDetailTranslationDTO>;
   duration?: string;
   videoUrl?: string;
   tags?: string[];

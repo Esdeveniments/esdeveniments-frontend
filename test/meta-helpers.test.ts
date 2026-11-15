@@ -293,25 +293,6 @@ describe("meta helpers (black-box)", () => {
       const enMeta = generateEventMetadata(longCatalan, undefined, undefined, "en");
       expect(enMeta.description).toContain("October 7, 2099");
       expect(enMeta.description).toContain("La Llagosta");
-
-      const translatedEn = generateEventMetadata(
-        {
-          ...longCatalan,
-          translations: {
-            en: {
-              title: "6th Castaween Festival",
-              description: "Live music, workshops and local food in La Llagosta.",
-            },
-          },
-        },
-        undefined,
-        undefined,
-        "en",
-      );
-      expect(translatedEn.title).toContain("6th Castaween Festival");
-      expect(translatedEn.description).toContain(
-        "Live music, workshops and local food in La Llagosta.",
-      );
     });
 
     it("pads a short description with the suffix sentence, only when it fits", () => {

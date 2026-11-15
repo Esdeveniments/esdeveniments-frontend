@@ -1,12 +1,8 @@
 import { z } from "zod";
 import { withImageCacheKey } from "@utils/image-cache";
-import { NON_DEFAULT_LOCALES } from "types/i18n";
 import type {
   EventDetailResponseDTO,
-  EventDetailTranslationDTO,
   EventSummaryResponseDTO,
-  EventSummaryTranslationDTO,
-  EventTranslationsMap,
   PagedResponseDTO,
   CategorizedEvents,
 } from "types/api/event";
@@ -58,61 +54,6 @@ const requiredText = z
   .string()
   .transform((value) => (isMissingText(value) ? "" : value));
 
-function cleanTranslationString(value: unknown): string | undefined {
-  if (typeof value !== "string" || isMissingText(value)) return undefined;
-  return value.trim();
-}
-
-/**
- * Keeps only `NON_DEFAULT_LOCALES` (`SUPPORTED_LOCALES` minus `ca`), stripping
- * `description` on summary items and returning `undefined` when empty so
- * Catalan-only events add zero keys to RSC and SWR payloads.
- */
-function parseEventTranslationsMap(
-  raw: unknown,
-  includeDescription: false,
-): EventTranslationsMap<EventSummaryTranslationDTO> | undefined;
-function parseEventTranslationsMap(
-  raw: unknown,
-  includeDescription: true,
-): EventTranslationsMap<EventDetailTranslationDTO> | undefined;
-function parseEventTranslationsMap(
-  raw: unknown,
-  includeDescription: boolean,
-): EventTranslationsMap<EventDetailTranslationDTO> | undefined {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
-
-  const source = raw as Record<string, unknown>;
-  const out: EventTranslationsMap<EventDetailTranslationDTO> = {};
-  let hasAny = false;
-
-  for (const locale of NON_DEFAULT_LOCALES) {
-    const val = Object.hasOwn(source, locale) ? source[locale] : undefined;
-    if (!val || typeof val !== "object" || Array.isArray(val)) continue;
-
-    const record = val as Record<string, unknown>;
-    const title = cleanTranslationString(record.title);
-    const description = includeDescription
-      ? cleanTranslationString(record.description)
-      : undefined;
-    if (!title && !description) continue;
-
-    out[locale] = {
-      ...(title ? { title } : {}),
-      ...(description ? { description } : {}),
-    };
-    hasAny = true;
-  }
-
-  return hasAny ? out : undefined;
-}
-
-const summaryTranslationsSchema = z
-  .unknown()
-  .transform((val) => parseEventTranslationsMap(val, false));
-const detailTranslationsSchema = z
-  .unknown()
-  .transform((val) => parseEventTranslationsMap(val, true));
 // The backend writes unset objects as null; the DTOs mark them optional.
 const nullAsMissing = <T extends z.ZodTypeAny>(schema: T) =>
   schema.nullish().transform((value) => value ?? undefined);
@@ -131,7 +72,6 @@ const EventSummaryBaseSchema = z
     // Note: title is allowed to be empty string (backend may return empty titles)
     // Frontend code should handle empty titles defensively (see app/e/[eventId]/page.tsx)
     title: z.string(),
-    translations: summaryTranslationsSchema,
     // Absent on the pre-v2 backend still serving prod; default keeps it parsing.
     isPromoted: z.boolean().default(false),
     url: optionalText,
@@ -178,7 +118,6 @@ const RelatedEventSummarySchema = z
     id: z.string().optional(),
     slug: z.string(),
     title: z.string(),
-    translations: summaryTranslationsSchema,
     url: optionalText.optional(),
     description: optionalText.optional(),
     imageUrl: optionalText.optional(),
@@ -211,7 +150,6 @@ function sanitizeMetaField(
 }
 
 export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
-  translations: detailTranslationsSchema,
   videoUrl: z.string().optional(),
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -287,7 +225,7 @@ export function parsePagedEvents(
   const payload: PagedResponseDTO<EventSummaryResponseDTO> = result.data;
   return {
     ...payload,
-    content: payload.content.map(enhanceEventSummary),
+    content: payload.content.map(enhanceEventImage),
   };
 }
 
@@ -304,7 +242,7 @@ export function parseEventSummaryList(input: unknown): EventSummaryResponseDTO[]
       return [];
     }
     const event: EventSummaryResponseDTO = result.data;
-    return [enhanceEventSummary(event)];
+    return [enhanceEventImage(event)];
   });
 }
 
@@ -328,40 +266,9 @@ export function parseCategorizedEvents(
 
   const categorized: CategorizedEvents = result.data;
   const normalizedEntries = Object.entries(categorized).map(
-    ([category, events]) => [category, events.map(enhanceEventSummary)]
+    ([category, events]) => [category, events.map(enhanceEventImage)]
   );
   return Object.fromEntries(normalizedEntries) as CategorizedEvents;
-}
-
-/**
- * Cards never render translated descriptions; sanitize `translations` to title-only
- * and delete empty `translations` keys so listing RSC and SWR payloads stay small.
- */
-function enhanceEventSummary<
-  T extends {
-    imageUrl?: string | null;
-    hash?: string | null;
-    updatedAt?: string;
-    translations?: unknown;
-  }
->(event: T): T {
-  const enhanced = enhanceEventImage(event);
-  const sanitizedTranslations = parseEventTranslationsMap(
-    enhanced.translations,
-    false,
-  );
-  if (sanitizedTranslations === undefined) {
-    if ("translations" in enhanced) {
-      const rest = { ...(enhanced as Record<string, unknown>) };
-      delete rest.translations;
-      return rest as T;
-    }
-    return enhanced;
-  }
-  return {
-    ...enhanced,
-    translations: sanitizedTranslations,
-  };
 }
 
 function enhanceEventImage<
@@ -390,9 +297,7 @@ function enhanceEventImage<
 function enhanceEventDetail(
   event: EventDetailResponseDTO
 ): EventDetailResponseDTO {
-  const { translations, ...rest } = enhanceEventImage(event);
-  const normalizedEvent: EventDetailResponseDTO =
-    translations === undefined ? rest : { ...rest, translations };
+  const normalizedEvent = enhanceEventImage(event);
   if (!event.relatedEvents || event.relatedEvents.length === 0) {
     return normalizedEvent;
   }
@@ -403,7 +308,7 @@ function enhanceEventDetail(
   return {
     ...normalizedEvent,
     relatedEvents: event.relatedEvents.map((relatedEvent) => ({
-      ...enhanceEventSummary(relatedEvent),
+      ...enhanceEventImage(relatedEvent),
       description: "",
     })) as EventDetailResponseDTO["relatedEvents"],
   };

@@ -18,10 +18,7 @@ import { getFormattedDate } from "@utils/helpers";
 import { formatShortDateRange } from "@utils/date-helpers";
 import { isProductionSiteUrl } from "@utils/production-host";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
-import {
-  isExpiredEventDates,
-  resolveEventLocalizedText,
-} from "@utils/event-helpers";
+import { isExpiredEventDates } from "@utils/event-helpers";
 
 // --- Default robots policy for indexable pages ---
 export const DEFAULT_ROBOTS_POLICY = {
@@ -131,22 +128,16 @@ export function generateEventMetadata(
   if (!event) return { title: "No event found" };
 
   const localeToUse = locale ?? DEFAULT_LOCALE;
-  const {
-    title: localizedTitle,
-    description: localizedDescription,
-    descriptionTranslated,
-  } = resolveEventLocalizedText(event, localeToUse);
-  const hasLocalizedBody =
-    localeToUse === DEFAULT_LOCALE || descriptionTranslated;
+  const isDefaultLocale = localeToUse === DEFAULT_LOCALE;
 
   // The backend metaTitle and metaDescription are Catalan, so only the default
-  // locale uses them; es/en generate localized date/venue metadata instead.
+  // locale uses them; non-default locales generate localized date/venue metadata.
   const enhancedTitle =
-    event.metaTitle?.trim() && localeToUse === DEFAULT_LOCALE
+    event.metaTitle?.trim() && isDefaultLocale
       ? event.metaTitle.trim()
       : generateMetaTitle(
-          localizedTitle,
-          hasLocalizedBody ? localizedDescription : undefined,
+          event.title,
+          isDefaultLocale ? event.description : undefined,
           event.location,
           event.city?.name,
           event.region?.name,
@@ -159,7 +150,7 @@ export function generateEventMetadata(
       : enhancedTitle;
 
   let finalDescription: string;
-  if (event.metaDescription?.trim() && localeToUse === DEFAULT_LOCALE) {
+  if (event.metaDescription?.trim() && isDefaultLocale) {
     finalDescription = appendSentenceIfShort(
       event.metaDescription.trim(),
       descriptionSuffix,
@@ -175,10 +166,10 @@ export function generateEventMetadata(
       event.city?.name?.trim() ||
       event.region?.name?.trim() ||
       "";
-    if (hasLocalizedBody) {
+    if (isDefaultLocale) {
       const enhancedDescription = generateMetaDescription(
-        localizedTitle,
-        localizedDescription,
+        event.title,
+        event.description,
       );
       const descriptionParts = [enhancedDescription];
       if (formattedStart && formattedStart.trim().length > 0) {
@@ -192,10 +183,10 @@ export function generateEventMetadata(
         descriptionSuffix,
       );
     } else {
-      // On es/en with no translated body, prefer the localized suffix sentence
-      // over appending Catalan prose; use the Catalan tail only when no suffix fits.
+      // On non-default locales, prefer the localized suffix sentence over
+      // appending Catalan prose; use the Catalan tail only when no suffix fits.
       const leadParts = [
-        sanitizeInput(localizedTitle),
+        sanitizeInput(event.title),
         formattedStart?.trim() || "",
         placePart,
       ].filter(Boolean);
@@ -204,7 +195,7 @@ export function generateEventMetadata(
       if (withSuffix !== lead) {
         finalDescription = withSuffix;
       } else {
-        const bodyTail = sanitizeInput(localizedDescription);
+        const bodyTail = sanitizeInput(event.description);
         const combined =
           lead.length < META_DESCRIPTION_SHORT && bodyTail
             ? `${lead} - ${bodyTail}`

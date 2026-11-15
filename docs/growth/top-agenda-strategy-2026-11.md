@@ -217,25 +217,25 @@ Every bet below was checked against `que-fer`, `esdeveniments-backend`, and
   Socrata coverage. Hold scheduled DIBA backfills or exclude/snapshot the 30
   test towns until the December readout finishes.
 
-### Bet 3: Price pass-through now; `VENUE` coordinates and N-locale `translations` map next
+### Bet 3: Price pass-through and `/es/` + `/en/` metadata now; `VENUE` coordinates next
 
 - **Already in code:** `que-fer` supports `locationPrecision === "VENUE"`
   (`utils/event-map.ts`), free-text `price` + JSON-LD `offers`
   (`utils/event-price.ts`), localized `/es/e/*` and `/en/e/*` metadata and
-  schema fallbacks, and an N-locale `translations` read map
-  (`resolveEventLocalizedText` in `utils/event-helpers.ts`). `Event.java` and
+  schema fallbacks, and `NON_DEFAULT_LOCALES` + `DEEPL_TARGET_LANG` on-demand
+  DeepL translation (`types/i18n.ts`). `Event.java` and
   `CreateEventRequestDTO.java` already store `price` (`VARCHAR(500)`).
 - **Missing in backend (`esdeveniments-backend`):** `Event.java` has **no**
-  `latitude`, `longitude`, or `locationPrecision` columns yet, and the
-  normalized `event_translation` child table (`Esdeveniments/esdeveniments-backend#117`)
-  is pending implementation; `EventSummaryResponseDTO.java` also omits `price`
-  and coordinates. `BucketStorageServiceImpl` accepts JPEG and PNG only (which
-  is fine for Socrata and DIBA).
+  `latitude`, `longitude`, or `locationPrecision` columns yet, and
+  `EventSummaryResponseDTO.java` omits `price` and coordinates. Stored event
+  translations (`Esdeveniments/esdeveniments-backend#117`, `event_translation`
+  table) stay parked until Search Console language data (`Esdeveniments/esdeveniments-dashboard#59`)
+  justifies backend storage. `BucketStorageServiceImpl` accepts JPEG and PNG
+  only (which is fine for Socrata and DIBA).
 - **80/20 split:** normalised `price` pass-through in `cultural-agenda-sync`
   and `/es/` + `/en/` metadata localization in `que-fer` are live (0 backend
-  changes). Implement `Esdeveniments/esdeveniments-backend#117` next so
-  reviewed `es`, `en`, and future `fr`+ event translations flow through a
-  single `translations[locale]` map without schema churn.
+  changes), while frontend DTOs stay free of unbacked translation fields until
+  `Esdeveniments/esdeveniments-backend#117` is implemented.
 
 ### Bet 4: Evergreen URLs for recurring fairs and venues (parked after Bets 1 and 2)
 
@@ -292,5 +292,5 @@ Every bet below was checked against `que-fer`, `esdeveniments-backend`, and
 | --- | --- | --- |
 | 1 | `cultural-agenda-sync`: upgrade `gencat` to Socrata `rhpv-yr4f` (with RSS fallback), add `diba` (`turisme`, `museus`, `parcs`) and `reus`, normalise `price`, add cross-source `(city, date, title)` dedup and workflow `concurrency` | Unit tests + live `DRY_RUN=true` pass; `sync-diba.yml` excludes the 30 `#706` test towns until 2026-12-20 |
 | 2 | Diagnose town-page ranking drop in GSC Page Indexing + read `#706` test; ship winning town template + cached 15 km radius backfill + hysteresis `noindex` gate; fix accent-insensitive internal search | Catalan and Spanish town-page impressions and clicks rise over 28 days in Search Console |
-| 3 | Pilot ingestion-time Spanish translation (`titleEs`, `descriptionEs`) + `VENUE` coordinates (`Event.java` migration + `EventSummaryResponseDTO`) | `/es/` clicks and rich-result impressions grow without raising Hetzner DB CPU |
+| 3 | Add `VENUE` coordinates (`Event.java` migration + `EventSummaryResponseDTO`); revisit `Esdeveniments/esdeveniments-backend#117` (`event_translation`) only if `/seo?view=languages` justifies DB storage | Map pins activate for Generalitat/DIBA events without raising Hetzner DB CPU |
 | 4 | Revisit `/fires/<slug>`, `/espai/<slug>`, `actesbiblioteques_ca`, `.ics`, `/embed`, and `/tria` | Only after monthly Spain traffic passes 5,000 users or organic saves/shares 5x |

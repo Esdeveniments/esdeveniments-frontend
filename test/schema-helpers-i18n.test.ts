@@ -86,7 +86,7 @@ describe("schema helpers i18n", () => {
     expect(schema.url).not.toContain("/es/e/");
   });
 
-  it("uses localized event fields and localized empty-field fallbacks per locale", () => {
+  it("uses localized empty-field fallbacks per locale", () => {
     const baseEvent: EventDetailResponseDTO = {
       id: "2",
       hash: "h2",
@@ -125,22 +125,5 @@ describe("schema helpers i18n", () => {
     const emptyEn = generateJsonData(baseEvent, "en");
     expect(emptyEn.name).toBe("Event in Vic");
     expect(emptyEn.description).toBe("Cultural event in Vic");
-
-    const translatedEs = generateJsonData(
-      {
-        ...baseEvent,
-        title: "Festa Major de Vic",
-        description: "Concerts a la plaça.",
-        translations: {
-          es: {
-            title: "Fiesta Mayor de Vic",
-            description: "Conciertos en la plaza.",
-          },
-        },
-      },
-      "es",
-    );
-    expect(translatedEs.name).toBe("Fiesta Mayor de Vic");
-    expect(translatedEs.description).toBe("Conciertos en la plaza.");
   });
 });

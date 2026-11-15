@@ -7,16 +7,12 @@ import {
 } from "@utils/event-window";
 import { EXPIRED_EVENT_NOINDEX_DAYS, MS_PER_DAY } from "@utils/constants";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
-import { isNonDefaultLocale } from "@utils/i18n-routing";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import localeLabels from "../i18n/locale-labels.generated.json";
 import type {
   EventDetailResponseDTO,
-  EventDetailTranslationDTO,
   EventSummaryResponseDTO,
-  EventTranslationsMap,
   ListEvent,
-  LocalizedEventText,
 } from "types/api/event";
 import type { CalendarEventData, EventAnalyticsSlugs } from "types/common";
 import type { EventWindowInput } from "types/event-status";
@@ -105,31 +101,6 @@ export function isValidEventSlug(slug: string): boolean {
   return EVENT_SLUG_RE.test(slug);
 }
 
-/**
- * Resolves display title and description for `locale` with independent flags
- * so a translated title never hides `<TranslateDescription>` when the body is
- * still Catalan. Keep source `event.title` for classification and series matching.
- */
-export function resolveEventLocalizedText(
-  event: Pick<EventSummaryResponseDTO, "title" | "description"> & {
-    translations?: EventTranslationsMap<EventDetailTranslationDTO> | null;
-  },
-  locale: AppLocale = DEFAULT_LOCALE,
-): LocalizedEventText {
-  const entry = isNonDefaultLocale(locale)
-    ? event.translations?.[locale]
-    : undefined;
-  const rawTitle = entry?.title?.trim();
-  const rawDescription = entry?.description?.trim();
-
-  return {
-    title: rawTitle || event.title || "",
-    description: rawDescription || event.description || "",
-    titleTranslated: Boolean(rawTitle),
-    descriptionTranslated: Boolean(rawDescription),
-  };
-}
-
 /** Localized fallback event noun from `messages/*.json` (`Utils.EventFallbacks`). */
 export function getDefaultEventNoun(
   locale: AppLocale = DEFAULT_LOCALE,
@@ -145,25 +116,22 @@ export function getDefaultEventNoun(
 export const buildCalendarEventData = (
   event: EventDetailResponseDTO,
   locale: AppLocale = DEFAULT_LOCALE,
-): CalendarEventData => {
-  const { title, description } = resolveEventLocalizedText(event, locale);
-  return {
-    title,
-    description,
-    location: [
-      event.location,
-      event.city?.name,
-      event.region?.name,
-      event.city?.postalCode,
-    ]
-      .map((part) => part?.trim())
-      .filter(Boolean)
-      .join(", "),
-    startDate: event.startDate,
-    endDate: event.endDate,
-    canonical: toLocalizedUrl(`/e/${event.slug}`, locale),
-  };
-};
+): CalendarEventData => ({
+  title: event.title,
+  description: event.description,
+  location: [
+    event.location,
+    event.city?.name,
+    event.region?.name,
+    event.city?.postalCode,
+  ]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(", "),
+  startDate: event.startDate,
+  endDate: event.endDate,
+  canonical: toLocalizedUrl(`/e/${event.slug}`, locale),
+});
 
 /**
  * The event's interest keys for GA: its first category and its town (or its

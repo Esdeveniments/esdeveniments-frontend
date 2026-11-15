@@ -5,7 +5,6 @@ import { generateJsonData } from "@utils/helpers";
 import {
   getDefaultEventNoun,
   getEventAnalyticsSlugs,
-  resolveEventLocalizedText,
 } from "@utils/event-helpers";
 import { getCachedEventBySlug } from "@lib/api/events";
 import { cacheLife, cacheTag } from "next/cache";
@@ -310,14 +309,13 @@ async function EventPageBody({
     placeType,
   } = getPlaceContext(event, locale);
   const eventSlug = event?.slug ?? "";
-  const { title, description, descriptionTranslated } =
-    resolveEventLocalizedText(event, locale);
+  const title = event?.title ?? "";
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const shareEvent = buildShareKitEvent(event, cityName || regionName, locale);
   const clientEvent = {
     id: event.id,
     slug: event.slug,
-    title,
+    title: event.title,
     startDate: event.startDate,
     endDate: event.endDate,
     startTime: event.startTime,
@@ -472,8 +470,7 @@ async function EventPageBody({
     : null;
   const lcpSizes = getOptimalImageSizes("hero");
 
-  // Match venue stripping against the source Catalan title (`event.location` is imported in Catalan).
-  const venue = getEventVenue(event.location, event.title);
+  const venue = getEventVenue(event.location, title);
   // Venue plus its town once ("Tesr, Aguilar de Segarra, Bages" stays as is).
   const placeText = buildDisplayLocation({
     location: venue,
@@ -481,7 +478,7 @@ async function EventPageBody({
     regionName: cityName ? "" : regionName,
   });
   // Short texts show whole; long ones fold behind "Llegeix més" (very long ones on desktop too).
-  const fold = descriptionFold(`${introText ?? ""}\n${description}`);
+  const fold = descriptionFold(`${introText ?? ""}\n${event.description ?? ""}`);
 
   return (
     <>
@@ -602,12 +599,10 @@ async function EventPageBody({
                   <CollapsibleDescription fold={fold}>
                     <EventDescription
                       slug={event.slug}
-                      description={description}
+                      description={event.description}
                       introText={introText}
                       locale={locale as AppLocale}
-                      showTranslate={
-                        temporalStatus.state !== "past" && !descriptionTranslated
-                      }
+                      showTranslate={temporalStatus.state !== "past"}
                     />
                   </CollapsibleDescription>
                 </DetailSectionTracker>
