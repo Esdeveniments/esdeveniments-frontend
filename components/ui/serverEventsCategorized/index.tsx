@@ -34,7 +34,9 @@ import { CategoryEventsSection } from "./CategoryEventsSection";
 import { createDateFilterBadgeLabels } from "./DateFilterBadges";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
 import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsSection";
-import HeroSectionSkeleton from "../hero/HeroSectionSkeleton";
+import HeroSectionSkeleton, {
+  getHeroSkeletonCopy,
+} from "../hero/HeroSectionSkeleton";
 import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
@@ -155,6 +157,7 @@ async function ServerEventsCategorized({
     locale,
     namespace: "Components.ServerEventsCategorized",
   });
+  const heroSkeletonCopy = await getHeroSkeletonCopy(locale, pageData?.subTitle ?? "");
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;
@@ -195,7 +198,7 @@ async function ServerEventsCategorized({
     <div className="w-full bg-background">
       {/* 1. HERO SECTION: Search + Location + Dates */}
       <HomeHero>
-        <Suspense fallback={<HeroSectionSkeleton />}>
+        <Suspense fallback={<HeroSectionSkeleton copy={heroSkeletonCopy} />}>
           <HeroSection subTitle={pageData?.subTitle} />
         </Suspense>
       </HomeHero>

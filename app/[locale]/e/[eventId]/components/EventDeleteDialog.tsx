@@ -47,6 +47,8 @@ export default function EventDeleteDialog({ slug, open, setOpen }: EventDeleteDi
     }
     sendGoogleEvent("event_delete_success", { event_slug: slug });
     router.replace("/");
+    // Drop cached pages (staleTimes) that still list the deleted event.
+    router.refresh();
     return true;
   };
 

@@ -796,6 +796,25 @@ export interface HomeHeroProps {
   children: ReactNode;
 }
 
+/** Static text of the home hero, so its skeleton has the same boxes. */
+export interface HeroSkeletonCopy {
+  titlePrefix: string;
+  place: string;
+  subTitle: string;
+  searchPlaceholder: string;
+  dateLabels: string[];
+  ctaLabel: string;
+  ctaHelper: string;
+}
+
+export interface HeroSectionSkeletonProps {
+  copy: HeroSkeletonCopy;
+}
+
+export interface HomePageSkeletonProps {
+  heroCopy: HeroSkeletonCopy;
+}
+
 export interface ServerEventsCategorizedProps {
   categorizedEventsPromise: Promise<Record<string, ListEvent[]>>;
   pageData?: PageData;

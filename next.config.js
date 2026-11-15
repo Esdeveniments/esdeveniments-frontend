@@ -118,6 +118,12 @@ const nextConfig = {
   // --- Experimental Features ---
   experimental: {
     scrollRestoration: true,
+    // Keep visited pages in the browser's router cache for 5 min, so a link
+    // back to a page seen recently opens instantly instead of refetching and
+    // showing its skeleton (Next's default is 0 s). Public pages are cached
+    // 30 min on the CDN anyway. Server actions that call updateTag, and
+    // router.refresh(), clear it; favorites and profile edits do that.
+    staleTimes: { dynamic: 300 },
     // Tree-shake heavy libraries to reduce bundle size
     optimizePackageImports: [
       "@headlessui/react",

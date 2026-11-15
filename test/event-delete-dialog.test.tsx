@@ -2,13 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 const replace = vi.fn();
+const refresh = vi.fn();
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
 vi.mock("@i18n/routing", () => ({
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ replace, refresh }),
 }));
 
 vi.mock("@utils/analytics", () => ({ sendGoogleEvent: vi.fn() }));
@@ -26,6 +27,7 @@ describe("EventDeleteDialog", () => {
 
   beforeEach(() => {
     replace.mockReset();
+    refresh.mockReset();
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
   });
@@ -46,6 +48,8 @@ describe("EventDeleteDialog", () => {
     await confirmDelete();
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+    // Cached pages (staleTimes) would otherwise still list the event.
+    expect(refresh).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith("/api/events/my-event", {
       method: "DELETE",
       credentials: "include",
@@ -62,5 +66,6 @@ describe("EventDeleteDialog", () => {
     expect(await screen.findByText("deleteError")).toBeTruthy();
     expect(screen.getByTestId("event-delete-modal")).toBeTruthy();
     expect(replace).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

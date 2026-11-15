@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH } from "../app/api/users/me/profile/route";
 import * as authCookies from "../utils/auth-cookies";
 import * as usersExternal from "../lib/api/users-external";
+import * as profilePages from "../lib/cache/revalidate-profile-pages";
 
 vi.mock("../utils/api-error-handler", () => ({
   // Map thrown errors to a Response carrying the error's `.status` when it is
@@ -26,8 +27,15 @@ vi.mock("../lib/api/users-external", () => ({
   patchMeProfileExternal: vi.fn(),
 }));
 
+vi.mock("../lib/cache/revalidate-profile-pages", () => ({
+  readCurrentUsername: vi.fn(async () => "alex_old"),
+  invalidateProfilePages: vi.fn(),
+}));
+
 const getCookie = vi.mocked(authCookies.getValidAccessToken);
 const patchExternal = vi.mocked(usersExternal.patchMeProfileExternal);
+const invalidate = vi.mocked(profilePages.invalidateProfilePages);
+const readUsername = vi.mocked(profilePages.readCurrentUsername);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -59,6 +67,8 @@ describe("PATCH /api/users/me/profile", () => {
     const res = await PATCH(req as never);
     expect(res.status).toBe(400);
     expect(patchExternal).not.toHaveBeenCalled();
+    // A bad body never reaches the backend, not even to read the username.
+    expect(readUsername).not.toHaveBeenCalled();
   });
 
   it("returns 400 when Zod safeParse fails (invalid field values)", async () => {
@@ -107,6 +117,8 @@ describe("PATCH /api/users/me/profile", () => {
     expect(res.headers.get("Cache-Control")).toBe("no-store");
     const json = (await res.json()) as typeof parsedFromBackend;
     expect(json).toEqual(parsedFromBackend);
+    // A rename must expire the old public profile as well as the new one.
+    expect(invalidate).toHaveBeenCalledWith(["alex_old", "alex91"]);
     expect(patchExternal).toHaveBeenCalledWith(
       expect.objectContaining({ username: "alex91" }),
       "tok",

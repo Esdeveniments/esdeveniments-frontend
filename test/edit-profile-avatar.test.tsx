@@ -12,6 +12,7 @@ const baseUser: AuthUser = {
 
 let authUser: AuthUser = baseUser;
 const mockRefetchUser = vi.fn();
+const mockRefresh = vi.fn();
 const { sendGoogleEventMock } = vi.hoisted(() => ({
   sendGoogleEventMock: vi.fn<
     (event: string, obj: Record<string, unknown>) => void
@@ -24,6 +25,10 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@components/hooks/useAuth", () => ({
   useAuth: () => ({ user: authUser, refetchUser: mockRefetchUser }),
+}));
+
+vi.mock("@i18n/routing", () => ({
+  useRouter: () => ({ refresh: mockRefresh }),
 }));
 
 vi.mock("@utils/analytics", () => ({
@@ -41,6 +46,7 @@ describe("EditProfileAvatar", () => {
   beforeEach(() => {
     authUser = baseUser;
     mockRefetchUser.mockReset().mockResolvedValue(undefined);
+    mockRefresh.mockReset();
     sendGoogleEventMock.mockReset();
     vi.stubGlobal("fetch", vi.fn());
   });
@@ -111,6 +117,8 @@ describe("EditProfileAvatar", () => {
     expect(body.get("avatarFile")).toBe(file);
     expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_start", {});
     expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_upload_success", {});
+    // Cached pages (staleTimes) would otherwise show the old avatar.
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
   });
 
   it("removes the avatar and refetches the session", async () => {
@@ -130,6 +138,7 @@ describe("EditProfileAvatar", () => {
       expect.objectContaining({ method: "DELETE", credentials: "include" }),
     );
     expect(sendGoogleEventMock).toHaveBeenCalledWith("avatar_remove_success", {});
+    await waitFor(() => expect(mockRefresh).toHaveBeenCalledTimes(1));
   });
 
   it("surfaces an upload failure without refetching", async () => {

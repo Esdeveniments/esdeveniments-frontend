@@ -1079,3 +1079,13 @@ when it's fully prefetched. With `partialPrefetching` and no `prefetch={true}`,
 the event page suspends into its skeleton first, so a card → hero morph never
 plays. The unused `viewTransitionName` and `::view-transition` CSS were removed
 (Nov 2026). Revisit only if the event page can render in that commit.
+
+## `tots` is a URL segment, never an API value
+
+The backend treats `category=tots` as a real category and answers it with 0
+events and `last: true`. The server pages drop it before calling the backend,
+but `useEvents` passed the `category` prop through, so "Carregar més" on every
+`/<place>/<date>` listing without a category fetched nothing and hid the button
+(likely since backend contract v2 reached production on 2026-11-04).
+`buildEventsQuery` (`utils/api-helpers.ts`), which builds every events query,
+now drops `tots` from `category` and `byDate`.

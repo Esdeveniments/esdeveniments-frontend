@@ -68,6 +68,8 @@ export default function Page() {
       <ClientTest
         initialEvents={initialEvents as EventSummaryResponseDTO[]}
         place="catalunya"
+        // A listing without a category passes "tots", as the real pages do.
+        category="tots"
       />
     </Suspense>
   );

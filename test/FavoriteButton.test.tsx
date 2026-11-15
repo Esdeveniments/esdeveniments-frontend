@@ -96,6 +96,42 @@ describe("FavoriteButton", () => {
     expect(button.querySelector("use")).toHaveAttribute("href", "#icon-heart-solid");
   });
 
+  it("outside /preferits, marks favorites changed instead of refreshing", async () => {
+    window.location.pathname = "/barcelona";
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: [] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, favorites: ["test-event"] }),
+      });
+
+    const { default: FavoriteButton } = await import(
+      "@components/ui/common/favoriteButton"
+    );
+    const { takeFavoritesChanged } = await import("@utils/favorites-events");
+
+    render(
+      <SWRConfig value={{ provider: () => new Map() }}>
+        <FavoriteButton
+          eventSlug="test-event"
+          initialIsFavorite={false}
+          labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
+        />
+      </SWRConfig>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Afegeix a preferits" }));
+
+    // A cached /preferits must refetch when shown again.
+    await waitFor(() => expect(takeFavoritesChanged()).toBe(true));
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
   it("adopts the saved favorites list once it loads", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,

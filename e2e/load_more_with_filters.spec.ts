@@ -216,6 +216,11 @@ test.describe("Load more with filters via proxy", () => {
     // network busy on deployed builds, so networkidle never settles and
     // page.goto times out (45s) on the Vercel preview. The explicit hasMore
     // assertion below auto-waits for the harness to be interactive.
+    const eventRequests: URL[] = [];
+    page.on("request", (req) => {
+      if (req.url().includes("/api/events")) eventRequests.push(new URL(req.url()));
+    });
+
     await page.goto("/e2e/load-more", { waitUntil: "domcontentloaded" });
     // Load more should be available initially
     await expect(page.getByTestId("hasMore")).toHaveText("true");
@@ -251,6 +256,10 @@ test.describe("Load more with filters via proxy", () => {
     await loadMore.click();
     await responsePromise;
     expect(page1Fetched).toBe(true);
+    // The server already rendered page 0, and the backend answers
+    // category=tots with 0 events: neither may be requested.
+    expect(eventRequests.map((u) => u.searchParams.get("page"))).not.toContain("0");
+    expect(eventRequests.some((u) => u.searchParams.has("category"))).toBe(false);
     await expect(page.getByTestId("appended-list")).toContainText(
       "E2E Event 3"
     );
