@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DELETE, POST } from "../app/api/users/me/avatar/route";
 import * as authCookies from "../utils/auth-cookies";
 import * as usersExternal from "../lib/api/users-external";
+import * as profilePages from "../lib/cache/revalidate-profile-pages";
 
 vi.mock("../utils/api-error-handler", () => ({
   // Map thrown errors to a Response carrying the error's `.status` when it is
@@ -22,6 +23,11 @@ vi.mock("../utils/auth-cookies", () => ({
   getValidAccessToken: vi.fn(),
 }));
 
+vi.mock("../lib/cache/revalidate-profile-pages", () => ({
+  readCurrentUsername: vi.fn(async () => "alex91"),
+  invalidateProfilePages: vi.fn(),
+}));
+
 vi.mock("../lib/api/users-external", () => ({
   uploadUserAvatarExternal: vi.fn(),
   deleteUserAvatarExternal: vi.fn(),
@@ -29,6 +35,7 @@ vi.mock("../lib/api/users-external", () => ({
 
 const getCookie = vi.mocked(authCookies.getValidAccessToken);
 const deleteMock = vi.mocked(usersExternal.deleteUserAvatarExternal);
+const invalidate = vi.mocked(profilePages.invalidateProfilePages);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -130,6 +137,7 @@ describe("DELETE /api/users/me/avatar", () => {
     const json = (await res.json()) as { ok: boolean };
     expect(json.ok).toBe(true);
     expect(deleteMock).toHaveBeenCalledWith("tok");
+    expect(invalidate).toHaveBeenCalledWith(["alex91"]);
   });
 
   it("returns 502 when the wrapper returns false (backend delete failed)", async () => {
@@ -137,6 +145,7 @@ describe("DELETE /api/users/me/avatar", () => {
     deleteMock.mockResolvedValue(false);
     const res = await DELETE(buildDeleteRequest() as never);
     expect(res.status).toBe(502);
+    expect(invalidate).not.toHaveBeenCalled();
   });
 
   it("propagates backend 401 (expired / invalid token) via handleApiError", async () => {

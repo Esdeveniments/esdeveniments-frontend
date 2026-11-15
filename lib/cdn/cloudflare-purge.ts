@@ -94,6 +94,18 @@ export async function purgeCloudflareCache(
   return { success: true };
 }
 
+/** Clear the public profile pages (`/perfil/<username>` and its tabs). */
+export async function purgeProfilePagesFromCdn(
+  usernames: readonly string[],
+): Promise<CloudflarePurgeOutcome> {
+  const host = getCdnHost();
+  // Like buildPageCdnTags: with no host, no page carries a matching tag.
+  if (!host || usernames.length === 0) return { success: true, skipped: true };
+  return purgeCloudflareCache({
+    tags: usernames.map((username) => cdnTag(host, "user", username)),
+  });
+}
+
 /**
  * Clear every CDN-cached page that lists or shows these events. Call it from
  * `after()` once the change is saved and Next's own caches are expired, so

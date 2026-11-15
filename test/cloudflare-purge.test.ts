@@ -4,6 +4,7 @@ import {
   buildPurgeBodies,
   purgeCloudflareCache,
   purgeEventPagesFromCdn,
+  purgeProfilePagesFromCdn,
 } from "@lib/cdn/cloudflare-purge";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
@@ -103,6 +104,25 @@ describe("purgeCloudflareCache", () => {
 
     expect(outcome.success).toBe(false);
     expect(captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips the profile purge with no usernames or no site host", async () => {
+    await expect(purgeProfilePagesFromCdn([])).resolves.toEqual({ success: true, skipped: true });
+    process.env.NEXT_PUBLIC_SITE_URL = "not a url";
+    await expect(purgeProfilePagesFromCdn(["alex91"])).resolves.toEqual({
+      success: true,
+      skipped: true,
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("purges the profile pages of each username in one request", async () => {
+    await purgeProfilePagesFromCdn(["alex_old", "alex91"]);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(mockFetch.mock.calls[0][1]?.body))).toEqual({
+      tags: ["www.esdeveniments.cat:user:alex_old", "www.esdeveniments.cat:user:alex91"],
+    });
   });
 
   it("purges an event's pages in one request, tagged with the site host", async () => {

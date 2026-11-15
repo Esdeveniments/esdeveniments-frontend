@@ -5,6 +5,10 @@ import {
   uploadUserAvatarExternal,
 } from "@lib/api/users-external";
 import { handleApiError } from "@utils/api-error-handler";
+import {
+  invalidateProfilePages,
+  readCurrentUsername,
+} from "@lib/cache/revalidate-profile-pages";
 import { detectImageType, isBackendImageType } from "@utils/image-validation";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
@@ -133,13 +137,18 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const result = await uploadUserAvatarExternal(file, auth.token);
+    // An avatar change keeps the username, so it is read in parallel.
+    const [result, username] = await Promise.all([
+      uploadUserAvatarExternal(file, auth.token),
+      readCurrentUsername(auth.token),
+    ]);
     if (!result) {
       return NextResponse.json(
         { error: "Avatar upload failed" },
         { status: 502, headers: NO_STORE },
       );
     }
+    invalidateProfilePages([username]);
     return NextResponse.json(result, { status: 200, headers: NO_STORE });
   } catch (e) {
     return handleApiError(e, "/api/users/me/avatar", {
@@ -154,7 +163,11 @@ export async function DELETE(_request: NextRequest): Promise<Response> {
   if (!auth.ok) return auth.response;
 
   try {
-    const result = await deleteUserAvatarExternal(auth.token);
+    const [result, username] = await Promise.all([
+      deleteUserAvatarExternal(auth.token),
+      readCurrentUsername(auth.token),
+    ]);
+    if (result) invalidateProfilePages([username]);
     return NextResponse.json(
       { ok: result },
       { status: result ? 200 : 502, headers: NO_STORE },
