@@ -118,7 +118,7 @@ export default async function Footer(): Promise<JSX.Element> {
                 data-pressable-link="inline"
                 className="label font-semibold px-button-x py-button-y whitespace-nowrap hover:text-primary transition-interactive pressable-inline"
                 {...(item.href === "/iniciar-sessio"
-                  ? { "data-analytics-action": "footer_login" }
+                  ? { "data-analytics-action": "footer_login", rel: "nofollow" }
                   : {})}
               >
                 {item.name}

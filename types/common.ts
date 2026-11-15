@@ -564,6 +564,7 @@ export interface ActiveLinkProps extends Omit<LinkProps, "href"> {
   activeLinkClass?: string;
   className?: string;
   href?: Href;
+  rel?: string;
 }
 
 export interface ActiveLinkAnchorProps extends Omit<ActiveLinkProps, "href"> {

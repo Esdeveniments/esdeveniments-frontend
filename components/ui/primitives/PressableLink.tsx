@@ -13,7 +13,8 @@ import type {
   PressableLinkVariant,
 } from "types/ui";
 import { useLocale } from "next-intl";
-import { DEFAULT_LOCALE } from "types/i18n";
+import type { AppLocale } from "types/i18n";
+import { localizePath } from "@utils/i18n-routing";
 import { NO_VIGNETTE_LINK_ATTRS } from "@utils/constants";
 
 const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
@@ -36,15 +37,8 @@ export default function PressableLink({
   const { handlers, isPressed } = usePressFeedback();
   const isTestEnv = process.env.NODE_ENV === "test";
   const resolvedPrefetch = isTestEnv ? undefined : prefetch;
-  const locale = useLocale();
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const locale = useLocale() as AppLocale;
+  const withLocale = (path: string) => localizePath(path, locale);
   const normalizeHref = (hrefValue: PressableLinkProps["href"]) => {
     if (typeof hrefValue === "string") {
       if (hrefValue.startsWith("http")) return hrefValue;

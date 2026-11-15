@@ -1,4 +1,5 @@
 import { siteUrl } from "@config/index";
+import { localizePath } from "@utils/i18n-routing";
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
@@ -125,18 +126,7 @@ export async function getLocaleSafely(): Promise<AppLocale> {
  * - Avoids double-prefixing when the path is already localized for the same locale.
  */
 export function withLocalePath(path: string, locale: AppLocale): string {
-  if (!path) return path;
-  // Skip absolute or protocol-relative URLs (e.g., http:, https:, mailto:, tel:, //cdn)
-  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path) || path.startsWith("//")) {
-    return path;
-  }
-  if (!path.startsWith("/")) return path;
-
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  if (!prefix) return path;
-  if (path === "/") return prefix || "/";
-  if (path.startsWith(prefix)) return path;
-  return `${prefix}${path}`;
+  return localizePath(path, locale);
 }
 
 export function toLocalizedUrl(path: string, locale: AppLocale): string {

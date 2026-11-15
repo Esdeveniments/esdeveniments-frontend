@@ -4,8 +4,9 @@ import { Suspense } from "react";
 import { useLocale } from "next-intl";
 import { usePathname } from "../../../../i18n/routing";
 import PressableLink from "@components/ui/primitives/PressableLink";
+import { localizePath } from "@utils/i18n-routing";
 import type { ActiveLinkAnchorProps, ActiveLinkProps } from "types/common";
-import { DEFAULT_LOCALE } from "types/i18n";
+import type { AppLocale } from "types/i18n";
 
 const DEFAULT_CLASS =
   "flex-center gap-element-gap-sm text-foreground-strong px-button-x py-button-y label transition-interactive";
@@ -52,16 +53,9 @@ export default function ActiveLink({
   url,
   ...props
 }: ActiveLinkProps & { url?: string }) {
-  const locale = useLocale();
+  const locale = useLocale() as AppLocale;
   const rawHref = href || url || "/";
-  const linkHref =
-    locale === DEFAULT_LOCALE || rawHref.startsWith("http")
-      ? rawHref
-      : rawHref.startsWith(`/${locale}`)
-        ? rawHref
-        : rawHref.startsWith("/")
-          ? `/${locale}${rawHref}`
-          : rawHref;
+  const linkHref = localizePath(rawHref, locale);
 
   return (
     <Suspense
