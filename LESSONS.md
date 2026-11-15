@@ -1086,5 +1086,6 @@ The backend treats `category=tots` as a real category and answers it with 0
 events and `last: true`. The server pages drop it before calling the backend,
 but `useEvents` passed the `category` prop through, so "Carregar més" on every
 `/<place>/<date>` listing without a category fetched nothing and hid the button.
-Strip `DEFAULT_FILTER_VALUE` from `category` before any `/api/events` call.
-`byDate=tots` is harmless (the backend ignores it), but don't rely on that.
+Strip `DEFAULT_FILTER_VALUE` from `category` and `byDate` before any
+`/api/events` call. `byDate=tots` happens to be ignored today; `useEvents`
+drops it anyway.

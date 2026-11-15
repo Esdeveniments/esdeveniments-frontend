@@ -95,7 +95,7 @@ export const useEvents = ({
     place: placeForRequest,
     // "tots" is a URL segment, not a category: the backend answers it with 0 events.
     category: category && category !== DEFAULT_FILTER_VALUE ? category : undefined,
-    byDate: explicitFrom ? undefined : date,
+    byDate: explicitFrom || date === DEFAULT_FILTER_VALUE ? undefined : date,
     from: range.from,
     to: range.to,
     term: search,

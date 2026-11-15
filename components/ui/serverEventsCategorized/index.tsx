@@ -157,7 +157,7 @@ async function ServerEventsCategorized({
     locale,
     namespace: "Components.ServerEventsCategorized",
   });
-  const heroSkeletonCopy = await getHeroSkeletonCopy(locale, pageData?.subTitle);
+  const heroSkeletonCopy = await getHeroSkeletonCopy(locale, pageData?.subTitle ?? "");
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
   const withLocale = (path: string) => {
     if (!path.startsWith("/")) return path;

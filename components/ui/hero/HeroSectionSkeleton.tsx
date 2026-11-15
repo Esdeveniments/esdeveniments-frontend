@@ -23,6 +23,8 @@ async function madridMonthIndexCached(): Promise<number> {
   return Number(madridTodayYmd().slice(5, 7)) - 1;
 }
 
+// `subTitle` is the subtitle HeroSection will get. Leave it undefined in the
+// page shell, which can't know it yet: the home always has the month sentence.
 export async function getHeroSkeletonCopy(
   locale: AppLocale,
   subTitle?: string,
@@ -45,8 +47,9 @@ export async function getHeroSkeletonCopy(
     titlePrefix: `${tSearch("titlePrefix")} ${placeParts.preposition}`,
     place: placeParts.place,
     subTitle:
-      subTitle ??
-      tPages("root.subTitle", { month: getMonthNames(locale)[monthIndex ?? 0] }),
+      subTitle === undefined
+        ? tPages("root.subTitle", { month: getMonthNames(locale)[monthIndex ?? 0] })
+        : subTitle || tSearch("subtitleDefault"),
     searchPlaceholder: tSearch("searchPlaceholder", {
       placeIn: joinPlacePhrase(placeParts),
     }),
