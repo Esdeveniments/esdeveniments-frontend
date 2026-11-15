@@ -45,6 +45,8 @@ describe("CompactCardView (map panel)", () => {
     const html = render();
     expect(html).toContain('data-analytics-event-name="related_event_click"');
     expect(html).toContain('data-analytics-position="3"');
+    expect(html).toContain('data-analytics-place-slug="cardedeu"');
+    expect(html).toContain('data-analytics-category-slug=""');
   });
 
   it("has a decorative image and a <time> for the single-day date", () => {

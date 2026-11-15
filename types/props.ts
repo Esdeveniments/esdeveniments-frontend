@@ -189,6 +189,10 @@ export interface CardData {
   slug: string;
   /** Event ID for analytics */
   eventId?: string;
+  /** First category slug, for analytics ("" or absent when none) */
+  categorySlug?: string;
+  /** Town (else region) slug, for analytics ("" or absent when none) */
+  placeSlug?: string;
   title: string;
   /** Image URL ("" when the event has none) */
   image: string;
@@ -252,6 +256,8 @@ export interface CardLayoutProps {
     "data-analytics-event-name": string;
     "data-analytics-event-id": string;
     "data-analytics-event-slug": string;
+    "data-analytics-category-slug": string;
+    "data-analytics-place-slug": string;
     children: ReactNode;
   }) => ReactNode;
 }
@@ -290,6 +296,9 @@ export interface FavoriteButtonLabels {
 export interface FavoriteButtonProps {
   eventSlug: string;
   eventId?: string;
+  /** Sent with favorite_add/remove so saves group like views */
+  categorySlug?: string;
+  placeSlug?: string;
   initialIsFavorite: boolean;
   labels: FavoriteButtonLabels;
   className?: string;

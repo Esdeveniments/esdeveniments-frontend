@@ -7,6 +7,7 @@ import {
   convertTZ,
 } from "@utils/date-helpers";
 import { getCategoryLabel } from "@utils/category-helpers";
+import { getEventAnalyticsSlugs } from "@utils/event-helpers";
 import type {
   CardContentProps,
   CardData,
@@ -146,6 +147,7 @@ export function prepareCardContentData({
   return {
     slug: event.slug,
     eventId: event.id ? String(event.id) : undefined,
+    ...getEventAnalyticsSlugs(event),
     title,
     primaryLocation,
     image,

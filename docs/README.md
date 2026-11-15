@@ -57,6 +57,10 @@ pipeline.
   — why search clicks fell: town pages and home lost ranking from December
   2025, causes ruled out (indexing, robots, titles, inventory, GA4/Zaraz),
   Google updates, AI Mode, the event `noindex` lead and crawl health.
+- [`growth/personalization-plan-2026-11.md`](./growth/personalization-plan-2026-11.md)
+  — "Per a tu" personalisation checked against GA4: 92% one-time visitors,
+  why we measure first, the event-page test, on-device profile, and when to
+  move to each next phase.
 
 - [`growth/top-agenda-strategy-2026-11.md`](./growth/top-agenda-strategy-2026-11.md)
   — path to #1 agenda in Catalonia: ChatGPT brainstorm audit, live city supply

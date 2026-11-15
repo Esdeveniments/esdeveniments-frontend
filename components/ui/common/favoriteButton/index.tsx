@@ -37,6 +37,8 @@ function isMaxReachedPayload(payload: unknown): boolean {
 export default function FavoriteButton({
   eventSlug,
   eventId,
+  categorySlug,
+  placeSlug,
   initialIsFavorite,
   labels,
   className = "",
@@ -195,6 +197,8 @@ export default function FavoriteButton({
               sendGoogleEvent(analyticsEventName, {
                 event_slug: eventSlug,
                 event_id: eventId,
+                category_slug: categorySlug || undefined,
+                place_slug: placeSlug || undefined,
               });
 
               // Guest just saved a favorite (kept in the cookie until they

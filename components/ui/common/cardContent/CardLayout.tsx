@@ -24,6 +24,8 @@ export default function CardLayout({
   const {
     slug,
     eventId,
+    categorySlug = "",
+    placeSlug = "",
     title,
     image,
     cardDate,
@@ -83,6 +85,8 @@ export default function CardLayout({
           <FavoriteButtonOverlay
             eventSlug={slug}
             eventId={eventId}
+            categorySlug={categorySlug}
+            placeSlug={placeSlug}
             initialIsFavorite={Boolean(isFavorite)}
             labels={favoriteLabels}
           />
@@ -100,6 +104,8 @@ export default function CardLayout({
             "data-analytics-event-name": analyticsEventName,
             "data-analytics-event-id": eventId ?? "",
             "data-analytics-event-slug": slug || "",
+            "data-analytics-category-slug": categorySlug,
+            "data-analytics-place-slug": placeSlug,
             children: title,
           })}
         </Heading>

@@ -643,6 +643,12 @@ export interface GoogleAnalyticsEvent {
   [key: string]: unknown;
 }
 
+/** An event's first category and its town (else region) slug, "" when missing. */
+export interface EventAnalyticsSlugs {
+  categorySlug: string;
+  placeSlug: string;
+}
+
 // Opening hours formatting options (shared between utils and UI)
 export interface FormatOpeningHoursOptions {
   locale?: string;
