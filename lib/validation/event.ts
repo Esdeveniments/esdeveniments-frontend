@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { withImageCacheKey } from "@utils/image-cache";
-import { canonicalizeLocaleTag } from "@utils/i18n-routing";
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "types/i18n";
+import { NON_DEFAULT_LOCALES } from "types/i18n";
 import type {
   EventDetailResponseDTO,
   EventDetailTranslationDTO,
@@ -59,19 +58,15 @@ const requiredText = z
   .string()
   .transform((value) => (isMissingText(value) ? "" : value));
 
-const MAX_TRANSLATION_LOCALES = 32;
-const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
-
 function cleanTranslationString(value: unknown): string | undefined {
   if (typeof value !== "string" || isMissingText(value)) return undefined;
   return value.trim();
 }
 
 /**
- * Sanitizes `translations` into a plain `{}` map (React Flight RSC rejects
- * null-prototype objects) using ECMA-402 `canonicalizeLocaleTag`. Prioritizes
- * `SUPPORTED_LOCALES` before capping key count, strips `description` on summary
- * items, and returns `undefined` when empty so Catalan-only events carry zero extra keys.
+ * Keeps only `NON_DEFAULT_LOCALES` (`SUPPORTED_LOCALES` minus `ca`), stripping
+ * `description` on summary items and returning `undefined` when empty so
+ * Catalan-only events add zero keys to RSC and SWR payloads.
  */
 function parseEventTranslationsMap(
   raw: unknown,
@@ -87,40 +82,12 @@ function parseEventTranslationsMap(
 ): EventTranslationsMap<EventDetailTranslationDTO> | undefined {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
 
-  const entries = Object.entries(raw as Record<string, unknown>)
-    .flatMap(([rawKey, val]) => {
-      const parsed = canonicalizeLocaleTag(rawKey);
-      if (!parsed || parsed.canonical === DEFAULT_LOCALE) return [];
-      const isSupported =
-        SUPPORTED_LOCALE_SET.has(parsed.canonical) ||
-        SUPPORTED_LOCALE_SET.has(parsed.language);
-      const isStandard = !parsed.canonical.includes("-x-");
-      const isCanonicalCase = rawKey === parsed.canonical;
-      return [
-        {
-          canonical: parsed.canonical,
-          val,
-          isSupported,
-          isStandard,
-          isCanonicalCase,
-        },
-      ];
-    })
-    .sort((a, b) => {
-      if (a.isSupported !== b.isSupported) return a.isSupported ? -1 : 1;
-      if (a.isStandard !== b.isStandard) return a.isStandard ? -1 : 1;
-      if (a.isCanonicalCase !== b.isCanonicalCase) {
-        return a.isCanonicalCase ? -1 : 1;
-      }
-      return 0;
-    });
-
+  const source = raw as Record<string, unknown>;
   const out: EventTranslationsMap<EventDetailTranslationDTO> = {};
-  let count = 0;
+  let hasAny = false;
 
-  for (const { canonical, val } of entries) {
-    if (Object.hasOwn(out, canonical)) continue;
-    if (count >= MAX_TRANSLATION_LOCALES) break;
+  for (const locale of NON_DEFAULT_LOCALES) {
+    const val = Object.hasOwn(source, locale) ? source[locale] : undefined;
     if (!val || typeof val !== "object" || Array.isArray(val)) continue;
 
     const record = val as Record<string, unknown>;
@@ -130,14 +97,14 @@ function parseEventTranslationsMap(
       : undefined;
     if (!title && !description) continue;
 
-    const entry: EventDetailTranslationDTO = {};
-    if (title) entry.title = title;
-    if (description) entry.description = description;
-    out[canonical] = entry;
-    count += 1;
+    out[locale] = {
+      ...(title ? { title } : {}),
+      ...(description ? { description } : {}),
+    };
+    hasAny = true;
   }
 
-  return count > 0 ? out : undefined;
+  return hasAny ? out : undefined;
 }
 
 const summaryTranslationsSchema = z
@@ -423,12 +390,9 @@ function enhanceEventImage<
 function enhanceEventDetail(
   event: EventDetailResponseDTO
 ): EventDetailResponseDTO {
-  let normalizedEvent = enhanceEventImage(event) as EventDetailResponseDTO;
-  if (normalizedEvent.translations === undefined && "translations" in normalizedEvent) {
-    const rest = { ...(normalizedEvent as unknown as Record<string, unknown>) };
-    delete rest.translations;
-    normalizedEvent = rest as unknown as EventDetailResponseDTO;
-  }
+  const { translations, ...rest } = enhanceEventImage(event);
+  const normalizedEvent: EventDetailResponseDTO =
+    translations === undefined ? rest : { ...rest, translations };
   if (!event.relatedEvents || event.relatedEvents.length === 0) {
     return normalizedEvent;
   }

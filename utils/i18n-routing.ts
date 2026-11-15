@@ -48,28 +48,6 @@ export function isNonDefaultLocale(
 }
 
 /**
- * Canonicalizes a BCP-47 locale tag with standard ECMA-402 `Intl.getCanonicalLocales`
- * and `Intl.Locale` (`"en-gb"` -> `"en-GB"`, `"zh-hans"` -> `"zh-Hans"`).
- * Restricts the primary language subtag to ISO 639 (2-3 letters), rejecting
- * prototype words like `"toString"`, `"valueOf"`, or `"constructor"`.
- */
-export function canonicalizeLocaleTag(
-  raw: string | null | undefined,
-): { canonical: string; language: string } | null {
-  const trimmed = raw?.trim();
-  if (!trimmed || trimmed.length > 35) return null;
-  try {
-    const [canonical] = Intl.getCanonicalLocales(trimmed);
-    if (!canonical) return null;
-    const { language } = new Intl.Locale(canonical);
-    if (!language || language.length < 2 || language.length > 3) return null;
-    return { canonical, language };
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Prefixes a relative root path with the locale segment when needed.
  * Matches a complete locale segment so towns like `/esparreguera` still get `/es`.
  */

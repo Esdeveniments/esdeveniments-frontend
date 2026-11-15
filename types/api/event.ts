@@ -50,9 +50,8 @@ export interface EventDetailTranslationDTO extends EventSummaryTranslationDTO {
   description?: string | null;
 }
 
-export type EventTranslationsMap<T = EventSummaryTranslationDTO> = Record<
-  string,
-  T
+export type EventTranslationsMap<T = EventSummaryTranslationDTO> = Partial<
+  Record<import("types/i18n").NonDefaultLocale, T>
 >;
 
 export interface EventSummaryResponseDTO {
