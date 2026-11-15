@@ -78,6 +78,16 @@ hold the listing page's filters (set on the list container), and those stay.
 | `related_event_click` | event id, slug, position, source event id and slug | + `event_category_slug`, `event_place_slug`, and the viewed event's `category_slug`, `place_slug` |
 | `map_event_click` | event id, slug, position | + `event_category_slug`, `event_place_slug` |
 | `favorite_add`, `favorite_remove` | event id and slug | + `category_slug`, `place_slug` of the event |
+| `view_item_list` (new, listings) | `card_impression_batch` sent only how many cards were seen | which events were seen: one item per card with `item_id` (event id), `item_category` (category), `item_category2` (town, else region) and `index` (slot in the grid) |
+
+`view_item_list` is GA4's standard event for "items shown in a list". Its item
+fields are built-in dimensions (Item ID, Item category, Item category 2, Item
+list position), so it uses none of the 50 custom dimension slots. It goes out
+in the same 2 s batch as `card_impression_batch`, which stays for the
+dashboards (`scripts/ga-dashboard.py`). Ad slots have no event, so they are
+skipped. GA4's own "item list click-through rate" stays empty, because card
+clicks are `select_event`, not `select_item`: join the two on the event id in
+BigQuery instead.
 
 Manual step (needs GA4 edit access; the local credentials are read-only):
 register `category_slug`, `event_category_slug` and `event_place_slug` as
@@ -87,8 +97,40 @@ dimensions. GA4 only fills a dimension from the day it is registered, so do
 it before the four weeks start.
 
 Left for later, on purpose: `share` and `add_to_calendar` (14 events in four
-weeks, and their buttons don't receive the event's category today) and the
-card's position in listings (only numbered lists pass it).
+weeks, and their buttons don't receive the event's category today), the
+position of a clicked card (`view_item_list` has the slot of seen cards), seen
+cards on home rows and the related row (only listings report them), and
+"stops" (how long a card stayed on screen).
+
+### BigQuery export (free)
+
+GA4 keeps event data 14 months, its reports can't follow one visitor from
+view to save, and custom parameters need one of the 50 slots. The BigQuery
+export copies every event with all its parameters into our Google Cloud
+project, where SQL can do all three.
+
+At no cost, with no card, it runs in the BigQuery sandbox:
+
+| Fact | Value | Source |
+| --- | --- | --- |
+| Our volume | 69,721 events in 28 days (~2,500 a day, all countries) | GA4 Data API, 2026-10-18 → 2026-11-14 |
+| Daily export limit | 1 million events a day | GA4 help, "Set up BigQuery Export" |
+| Sandbox | Free queries up to 1 TiB a month; every table is deleted after 60 days; no streaming | BigQuery docs, "Use the BigQuery sandbox" |
+| Project | `esdeveniments-3`, BigQuery API already on, billing off (so sandbox) | `gcloud`, 2026-11-15 |
+
+Steps (needs Editor on the GA4 property and Owner on the Cloud project):
+
+1. GA4 Admin → Product links → BigQuery links → Link.
+2. Choose BigQuery project → `esdeveniments-3` → Confirm.
+3. Data location: an EU location (the data is about EU visitors).
+4. Data streams: the web stream, no excluded events.
+5. Frequency: Daily only (the sandbox can't take Streaming).
+6. Submit. The first daily table (`events_YYYYMMDD`) shows up within a day.
+
+The sandbox keeps a rolling 60 days, enough for the four-week questions
+below. Older data stays in GA4 for 14 months. Keeping BigQuery tables longer
+needs a billing account on the project; at our volume the usage fits the free
+tier, but it means adding a card, so we skip it for now.
 
 ## 4. Questions to answer after four weeks
 
@@ -148,8 +190,8 @@ What they share:
 What this means for us:
 
 - The same rules fit our listings: a card is seen when half of it is on
-  screen in a visible tab (`useListingAnalytics` already uses an
-  IntersectionObserver for `card_impression_batch`, but sends only counts),
+  screen in a visible tab (`useListingAnalytics` uses an IntersectionObserver
+  at 50% and now reports which events were seen with `view_item_list`),
   a "stop" is a card that stays on screen well above that person's median,
   and a "good click" is an event page where the visitor reaches the
   description or location section (`section_view` exists) or clicks the

@@ -2,10 +2,28 @@
 
 import { useEffect, useRef } from "react";
 import { sendGoogleEvent } from "@utils/analytics";
+import type { ListingImpressionItem } from "types/analytics";
+
+// GA4 takes up to 200 items per event.
+const MAX_ITEMS_PER_EVENT = 200;
+
+/** The card's event, read from its title link; null for ad slots. */
+function toImpressionItem(card: Element, index: number): ListingImpressionItem | null {
+  const link = card.querySelector<HTMLElement>("[data-analytics-event-id]");
+  const id = link?.dataset.analyticsEventId;
+  if (!link || !id) return null;
+  return {
+    item_id: id,
+    item_category: link.dataset.analyticsEventCategorySlug || undefined,
+    item_category2: link.dataset.analyticsEventPlaceSlug || undefined,
+    index,
+  };
+}
 
 /**
  * Tracks listing page analytics:
- * 1. Card impressions (batched, 2s debounce) via IntersectionObserver
+ * 1. Card impressions (batched, 2s debounce) via IntersectionObserver: a count
+ *    (`card_impression_batch`) and which events were seen (`view_item_list`)
  * 2. Scroll depth (25/50/75/100%) derived from unique cards seen
  *
  * Pass `container` via callback ref pattern (useState setter) so the effect
@@ -35,6 +53,7 @@ export default function useListingAnalytics(
     const seen = new Set<Element>();
     const milestonesHit = new Set<number>();
     let pending = 0;
+    let pendingItems: ListingImpressionItem[] = [];
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const flush = () => {
@@ -47,6 +66,14 @@ export default function useListingAnalytics(
         });
         pending = 0;
       }
+      for (let i = 0; i < pendingItems.length; i += MAX_ITEMS_PER_EVENT) {
+        sendGoogleEvent("view_item_list", {
+          item_list_name: "listing",
+          ...contextRef.current,
+          items: pendingItems.slice(i, i + MAX_ITEMS_PER_EVENT),
+        });
+      }
+      pendingItems = [];
       timer = null;
     };
 
@@ -74,6 +101,9 @@ export default function useListingAnalytics(
           if (e.isIntersecting && !seen.has(e.target)) {
             seen.add(e.target);
             n++;
+            const slot = [...(e.target.parentElement?.children ?? [])].indexOf(e.target) + 1;
+            const item = toImpressionItem(e.target, slot);
+            if (item) pendingItems.push(item);
             io.unobserve(e.target);
           }
         }
@@ -106,7 +136,7 @@ export default function useListingAnalytics(
       io.disconnect();
       mo.disconnect();
       if (timer) clearTimeout(timer);
-      if (pending > 0) flush();
+      flush();
     };
   }, [container]);
 }
