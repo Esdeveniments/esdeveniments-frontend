@@ -144,8 +144,8 @@ describe("CardLayout link", () => {
         renderLink={renderLink}
       />
     );
-    expect(html).toContain('data-analytics-category-slug="concerts"');
-    expect(html).toContain('data-analytics-place-slug="cardedeu"');
+    expect(html).toContain('data-analytics-event-category-slug="concerts"');
+    expect(html).toContain('data-analytics-event-place-slug="cardedeu"');
   });
 
   it("puts the title before the date in the DOM", () => {

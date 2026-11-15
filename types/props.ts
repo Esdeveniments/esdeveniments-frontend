@@ -35,7 +35,13 @@ export interface UseImageRetryReturn {
   getImageKey: (baseSrc: string) => string;
 }
 
-import type { ActiveLinkProps, CardProps, DescriptionFold, ImageSizeContext } from "types/common";
+import type {
+  ActiveLinkProps,
+  CardProps,
+  DescriptionFold,
+  EventAnalyticsSlugs,
+  ImageSizeContext,
+} from "types/common";
 
 /**
  * Props for ClientImageInner component
@@ -256,8 +262,8 @@ export interface CardLayoutProps {
     "data-analytics-event-name": string;
     "data-analytics-event-id": string;
     "data-analytics-event-slug": string;
-    "data-analytics-category-slug": string;
-    "data-analytics-place-slug": string;
+    "data-analytics-event-category-slug": string;
+    "data-analytics-event-place-slug": string;
     children: ReactNode;
   }) => ReactNode;
 }
@@ -1315,6 +1321,8 @@ export interface EventRelatedEventsProps {
   events: EventSummaryResponseDTO[];
   sourceEventId?: string;
   sourceEventSlug: string;
+  /** The viewed event's category and place, sent as the clicks' page context */
+  sourceSlugs?: EventAnalyticsSlugs;
 }
 
 export interface EventMoreEventsProps {
@@ -1325,6 +1333,7 @@ export interface EventMoreEventsProps {
   regionId?: number;
   relatedEvents: EventSummaryResponseDTO[];
   sourceEventSlug: string;
+  sourceSlugs?: EventAnalyticsSlugs;
 }
 
 export interface PromotedEventsTrackerProps {

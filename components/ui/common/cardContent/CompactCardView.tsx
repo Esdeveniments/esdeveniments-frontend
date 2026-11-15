@@ -60,8 +60,8 @@ export default function CompactCardView({
             data-analytics-event-name={analyticsEventName}
             data-analytics-event-id={event.id ? String(event.id) : ""}
             data-analytics-event-slug={event.slug || ""}
-            data-analytics-category-slug={categorySlug}
-            data-analytics-place-slug={placeSlug}
+            data-analytics-event-category-slug={categorySlug}
+            data-analytics-event-place-slug={placeSlug}
             data-analytics-position={String(index + 1)}
           >
             {title}

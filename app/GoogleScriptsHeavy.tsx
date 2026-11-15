@@ -128,6 +128,10 @@ export default function GoogleScriptsHeavy({
           event_id: dataset.analyticsEventId || undefined,
           event_slug: dataset.analyticsEventSlug || undefined,
           place_slug: dataset.analyticsPlaceSlug || undefined,
+          // The clicked event's own category and town. Separate names, because
+          // a listing container's place/category is the page, not the event.
+          event_category_slug: dataset.analyticsEventCategorySlug || undefined,
+          event_place_slug: dataset.analyticsEventPlaceSlug || undefined,
           date_slug: dataset.analyticsDateSlug || undefined,
           position: dataset.analyticsPosition || undefined,
           source_event_id: dataset.analyticsSourceEventId || undefined,

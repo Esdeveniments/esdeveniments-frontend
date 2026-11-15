@@ -65,21 +65,26 @@ best signal we have is the event they are looking at right now.
 
 ## 3. Phase 0: instrumentation (this change)
 
-Every event below now carries `category_slug` (first category) and
-`place_slug` (town, else region), from one helper,
-`getEventAnalyticsSlugs` in `utils/event-helpers.ts`:
+Every event below now carries the event's first category and its town (or
+its region when it has no town), from one helper, `getEventAnalyticsSlugs` in
+`utils/event-helpers.ts`. Card clicks send the pair as `event_category_slug`
+and `event_place_slug`, because their `category_slug` and `place_slug` already
+hold the listing page's filters (set on the list container), and those stay.
 
 | GA4 event | Before | Now |
 | --- | --- | --- |
-| `view_event_page` | category, place | same, from the helper |
-| `select_event` (listing and home cards) | event id and slug | + category, place |
-| `related_event_click`, `map_event_click` | event id, slug, position | + category, place |
-| `favorite_add`, `favorite_remove` | event id and slug | + category, place |
+| `view_event_page` | `category_slug`, `place_slug` of the event | same, from the helper |
+| `select_event` (listing and home cards) | event id and slug; on listings also the page's `category_slug`, `place_slug` | + `event_category_slug`, `event_place_slug` |
+| `related_event_click` | event id, slug, position, source event id and slug | + `event_category_slug`, `event_place_slug`, and the viewed event's `category_slug`, `place_slug` |
+| `map_event_click` | event id, slug, position | + `event_category_slug`, `event_place_slug` |
+| `favorite_add`, `favorite_remove` | event id and slug | + `category_slug`, `place_slug` of the event |
 
 Manual step (needs GA4 edit access; the local credentials are read-only):
-register `category_slug` as an event-scoped custom dimension in GA4 Admin →
-Custom definitions. `place_slug` is already registered. GA4 only fills a
-dimension from the day it is registered, so do it before the four weeks start.
+register `category_slug`, `event_category_slug` and `event_place_slug` as
+event-scoped custom dimensions in GA4 Admin → Custom definitions.
+`place_slug` is already registered. That makes 47 of the 50 event-scoped
+dimensions. GA4 only fills a dimension from the day it is registered, so do
+it before the four weeks start.
 
 Left for later, on purpose: `share` and `add_to_calendar` (14 events in four
 weeks, and their buttons don't receive the event's category today) and the
@@ -87,14 +92,15 @@ card's position in listings (only numbered lists pass it).
 
 ## 4. Questions to answer after four weeks
 
-Each one is a GA4 report or exploration with `category_slug` and `place_slug`:
+Each one is a GA4 report or exploration with the event's category and place
+(`category_slug`/`place_slug` on views and saves, `event_*` on card clicks):
 
 - Do people who view a category click and save the same category? Compare
   the category mix of `view_event_page` with `select_event` and
   `favorite_add`, per user, in a user exploration.
 - Does place matter more than category? For `related_event_click`, compare
-  how often the clicked event shares the source event's place against its
-  category.
+  how often `event_place_slug` matches `place_slug` (the viewed event's town)
+  against how often `event_category_slug` matches `category_slug`.
 - Which categories bring people back? `view_event_page` by category, split
   by new and returning users.
 - Where is demand without supply? `zero_results` and `search_outcome` by

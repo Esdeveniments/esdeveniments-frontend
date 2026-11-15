@@ -208,6 +208,7 @@ async function EventPageContent({
 
   const { primaryPlaceSlug, sponsorFallbackPlaces, placeLabel, placeType, newsHref } =
     getPlaceContext(event, locale);
+  const analyticsSlugs = getEventAnalyticsSlugs(event);
   // Request-time parts stay outside the cached body and pass through it.
   const sponsorSlot = (
     <SponsorBannerSlot
@@ -243,6 +244,7 @@ async function EventPageContent({
               events={event.relatedEvents ?? []}
               sourceEventId={event.id}
               sourceEventSlug={event.slug || slug}
+              sourceSlugs={analyticsSlugs}
             />
           }
         >
@@ -253,6 +255,7 @@ async function EventPageContent({
             regionId={event.region?.id}
             relatedEvents={event.relatedEvents ?? []}
             sourceEventSlug={event.slug || slug}
+            sourceSlugs={analyticsSlugs}
           />
         </Suspense>
       }

@@ -104,8 +104,8 @@ export default function CardLayout({
             "data-analytics-event-name": analyticsEventName,
             "data-analytics-event-id": eventId ?? "",
             "data-analytics-event-slug": slug || "",
-            "data-analytics-category-slug": categorySlug,
-            "data-analytics-place-slug": placeSlug,
+            "data-analytics-event-category-slug": categorySlug,
+            "data-analytics-event-place-slug": placeSlug,
             children: title,
           })}
         </Heading>
