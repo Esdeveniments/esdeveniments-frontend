@@ -169,7 +169,6 @@ export const useEvents = ({
         free: freeParam as boolean | undefined,
       }),
     {
-      keepPreviousData: !hasClientFilters,
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
 

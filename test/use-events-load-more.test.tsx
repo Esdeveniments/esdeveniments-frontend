@@ -231,6 +231,45 @@ describe("useEvents load more (integration)", () => {
     expect(screen.getByTestId("loadingMore").textContent).toBe("false");
   });
 
+  it("doesn't show the cleared filter's results while the next page loads", async () => {
+    const mockedFetch = vi.mocked(globalThis.fetch);
+    const defaultFetch = mockedFetch.getMockImplementation()!;
+    let releasePage1: () => void = () => {};
+    mockedFetch.mockImplementation(async (input, init) => {
+      const params = new URL(String(input), "http://localhost").searchParams;
+      if (params.get("page") === "1" && !params.has("term")) {
+        await new Promise<void>((resolve) => (releasePage1 = resolve));
+      }
+      return defaultFetch(input, init);
+    });
+
+    const props: UseEventsOptions = {
+      place: "barcelona",
+      category: "music",
+      date: "avui",
+      initialSize: 10,
+      fallbackData: [createMockEvent("9", "SSR event", "e9")],
+      serverHasMore: true,
+    };
+    const tree = (extra: Partial<UseEventsOptions>) => (
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <EventsHarness {...props} {...extra} />
+      </SWRConfig>
+    );
+    const { rerender } = render(tree({ search: "jazz" }));
+    await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("2"));
+
+    rerender(tree({}));
+    fireEvent.click(screen.getByText("Load"));
+    await waitFor(() =>
+      expect(screen.getByTestId("loadingMore").textContent).toBe("true"),
+    );
+    expect(screen.getByTestId("count").textContent).toBe("1");
+
+    releasePage1();
+    await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("3"));
+  });
+
   it("fetches nothing before the first click and never sends category=tots", async () => {
     render(
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>

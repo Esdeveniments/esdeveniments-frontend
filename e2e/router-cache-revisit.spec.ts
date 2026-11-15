@@ -29,7 +29,8 @@ test.describe("Router cache", () => {
 
     await favoritesLink.click();
     await page.waitForURL(/\/preferits$/);
-    await expect(page.locator("main h1").filter({ visible: true }).first()).toBeVisible();
+    // Page content, not the layout's h1: the skeleton must be gone.
+    await expect(page.getByTestId("favorites-page-empty")).toBeVisible();
     expect(favoritesRequests()).toBe(1);
 
     await page.locator('nav a[href="/"]').filter({ visible: true }).first().click();
@@ -37,7 +38,8 @@ test.describe("Router cache", () => {
 
     await favoritesLink.click();
     await page.waitForURL(/\/preferits$/);
-    await expect(page.locator("main h1").filter({ visible: true }).first()).toBeVisible();
+    // Page content, not the layout's h1: the skeleton must be gone.
+    await expect(page.getByTestId("favorites-page-empty")).toBeVisible();
     expect(favoritesRequests()).toBe(1);
   });
 });
