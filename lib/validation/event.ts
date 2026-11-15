@@ -50,6 +50,7 @@ const optionalText = z
   .string()
   .nullable()
   .transform((value) => (value === null || isMissingText(value) ? null : value));
+const optionalTranslationText = optionalText.nullish().catch(null);
 const requiredText = z
   .string()
   .transform((value) => (isMissingText(value) ? "" : value));
@@ -71,6 +72,8 @@ const EventSummaryBaseSchema = z
     // Note: title is allowed to be empty string (backend may return empty titles)
     // Frontend code should handle empty titles defensively (see app/e/[eventId]/page.tsx)
     title: z.string(),
+    titleEs: optionalTranslationText,
+    titleEn: optionalTranslationText,
     // Absent on the pre-v2 backend still serving prod; default keeps it parsing.
     isPromoted: z.boolean().default(false),
     url: optionalText,
@@ -117,6 +120,8 @@ const RelatedEventSummarySchema = z
     id: z.string().optional(),
     slug: z.string(),
     title: z.string(),
+    titleEs: optionalTranslationText,
+    titleEn: optionalTranslationText,
     url: optionalText.optional(),
     description: optionalText.optional(),
     imageUrl: optionalText.optional(),
@@ -149,6 +154,8 @@ function sanitizeMetaField(
 }
 
 export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
+  descriptionEs: optionalTranslationText,
+  descriptionEn: optionalTranslationText,
   videoUrl: z.string().optional(),
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -224,7 +231,7 @@ export function parsePagedEvents(
   const payload: PagedResponseDTO<EventSummaryResponseDTO> = result.data;
   return {
     ...payload,
-    content: payload.content.map(enhanceEventImage),
+    content: payload.content.map(enhanceEventSummary),
   };
 }
 
@@ -241,7 +248,7 @@ export function parseEventSummaryList(input: unknown): EventSummaryResponseDTO[]
       return [];
     }
     const event: EventSummaryResponseDTO = result.data;
-    return [enhanceEventImage(event)];
+    return [enhanceEventSummary(event)];
   });
 }
 
@@ -265,9 +272,26 @@ export function parseCategorizedEvents(
 
   const categorized: CategorizedEvents = result.data;
   const normalizedEntries = Object.entries(categorized).map(
-    ([category, events]) => [category, events.map(enhanceEventImage)]
+    ([category, events]) => [category, events.map(enhanceEventSummary)]
   );
   return Object.fromEntries(normalizedEntries) as CategorizedEvents;
+}
+
+/**
+ * Cards never render translated descriptions; strip them from passthrough
+ * summary items so listing RSC and SWR payloads stay small.
+ */
+function enhanceEventSummary<
+  T extends { imageUrl?: string | null; hash?: string | null; updatedAt?: string }
+>(event: T): T {
+  const enhanced = enhanceEventImage(event);
+  if ("descriptionEs" in enhanced || "descriptionEn" in enhanced) {
+    const rest = { ...(enhanced as Record<string, unknown>) };
+    delete rest.descriptionEs;
+    delete rest.descriptionEn;
+    return rest as T;
+  }
+  return enhanced;
 }
 
 function enhanceEventImage<
@@ -307,7 +331,7 @@ function enhanceEventDetail(
   return {
     ...normalizedEvent,
     relatedEvents: event.relatedEvents.map((relatedEvent) => ({
-      ...enhanceEventImage(relatedEvent),
+      ...enhanceEventSummary(relatedEvent),
       description: "",
     })) as EventDetailResponseDTO["relatedEvents"],
   };

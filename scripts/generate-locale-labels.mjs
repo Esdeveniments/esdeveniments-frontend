@@ -36,6 +36,12 @@ const labels = {
   constants: Object.fromEntries(
     LOCALES.map((l) => [l, pick(lists.constants[l], `locale-lists constants.${l}`)]),
   ),
+  eventFallbacks: Object.fromEntries(
+    LOCALES.map((l) => [
+      l,
+      pick(messages[l].Utils?.EventFallbacks, `${l}.Utils.EventFallbacks`),
+    ]),
+  ),
   utils: Object.fromEntries(
     UTILS_KEYS.map((k) => [k, pick(messages.ca.Utils?.[k], `ca.Utils.${k}`)]),
   ),

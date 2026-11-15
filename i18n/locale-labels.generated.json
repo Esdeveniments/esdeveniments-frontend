@@ -187,6 +187,20 @@
       ]
     }
   },
+  "eventFallbacks": {
+    "ca": {
+      "defaultEvent": "Esdeveniment",
+      "defaultCulturalEvent": "Esdeveniment cultural"
+    },
+    "es": {
+      "defaultEvent": "Evento",
+      "defaultCulturalEvent": "Evento cultural"
+    },
+    "en": {
+      "defaultEvent": "Event",
+      "defaultCulturalEvent": "Cultural event"
+    }
+  },
   "utils": {
     "EventCopy": {
       "sentence": {
