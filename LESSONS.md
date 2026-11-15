@@ -1085,7 +1085,7 @@ plays. The unused `viewTransitionName` and `::view-transition` CSS were removed
 The backend treats `category=tots` as a real category and answers it with 0
 events and `last: true`. The server pages drop it before calling the backend,
 but `useEvents` passed the `category` prop through, so "Carregar més" on every
-`/<place>/<date>` listing without a category fetched nothing and hid the button.
-Strip `DEFAULT_FILTER_VALUE` from `category` and `byDate` before any
-`/api/events` call. `byDate=tots` happens to be ignored today; `useEvents`
-drops it anyway.
+`/<place>/<date>` listing without a category fetched nothing and hid the button
+(likely since backend contract v2 reached production on 2026-11-04).
+`buildEventsQuery` (`utils/api-helpers.ts`), which builds every events query,
+now drops `tots` from `category` and `byDate`.

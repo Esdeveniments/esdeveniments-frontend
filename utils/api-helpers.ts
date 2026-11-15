@@ -8,6 +8,7 @@ import apiDefaults from "@config/api-defaults.json";
 import { isDevelopmentHost } from "@utils/host-validation";
 import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
+import { DEFAULT_FILTER_VALUE } from "@utils/constants";
 import type { FetchNewsParams } from "@lib/api/news";
 import type { HeadersFn } from "types/utils";
 import type { InternalOriginOptions } from "types/api/internal";
@@ -225,12 +226,16 @@ export function buildEventsQuery(params: FetchEventsParams): URLSearchParams {
   query.size = typeof params.size === "number" ? params.size : 10;
 
   if (params.place) query.place = params.place;
-  if (params.category) query.category = params.category;
+  // "tots" is a URL segment, not a filter: the backend answers
+  // category=tots with 0 events.
+  if (params.category && params.category !== DEFAULT_FILTER_VALUE)
+    query.category = params.category;
   if (params.lat !== undefined) query.lat = params.lat;
   if (params.lon !== undefined) query.lon = params.lon;
   if (params.radius !== undefined) query.radius = params.radius;
   if (params.term) query.term = params.term;
-  if (params.byDate) query.byDate = params.byDate;
+  if (params.byDate && params.byDate !== DEFAULT_FILTER_VALUE)
+    query.byDate = params.byDate;
   if (params.from) query.from = params.from;
   if (params.to) query.to = params.to;
   if (params.profileSlug) query.profileSlug = params.profileSlug;

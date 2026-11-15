@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@components/hooks/useAuth";
+import { useRouter } from "@i18n/routing";
 import AvatarInitials from "@components/ui/common/AvatarInitials";
 import { sendGoogleEvent } from "@utils/analytics";
 import { isBackendImageType } from "@utils/image-validation";
@@ -17,6 +18,7 @@ export default function EditProfileAvatar({
   className,
 }: EditProfileAvatarProps) {
   const t = useTranslations("App.EditProfile.avatar");
+  const router = useRouter();
   const { user, refetchUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -81,6 +83,8 @@ export default function EditProfileAvatar({
       // done, or a second upload could race the first one's session refresh.
       sendGoogleEvent("avatar_upload_success", {});
       await refetchUser();
+      // Drop cached pages (staleTimes) so the profile shows the new avatar.
+      router.refresh();
     } finally {
       setIsUploading(false);
     }
@@ -110,6 +114,7 @@ export default function EditProfileAvatar({
       // Same ordering and busy-state rationale as handleFileChange above.
       sendGoogleEvent("avatar_remove_success", {});
       await refetchUser();
+      router.refresh();
     } finally {
       setIsRemoving(false);
     }
