@@ -94,11 +94,21 @@ function parseEventTranslationsMap(
       const isSupported =
         SUPPORTED_LOCALE_SET.has(parsed.canonical) ||
         SUPPORTED_LOCALE_SET.has(parsed.language);
+      const isStandard = !parsed.canonical.includes("-x-");
       const isCanonicalCase = rawKey === parsed.canonical;
-      return [{ canonical: parsed.canonical, val, isSupported, isCanonicalCase }];
+      return [
+        {
+          canonical: parsed.canonical,
+          val,
+          isSupported,
+          isStandard,
+          isCanonicalCase,
+        },
+      ];
     })
     .sort((a, b) => {
       if (a.isSupported !== b.isSupported) return a.isSupported ? -1 : 1;
+      if (a.isStandard !== b.isStandard) return a.isStandard ? -1 : 1;
       if (a.isCanonicalCase !== b.isCanonicalCase) {
         return a.isCanonicalCase ? -1 : 1;
       }
