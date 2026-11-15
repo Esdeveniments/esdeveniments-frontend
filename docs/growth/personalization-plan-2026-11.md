@@ -114,28 +114,34 @@ view to save, and custom parameters need one of the 50 slots. The BigQuery
 export copies every event with all its parameters into our Google Cloud
 project, where SQL can do all three.
 
-At no cost, with no card, it runs in the BigQuery sandbox:
+It goes to `esdeveniments`, the main Cloud project (Maps, Places, Search
+Console, Cloud Run), which already has billing on. A project without billing
+runs in the BigQuery sandbox, which deletes every table after 60 days.
 
 | Fact | Value | Source |
 | --- | --- | --- |
 | Our volume | 69,721 events in 28 days (~2,500 a day, all countries) | GA4 Data API, 2026-10-18 → 2026-11-14 |
 | Daily export limit | 1 million events a day | GA4 help, "Set up BigQuery Export" |
-| Sandbox | Free queries up to 1 TiB a month; every table is deleted after 60 days; no streaming | BigQuery docs, "Use the BigQuery sandbox" |
-| Project | `esdeveniments-3`, BigQuery API already on, billing off (so sandbox) | `gcloud`, 2026-11-15 |
+| Free use | 10 GiB of storage and 1 TiB of queries a month | BigQuery pricing |
+| Sandbox (no billing) | Every table deleted after 60 days, no streaming | BigQuery docs, "Use the BigQuery sandbox" |
+| Projects | `esdeveniments` billing on; `esdeveniments-3` and `-prod` billing off | `gcloud`, 2026-11-15 |
 
 Steps (needs Editor on the GA4 property and Owner on the Cloud project):
 
 1. GA4 Admin → Product links → BigQuery links → Link.
-2. Choose BigQuery project → `esdeveniments-3` → Confirm.
-3. Data location: an EU location (the data is about EU visitors).
+2. Choose BigQuery project → `esdeveniments` → Confirm.
+3. Data location: an EU location (the data is about EU visitors). It can't
+   be changed later.
 4. Data streams: the web stream, no excluded events.
-5. Frequency: Daily only (the sandbox can't take Streaming).
-6. Submit. The first daily table (`events_YYYYMMDD`) shows up within a day.
+5. Frequency: Daily.
+6. Submit. The first daily table (`analytics_406884331.events_YYYYMMDD`)
+   shows up within a day.
 
-The sandbox keeps a rolling 60 days, enough for the four-week questions
-below. Older data stays in GA4 for 14 months. Keeping BigQuery tables longer
-needs a billing account on the project; at our volume the usage fits the free
-tier, but it means adding a card, so we skip it for now.
+To keep it at no cost:
+
+- Billing → Budgets & alerts: a €1 budget on the project, with email alerts.
+- IAM & Admin → Quotas: "BigQuery API, Query usage per day" at 100 GiB, so a
+  runaway query fails instead of costing money.
 
 ## 4. Questions to answer after four weeks
 
