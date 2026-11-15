@@ -4,16 +4,18 @@ import type { ReactNode } from "react";
 import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
 
 const authState = { isAuthenticated: false };
+const routeState = { locale: "ca", pathname: "/esparreguera" };
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => routeState.locale,
 }));
 
 vi.mock("@i18n/routing", () => ({
   Link: ({ children, ...props }: { children: ReactNode }) => (
     <a {...props}>{children}</a>
   ),
-  usePathname: () => "/ca",
+  usePathname: () => routeState.pathname,
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({
@@ -38,6 +40,8 @@ function fireGuestSave() {
 describe("FavoriteLoginNudge", () => {
   beforeEach(() => {
     authState.isAuthenticated = false;
+    routeState.locale = "ca";
+    routeState.pathname = "/esparreguera";
     sessionStorage.clear();
     vi.useFakeTimers();
   });
@@ -81,5 +85,19 @@ describe("FavoriteLoginNudge", () => {
     render(<FavoriteLoginNudge />);
     fireGuestSave();
     expect(screen.queryByTestId("favorites-login-nudge")).toBeNull();
+  });
+
+  it("preserves non-default locale in login redirect and marks link rel=nofollow", () => {
+    routeState.locale = "es";
+    routeState.pathname = "/esparreguera";
+    render(<FavoriteLoginNudge />);
+    fireGuestSave();
+
+    const loginLink = screen.getByRole("link", { name: "login" });
+    expect(loginLink).toHaveAttribute(
+      "href",
+      "/iniciar-sessio?redirect=%2Fes%2Fesparreguera",
+    );
+    expect(loginLink).toHaveAttribute("rel", "nofollow");
   });
 });

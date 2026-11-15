@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@i18n/routing";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { useAuth } from "@components/hooks/useAuth";
 import { usePresenceTransition } from "@components/hooks/usePresenceTransition";
 import { GUEST_FAVORITE_SAVED_EVENT } from "@utils/favorites-events";
+import { buildLoginHref } from "@utils/i18n-routing";
+import type { AppLocale } from "types/i18n";
 
 const SESSION_KEY = "favorites-login-nudge-shown";
 const AUTO_HIDE_MS = 6000;
@@ -37,6 +39,7 @@ function markShown(): void {
  */
 export default function FavoriteLoginNudge() {
   const t = useTranslations("Components.FavoritesLoginNudge");
+  const locale = useLocale() as AppLocale;
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
@@ -93,11 +96,8 @@ export default function FavoriteLoginNudge() {
           {t("message")}
         </p>
         <Link
-          href={
-            pathname && pathname !== "/iniciar-sessio"
-              ? `/iniciar-sessio?redirect=${encodeURIComponent(pathname)}`
-              : "/iniciar-sessio"
-          }
+          href={buildLoginHref(pathname, locale)}
+          rel="nofollow"
           className="btn-primary btn-sm whitespace-nowrap"
           onClick={dismiss}
           data-analytics-action="favorites_nudge_login"
