@@ -80,6 +80,9 @@ TRACKED_CUSTOM_EVENTS = [
 AI_PLATFORMS = ["chatgpt", "perplexity", "copilot", "gemini", "claude", "bing.com/chat"]
 
 # Expired event date pattern (Catalan date format in URLs)
+# Event pages are noindexed this many days after the event ends. Keep in sync
+# with EXPIRED_EVENT_NOINDEX_DAYS in utils/constants.ts (a test checks it).
+EXPIRED_EVENT_NOINDEX_DAYS = 60
 EXPIRED_EVENT_DATE_RE = re.compile(r"(\d{1,2})-de-(\w+)-del-(\d{4})")
 CATALAN_MONTHS = {
     "gener": 1, "febrer": 2, "marc": 3, "abril": 4, "maig": 5, "juny": 6,
@@ -601,7 +604,7 @@ def collect_gsc_data():
             if month_num:
                 try:
                     event_date = datetime(int(year), month_num, int(day), tzinfo=timezone.utc)
-                    if event_date < TODAY - timedelta(days=30):
+                    if event_date < TODAY - timedelta(days=EXPIRED_EVENT_NOINDEX_DAYS):
                         expired_events.append({
                             "page": url,
                             "event_date": event_date.strftime("%Y-%m-%d"),
@@ -1502,7 +1505,7 @@ def generate_markdown(data, previous=None):
     if expired:
         lines.append("## 📅 Expired Events Still Indexed")
         lines.append("")
-        lines.append("Past events (>30 days old) still appearing in search. Wasted crawl budget and potentially poor UX.")
+        lines.append(f"Events that started more than {EXPIRED_EVENT_NOINDEX_DAYS} days ago and still appear in search. Their pages should be noindexed (or 301 to a festa major hub), so each row is either Google catching up or a bug.")
         lines.append("")
         lines.append("| Page | Event Date | Impressions | Clicks | Position |")
         lines.append("|------|------------|-------------|--------|----------|")
@@ -1836,7 +1839,7 @@ def generate_actions(data, previous=None):
         actions.append({
             "priority": "P2",
             "title": f"Expired events: {len(expired)} past events still indexed ({total_impr:,} impressions)",
-            "description": "Events >30 days old still appear in search results. Consider adding automatic noindex for past events or redirecting to current editions.",
+            "description": f"Events that ended more than {EXPIRED_EVENT_NOINDEX_DAYS} days ago are noindexed (lib/meta.ts). Check a few rows: a page still sending index, follow is a bug; otherwise Google has not recrawled it yet.",
         })
 
     # Low returning user ratio

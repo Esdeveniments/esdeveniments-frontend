@@ -4,7 +4,7 @@ import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
-import { EXPIRED_EVENT_NOINDEX_DAYS } from "@utils/constants";
+import { isExpiredEventDates } from "@utils/event-helpers";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
 import { SITEMAP_EVENTS_PER_CHUNK } from "@utils/constants";
 
@@ -60,22 +60,14 @@ export async function GET(
     JSON.stringify(events)
   ) as EventSummaryResponseDTO[];
 
-  // Keep sitemap aligned with on-page robots policy: events older than
-  // EXPIRED_EVENT_NOINDEX_DAYS are noindex'd in lib/meta.ts, so excluding
-  // them from the sitemap prevents signal conflicts and preserves sitemap
-  // trust. Events without a resolvable end date are kept (edge case).
-  const expiredCutoffMs = Date.now() - EXPIRED_EVENT_NOINDEX_DAYS * 24 * 60 * 60 * 1000;
+  // Same rule as the page's robots tag (lib/meta.ts): an expired event is
+  // noindexed there, so it must not be in the sitemap either.
+  const now = new Date();
 
   const fields: SitemapField[] = normalizedEvents
     .filter((event) => !event.isAd)
     .filter((event) => !isMalformedEventSlug(event.slug))
-    .filter((event) => {
-      const end = event.endDate || event.startDate;
-      if (!end) return true;
-      const endTime = new Date(end).getTime();
-      if (Number.isNaN(endTime)) return true;
-      return endTime > expiredCutoffMs;
-    })
+    .filter((event) => !isExpiredEventDates(event, now))
     .map((data) => {
       // Only the event's own image; the site logo doesn't represent the event.
       const image = data.imageUrl;

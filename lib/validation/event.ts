@@ -53,6 +53,14 @@ const optionalText = z
 const requiredText = z
   .string()
   .transform((value) => (isMissingText(value) ? "" : value));
+// The backend writes unset objects as null; the DTOs mark them optional.
+const nullAsMissing = <T extends z.ZodTypeAny>(schema: T) =>
+  schema.nullish().transform((value) => value ?? undefined);
+const WeatherSchema = z.object({
+  temperature: z.string(),
+  description: z.string(),
+  icon: z.string(),
+});
 
 // Base event schema for list endpoints - does not include location fields
 const EventSummaryBaseSchema = z
@@ -84,22 +92,15 @@ const EventSummaryBaseSchema = z
     origin: EventOriginEnum,
     categories: z.array(CategorySummaryResponseDTOSchema),
     updatedAt: z.string().optional(),
-    weather: z
-      .object({
-        temperature: z.string(),
-        description: z.string(),
-        icon: z.string(),
-      })
-      .nullable()
-      .optional(),
+    weather: nullAsMissing(WeatherSchema),
   })
   .passthrough();
 
 // Event summary schema for list endpoints (optional location fields)
 export const EventSummaryResponseDTOSchema = EventSummaryBaseSchema.extend({
-  city: CitySummaryResponseDTOSchema.optional().nullable(),
-  region: RegionSummaryResponseDTOSchema.optional().nullable(),
-  province: ProvinceSummaryResponseDTOSchema.optional().nullable(),
+  city: nullAsMissing(CitySummaryResponseDTOSchema),
+  region: nullAsMissing(RegionSummaryResponseDTOSchema),
+  province: nullAsMissing(ProvinceSummaryResponseDTOSchema),
 });
 
 // Event detail schema - includes required location fields
@@ -133,14 +134,7 @@ const RelatedEventSummarySchema = z
     origin: EventOriginEnum.optional(),
     hash: z.string().optional(),
     updatedAt: z.string().optional(),
-    weather: z
-      .object({
-        temperature: z.string(),
-        description: z.string(),
-        icon: z.string(),
-      })
-      .nullable()
-      .optional(),
+    weather: nullAsMissing(WeatherSchema),
   })
   .passthrough();
 
@@ -184,7 +178,13 @@ export function parseEventDetail(
     return null;
   }
 
-  const event = result.data as EventDetailResponseDTO;
+  const { relatedEvents, ...fields } = result.data;
+  const event: EventDetailResponseDTO = {
+    ...fields,
+    // The only cast: the backend sends full summaries, but this schema is
+    // lenient so one partial related event can't drop the whole page.
+    relatedEvents: relatedEvents as EventSummaryResponseDTO[] | undefined,
+  };
   // Log warning if title is empty (helps identify data quality issues)
   if (!event.title || event.title.trim() === "") {
     console.warn(
@@ -221,7 +221,7 @@ export function parsePagedEvents(
     return null;
   }
 
-  const payload = result.data as PagedResponseDTO<EventSummaryResponseDTO>;
+  const payload: PagedResponseDTO<EventSummaryResponseDTO> = result.data;
   return {
     ...payload,
     content: payload.content.map(enhanceEventImage),
@@ -240,7 +240,8 @@ export function parseEventSummaryList(input: unknown): EventSummaryResponseDTO[]
       console.error("parseEventSummaryList: invalid event", result.error);
       return [];
     }
-    return [enhanceEventImage(result.data as EventSummaryResponseDTO)];
+    const event: EventSummaryResponseDTO = result.data;
+    return [enhanceEventImage(event)];
   });
 }
 
@@ -262,7 +263,7 @@ export function parseCategorizedEvents(
     return null;
   }
 
-  const categorized = result.data as CategorizedEvents;
+  const categorized: CategorizedEvents = result.data;
   const normalizedEntries = Object.entries(categorized).map(
     ([category, events]) => [category, events.map(enhanceEventImage)]
   );

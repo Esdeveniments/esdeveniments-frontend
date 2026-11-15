@@ -62,7 +62,7 @@ const HOUR_MS = 60 * 60 * 1000;
  */
 export function computeTemporalStatus(
   startDate: string,
-  endDate?: string,
+  endDate?: string | null,
   nowOverride?: Date,
   startTime?: string | null,
   endTime?: string | null,

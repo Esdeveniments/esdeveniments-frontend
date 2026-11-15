@@ -272,7 +272,7 @@ export interface RestaurantPromotionSectionProps {
   eventLat?: number;
   eventLng?: number;
   eventStartDate?: string; // ISO date string
-  eventEndDate?: string; // ISO date string
+  eventEndDate?: string | null; // ISO date; null for single-day events
   eventStartTime?: string | null; // ISO time string or null
   eventEndTime?: string | null; // ISO time string or null
 }
