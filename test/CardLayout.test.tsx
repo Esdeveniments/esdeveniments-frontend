@@ -136,6 +136,18 @@ describe("CardLayout link", () => {
     expect(html).toContain('data-analytics-event-slug="concert-de-nadal"');
   });
 
+  it("tags the click with the card's category and place", () => {
+    const html = renderToStaticMarkup(
+      <CardLayout
+        card={{ ...baseCard, categorySlug: "concerts", placeSlug: "cardedeu" }}
+        isPriority={false}
+        renderLink={renderLink}
+      />
+    );
+    expect(html).toContain('data-analytics-event-category-slug="concerts"');
+    expect(html).toContain('data-analytics-event-place-slug="cardedeu"');
+  });
+
   it("puts the title before the date in the DOM", () => {
     const html = renderCard();
     expect(html.indexOf("Concert de Nadal</a>")).toBeLessThan(

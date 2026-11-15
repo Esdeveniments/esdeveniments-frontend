@@ -19,6 +19,7 @@ export default async function EventMoreEvents({
   regionId,
   relatedEvents,
   sourceEventSlug,
+  sourceSlugs,
 }: EventMoreEventsProps) {
   const [inTown, inRegion] = await Promise.all([
     cityId ? fetchPromotedEvents({ placement: "CITY", cityId }) : [],
@@ -38,6 +39,7 @@ export default async function EventMoreEvents({
         events={relatedEvents.filter((event) => !promotedIds.has(event.id))}
         sourceEventId={eventId}
         sourceEventSlug={sourceEventSlug}
+        sourceSlugs={sourceSlugs}
       />
     </>
   );

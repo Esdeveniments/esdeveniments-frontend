@@ -64,6 +64,8 @@ describe("FavoriteButton", () => {
       <SWRConfig value={{ provider: () => new Map() }}>
         <FavoriteButton
           eventSlug="test-event"
+          categorySlug="concerts"
+          placeSlug="cardedeu"
           initialIsFavorite={false}
           labels={{ add: "Afegeix a preferits", remove: "Elimina de preferits" }}
         />
@@ -88,6 +90,11 @@ describe("FavoriteButton", () => {
     await waitFor(() => {
       expect(refreshMock).toHaveBeenCalled();
     });
+
+    expect(sendGoogleEventMock).toHaveBeenCalledWith(
+      "favorite_add",
+      expect.objectContaining({ category_slug: "concerts", place_slug: "cardedeu" }),
+    );
 
     expect(screen.getByRole("button", { name: "Elimina de preferits" })).toHaveAttribute(
       "aria-pressed",

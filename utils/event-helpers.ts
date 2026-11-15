@@ -13,7 +13,7 @@ import type {
   EventSummaryResponseDTO,
   ListEvent,
 } from "types/api/event";
-import type { CalendarEventData } from "types/common";
+import type { CalendarEventData, EventAnalyticsSlugs } from "types/common";
 import type { EventWindowInput } from "types/event-status";
 
 /**
@@ -112,4 +112,16 @@ export const buildCalendarEventData = (
   startDate: event.startDate,
   endDate: event.endDate,
   canonical: `${siteUrl}/e/${event.slug}`,
+});
+
+/**
+ * The event's interest keys for GA: its first category and its town (or its
+ * region when it has no town), the same pair `view_event_page` sends, so
+ * views, clicks and saves can be grouped the same way. "" when missing.
+ */
+export const getEventAnalyticsSlugs = (
+  event: Pick<EventSummaryResponseDTO, "categories" | "city" | "region">,
+): EventAnalyticsSlugs => ({
+  categorySlug: event.categories?.[0]?.slug ?? "",
+  placeSlug: event.city?.slug ?? event.region?.slug ?? "",
 });

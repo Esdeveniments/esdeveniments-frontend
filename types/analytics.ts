@@ -58,6 +58,17 @@ export interface CheckoutAnalyticsItem {
   quantity: number;
 }
 
+/**
+ * A listing card seen on screen, as a GA4 `view_item_list` item: the event
+ * id, its first category, its town (else region) and its slot (1-based).
+ */
+export interface ListingImpressionItem {
+  item_id: string;
+  item_category?: string;
+  item_category2?: string;
+  index: number;
+}
+
 /** Amount Stripe actually charged, in currency units (after promotion codes). */
 export interface CheckoutAmount {
   value: number;

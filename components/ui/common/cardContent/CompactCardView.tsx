@@ -2,6 +2,7 @@ import Image from "@components/ui/common/image";
 import { prepareCardContentData } from "./prepareCardContentData";
 import type { CompactCardViewProps } from "types/props";
 import { SPRITE_ICON } from "@components/ui/common/IconSprite";
+import { getEventAnalyticsSlugs } from "@utils/event-helpers";
 
 // Compact event card: related events (event page) and the map selection.
 // Same link pattern as CardLayout: the title is the only link and
@@ -29,6 +30,7 @@ export default function CompactCardView({
     locale,
     tCard,
   });
+  const { categorySlug, placeSlug } = getEventAnalyticsSlugs(event);
 
   return (
     <article className="card-event relative flex-none w-44 rounded-card overflow-hidden bg-background border border-border/20 transition-[transform,border-color] duration-normal ease-smooth flex flex-col">
@@ -58,6 +60,8 @@ export default function CompactCardView({
             data-analytics-event-name={analyticsEventName}
             data-analytics-event-id={event.id ? String(event.id) : ""}
             data-analytics-event-slug={event.slug || ""}
+            data-analytics-event-category-slug={categorySlug}
+            data-analytics-event-place-slug={placeSlug}
             data-analytics-position={String(index + 1)}
           >
             {title}
