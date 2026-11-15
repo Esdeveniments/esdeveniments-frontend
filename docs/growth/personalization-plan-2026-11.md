@@ -137,11 +137,16 @@ Steps (needs Editor on the GA4 property and Owner on the Cloud project):
 6. Submit. The first daily table (`analytics_406884331.events_YYYYMMDD`)
    shows up within a day.
 
-To keep it at no cost:
+To keep it at no cost (both set on 2026-11-15):
 
-- Billing → Budgets & alerts: a €1 budget on the project, with email alerts.
-- IAM & Admin → Quotas: "BigQuery API, Query usage per day" at 100 GiB, so a
-  runaway query fails instead of costing money.
+- Billing → Budgets & alerts: "BigQuery (esdeveniments) €1", a monthly budget
+  on this project's BigQuery and BigQuery Storage API spend only (Maps,
+  Places and Cloud Run also bill here), with email alerts at 50, 90 and
+  100%. A budget only warns; it doesn't stop spending.
+- IAM & Admin → Quotas: "BigQuery API, Query usage per day" at 32 GiB. Over
+  31 days that is 992 GiB, under the free 1 TiB a month, so a runaway query
+  fails instead of costing money. Lowering a quota by more than 10% needs
+  Google's safety check overridden on purpose.
 
 ## 4. Questions to answer after four weeks
 
