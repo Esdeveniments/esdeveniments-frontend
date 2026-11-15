@@ -202,6 +202,7 @@ describe("resolveEventLocalizedText and N-locale translations map", () => {
     });
 
     expect(detail).not.toBeNull();
+    expect(Object.keys(detail?.translations ?? {})).toHaveLength(32);
     // Plain object prototype required by React Flight RSC serialization.
     expect(Object.getPrototypeOf(detail?.translations)).toBe(Object.prototype);
     expect(Object.hasOwn(detail?.translations ?? {}, "constructor")).toBe(false);
