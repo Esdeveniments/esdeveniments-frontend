@@ -20,35 +20,41 @@ function toImpressionItem(card: Element, index: number): ListingImpressionItem |
   };
 }
 
+// Every event grid in the listing: the server-rendered page and the
+// load-more cards. A grid hidden by client filters doesn't count.
+function visibleCards(root: HTMLElement): Element[] {
+  return [...root.querySelectorAll("[data-listing-grid] > *")].filter(
+    (card) => !card.closest("[hidden]"),
+  );
+}
+
 /**
  * Tracks listing page analytics:
  * 1. Card impressions (batched, 2s debounce) via IntersectionObserver: a count
- *    (`card_impression_batch`) and which events were seen (`view_item_list`)
+ *    (`card_impression_batch`) and which events were seen (`view_item_list`),
+ *    with each card's slot counted across the grids in `root`
  * 2. Scroll depth (25/50/75/100%) derived from unique cards seen
  *
- * Pass `container` via callback ref pattern (useState setter) so the effect
- * re-runs when the element mounts/unmounts. Uses refs for changing params
- * to avoid tearing down observers on data changes.
+ * `root` holds both the server-rendered grid and the load-more grid. Pass it
+ * via a callback ref (useState setter) so the effect re-runs when it mounts.
+ * Uses refs for changing params to avoid tearing down observers.
  *
  * Uses MutationObserver to handle dynamically added cards (load more).
  * Zero DOM manipulation — no sentinel elements or style mutations.
  */
 export default function useListingAnalytics(
-  container: HTMLElement | null,
-  eventsCount: number,
+  root: HTMLElement | null,
   context: { place?: string; category?: string; date?: string },
 ): void {
-  const eventsCountRef = useRef(eventsCount);
   const contextRef = useRef(context);
 
   // Keep refs in sync without re-creating observers
   useEffect(() => {
-    eventsCountRef.current = eventsCount;
     contextRef.current = context;
-  }, [eventsCount, context]);
+  }, [context]);
 
   useEffect(() => {
-    if (!container || typeof IntersectionObserver === "undefined") return;
+    if (!root || typeof IntersectionObserver === "undefined") return;
 
     const seen = new Set<Element>();
     const milestonesHit = new Set<number>();
@@ -60,7 +66,7 @@ export default function useListingAnalytics(
       if (pending > 0) {
         sendGoogleEvent("card_impression_batch", {
           visible_cards: pending,
-          total_cards: eventsCountRef.current,
+          total_cards: visibleCards(root).length,
           context: "listing",
           ...contextRef.current,
         });
@@ -77,11 +83,10 @@ export default function useListingAnalytics(
       timer = null;
     };
 
-    const checkScrollDepth = () => {
-      const grid = container.querySelector(":scope > [data-listing-grid]");
-      const total = grid?.children.length ?? 0;
+    const checkScrollDepth = (cards: Element[]) => {
+      const total = cards.length;
       if (total === 0) return;
-      const pctSeen = (seen.size / total) * 100;
+      const pctSeen = (cards.filter((card) => seen.has(card)).length / total) * 100;
       for (const milestone of [25, 50, 75, 100]) {
         if (pctSeen >= milestone && !milestonesHit.has(milestone)) {
           milestonesHit.add(milestone);
@@ -96,13 +101,13 @@ export default function useListingAnalytics(
 
     const io = new IntersectionObserver(
       (entries) => {
+        const cards = visibleCards(root);
         let n = 0;
         for (const e of entries) {
           if (e.isIntersecting && !seen.has(e.target)) {
             seen.add(e.target);
             n++;
-            const slot = [...(e.target.parentElement?.children ?? [])].indexOf(e.target) + 1;
-            const item = toImpressionItem(e.target, slot);
+            const item = toImpressionItem(e.target, cards.indexOf(e.target) + 1);
             if (item) pendingItems.push(item);
             io.unobserve(e.target);
           }
@@ -111,18 +116,16 @@ export default function useListingAnalytics(
           pending += n;
           if (timer) clearTimeout(timer);
           timer = setTimeout(flush, 2000);
-          checkScrollDepth();
+          checkScrollDepth(cards);
         }
       },
       { threshold: 0.5 },
     );
 
-    // Scan grid children and observe any not yet seen
+    // Observe every grid card not yet seen (observing twice is a no-op)
     const observeNewCards = () => {
-      const grid = container.querySelector(":scope > [data-listing-grid]");
-      if (!grid) return;
-      for (const child of grid.children) {
-        if (!seen.has(child)) io.observe(child);
+      for (const card of root.querySelectorAll("[data-listing-grid] > *")) {
+        if (!seen.has(card)) io.observe(card);
       }
     };
 
@@ -130,7 +133,7 @@ export default function useListingAnalytics(
 
     // MutationObserver handles load-more cards and grid replacement
     const mo = new MutationObserver(observeNewCards);
-    mo.observe(container, { childList: true, subtree: true });
+    mo.observe(root, { childList: true, subtree: true });
 
     return () => {
       io.disconnect();
@@ -138,5 +141,5 @@ export default function useListingAnalytics(
       if (timer) clearTimeout(timer);
       flush();
     };
-  }, [container]);
+  }, [root]);
 }

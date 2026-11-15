@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, ReactElement, useMemo, Suspense, useEffect, useRef, useState } from "react";
+import { memo, ReactElement, useCallback, useMemo, Suspense, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import LoadMoreButton from "@components/ui/loadMoreButton";
 import EventCardSkeleton from "@components/ui/common/skeletons/EventCardSkeleton";
@@ -58,10 +58,17 @@ function HybridEventsListClientContent({
   const locale = useLocale() as AppLocale;
   const searchResultsTrackedRef = useRef(false);
   const zeroResultsTrackedRef = useRef(false);
-  const statusRef = useRef<HTMLParagraphElement>(null);
+  const statusRef = useRef<HTMLParagraphElement | null>(null);
   const [retried, setRetried] = useState(false);
   const focusAfterRetryRef = useRef(false);
   const [listingContainer, setListingContainer] = useState<HTMLDivElement | null>(null);
+  // The listing's analytics container (HybridEventsList) holds the server
+  // grid and the load-more grid; the status line below always renders in it.
+  const [analyticsRoot, setAnalyticsRoot] = useState<HTMLElement | null>(null);
+  const setStatusRef = useCallback((el: HTMLParagraphElement | null) => {
+    statusRef.current = el;
+    setAnalyticsRoot(el?.closest<HTMLElement>('[data-analytics-container="true"]') ?? null);
+  }, []);
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
@@ -175,7 +182,7 @@ function HybridEventsListClientContent({
   }, [hasClientFilters, isLoading, displayedEvents.length, error, search, place, category, date, distance, price]);
 
   // Track card impressions and scroll depth on the listing grid
-  useListingAnalytics(listingContainer, displayedEvents.length, {
+  useListingAnalytics(analyticsRoot, {
     place: place || undefined,
     category: category || undefined,
     date: date || undefined,
@@ -227,7 +234,7 @@ function HybridEventsListClientContent({
 
   return (
     <>
-      <p role="status" className="sr-only" ref={statusRef} tabIndex={-1}>
+      <p role="status" className="sr-only" ref={setStatusRef} tabIndex={-1}>
         {(hasClientFilters || retried) && !isLoading && !error
           ? t("resultsCount", { count: totalEvents })
           : ""}

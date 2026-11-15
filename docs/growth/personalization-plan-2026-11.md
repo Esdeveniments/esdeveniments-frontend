@@ -85,7 +85,12 @@ fields are built-in dimensions (Item ID, Item category, Item category 2, Item
 list position), so it uses none of the 50 custom dimension slots. It goes out
 in the same 2 s batch as `card_impression_batch`, which stays for the
 dashboards (`scripts/ga-dashboard.py`). Ad slots have no event, so they are
-skipped. GA4's own "item list click-through rate" stays empty, because card
+skipped. Both now watch the whole listing: before this change the observer
+only got the load-more wrapper, which exists after "load more", so
+`card_impression_batch`, `listing_scroll_depth` and their `total_cards` left
+out every server-rendered card. Expect those numbers to jump from the release
+day. A card's `index` counts across the server grid and the load-more grid;
+a grid hidden by client filters is skipped. GA4's own "item list click-through rate" stays empty, because card
 clicks are `select_event`, not `select_item`: join the two on the event id in
 BigQuery instead.
 

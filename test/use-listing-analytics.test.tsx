@@ -38,14 +38,14 @@ describe("useListingAnalytics", () => {
       </List>,
     );
 
-    renderHook(() => useListingAnalytics(container, 2, {}));
+    renderHook(() => useListingAnalytics(container, {}));
 
     const cards = [...container.querySelectorAll(":scope > ul > li")];
     expect(cards).toHaveLength(2);
     expect(observed).toEqual(cards);
   });
 
-  it("reports which events were seen, with their slot, and skips ad slots", () => {
+  it("reports seen events with slots counted across the server and load-more grids", () => {
     vi.useFakeTimers();
     let onIntersect: (entries: { isIntersecting: boolean; target: Element }[]) => void = () => {};
     vi.stubGlobal(
@@ -60,41 +60,48 @@ describe("useListingAnalytics", () => {
       },
     );
 
-    const { container } = render(
-      <List events={[{ id: "e1" }, { id: "ad" }, { id: "e2" }]}>
-        {(event) =>
-          event.id === "ad" ? (
-            <div>ad</div>
-          ) : (
-            <a
-              href="#"
-              data-analytics-event-id={event.id}
-              data-analytics-event-category-slug={event.id === "e1" ? "concerts" : ""}
-              data-analytics-event-place-slug="cardedeu"
-            >
-              {event.id}
-            </a>
-          )
-        }
-      </List>,
+    const card = (id: string, category = "") => (
+      <a
+        href="#"
+        data-analytics-event-id={id}
+        data-analytics-event-category-slug={category}
+        data-analytics-event-place-slug="cardedeu"
+      >
+        {id}
+      </a>
     );
-    renderHook(() => useListingAnalytics(container, 3, { place: "cardedeu" }));
+    const { container } = render(
+      <div data-analytics-container="true">
+        {/* Server grid with an ad slot, then the load-more grid. */}
+        <List events={[{ id: "s1" }, { id: "ad" }]}>
+          {(event) => (event.id === "ad" ? <div>ad</div> : card(event.id, "concerts"))}
+        </List>
+        <div hidden>
+          <List events={[{ id: "hidden" }]}>{(event) => card(event.id)}</List>
+        </div>
+        <List events={[{ id: "m1" }]}>{(event) => card(event.id)}</List>
+      </div>,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    renderHook(() => useListingAnalytics(root, { place: "cardedeu" }));
 
-    const cards = [...container.querySelectorAll(":scope > ul > li")];
-    onIntersect(cards.map((target) => ({ isIntersecting: true, target })));
+    const visible = [...root.querySelectorAll("[data-listing-grid] > *")].filter(
+      (el) => !el.closest("[hidden]"),
+    );
+    onIntersect(visible.map((target) => ({ isIntersecting: true, target })));
     vi.advanceTimersByTime(2000);
 
     expect(sendGoogleEvent).toHaveBeenCalledWith("view_item_list", {
       item_list_name: "listing",
       place: "cardedeu",
       items: [
-        { item_id: "e1", item_category: "concerts", item_category2: "cardedeu", index: 1 },
-        { item_id: "e2", item_category: undefined, item_category2: "cardedeu", index: 3 },
+        { item_id: "s1", item_category: "concerts", item_category2: "cardedeu", index: 1 },
+        { item_id: "m1", item_category: undefined, item_category2: "cardedeu", index: 3 },
       ],
     });
     expect(sendGoogleEvent).toHaveBeenCalledWith(
       "card_impression_batch",
-      expect.objectContaining({ visible_cards: 3 }),
+      expect.objectContaining({ visible_cards: 3, total_cards: 3 }),
     );
   });
 });
