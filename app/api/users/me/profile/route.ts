@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getValidAccessToken } from "@utils/auth-cookies";
 import { patchMeProfileExternal } from "@lib/api/users-external";
 import { handleApiError } from "@utils/api-error-handler";
+import {
+  invalidateProfilePages,
+  readCurrentUsername,
+} from "@lib/cache/revalidate-profile-pages";
 import { profileUpdateSchema } from "lib/validation/auth";
 import type { ProfileUpdateRequestDTO } from "types/api/user";
 
@@ -28,6 +32,10 @@ export async function PATCH(request: NextRequest): Promise<Response> {
     );
   }
 
+  // The username before the save: a rename must expire the old profile too.
+  // Read in parallel with the body, before the PATCH can change it.
+  const previousUsername = readCurrentUsername(accessToken);
+
   // Defense-in-depth: re-validate the payload shape on the server. The
   // client also validates (live feedback) but a bot/curl hitting the route
   // with garbage should 400 here without ever reaching the backend.
@@ -45,6 +53,7 @@ export async function PATCH(request: NextRequest): Promise<Response> {
   }
 
   try {
+    const oldUsername = await previousUsername;
     const updated = await patchMeProfileExternal(body, accessToken);
     if (!updated) {
       return NextResponse.json(
@@ -52,6 +61,7 @@ export async function PATCH(request: NextRequest): Promise<Response> {
         { status: 502, headers: NO_STORE },
       );
     }
+    invalidateProfilePages([oldUsername, updated.username]);
     return NextResponse.json(updated, { status: 200, headers: NO_STORE });
   } catch (e) {
     return handleApiError(e, "/api/users/me/profile", {
