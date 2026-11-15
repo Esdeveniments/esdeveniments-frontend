@@ -47,7 +47,9 @@ describe("useListingAnalytics", () => {
 
   it("reports seen events with slots counted across the server and load-more grids", () => {
     vi.useFakeTimers();
-    let onIntersect: (entries: { isIntersecting: boolean; target: Element }[]) => void = () => {};
+    let onIntersect: (
+      entries: { isIntersecting: boolean; intersectionRatio: number; target: Element }[],
+    ) => void = () => {};
     vi.stubGlobal(
       "IntersectionObserver",
       class {
@@ -88,7 +90,12 @@ describe("useListingAnalytics", () => {
     const visible = [...root.querySelectorAll("[data-listing-grid] > *")].filter(
       (el) => !el.closest("[hidden]"),
     );
-    onIntersect(visible.map((target) => ({ isIntersecting: true, target })));
+    // A card barely on screen doesn't count yet.
+    onIntersect([{ isIntersecting: true, intersectionRatio: 0.1, target: visible[0] }]);
+    vi.advanceTimersByTime(2000);
+    expect(sendGoogleEvent).not.toHaveBeenCalled();
+
+    onIntersect(visible.map((target) => ({ isIntersecting: true, intersectionRatio: 0.6, target })));
     vi.advanceTimersByTime(2000);
 
     expect(sendGoogleEvent).toHaveBeenCalledWith("view_item_list", {

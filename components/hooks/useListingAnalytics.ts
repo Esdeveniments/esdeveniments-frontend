@@ -6,6 +6,8 @@ import type { ListingImpressionItem } from "types/analytics";
 
 // GA4 takes up to 200 items per event.
 const MAX_ITEMS_PER_EVENT = 200;
+// A card counts as seen once half of it is on screen.
+const VISIBLE_RATIO = 0.5;
 
 /** The card's event, read from its title link; null for ad slots. */
 function toImpressionItem(card: Element, index: number): ListingImpressionItem | null {
@@ -104,7 +106,9 @@ export default function useListingAnalytics(
         const cards = visibleCards(root);
         let n = 0;
         for (const e of entries) {
-          if (e.isIntersecting && !seen.has(e.target)) {
+          // The first callback can report a card as intersecting below the
+          // threshold, so check the ratio too.
+          if (e.isIntersecting && e.intersectionRatio >= VISIBLE_RATIO && !seen.has(e.target)) {
             seen.add(e.target);
             n++;
             const item = toImpressionItem(e.target, cards.indexOf(e.target) + 1);
@@ -119,7 +123,7 @@ export default function useListingAnalytics(
           checkScrollDepth(cards);
         }
       },
-      { threshold: 0.5 },
+      { threshold: VISIBLE_RATIO },
     );
 
     // Observe every grid card not yet seen (observing twice is a no-op)
