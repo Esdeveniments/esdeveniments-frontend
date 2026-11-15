@@ -3,7 +3,10 @@ import {
   getEventAnalyticsSlugs,
   resolveEventLocalizedText,
 } from "@utils/event-helpers";
-import { parseEventDetail } from "@lib/validation/event";
+import {
+  parseEventDetail,
+  parsePagedEvents,
+} from "@lib/validation/event";
 
 describe("getEventAnalyticsSlugs", () => {
   const region = { id: 2, name: "Vallès Oriental", slug: "valles-oriental" };
@@ -142,7 +145,40 @@ describe("resolveEventLocalizedText and event translation parsing", () => {
     expect(detail?.descriptionEn).toBeNull();
     expect(detail?.relatedEvents?.[0]?.titleEs).toBe("Concierto en la plaza");
     expect(detail?.relatedEvents?.[0]?.description).toBe("");
-    expect(detail?.relatedEvents?.[0]?.descriptionEs).toBeNull();
-    expect(detail?.relatedEvents?.[0]?.descriptionEn).toBeNull();
+    expect("descriptionEs" in (detail?.relatedEvents?.[0] ?? {})).toBe(false);
+    expect("descriptionEn" in (detail?.relatedEvents?.[0] ?? {})).toBe(false);
+
+    const paged = parsePagedEvents({
+      currentPage: 0,
+      pageSize: 10,
+      totalElements: 1,
+      totalPages: 1,
+      last: true,
+      content: [
+        {
+          id: "sum-1",
+          hash: "hs1",
+          slug: "concert-1",
+          title: "Concert a la plaça",
+          titleEs: "Concierto en la plaza",
+          description: "Text en català",
+          descriptionEs: "Texto largo en español",
+          descriptionEn: "Long English text",
+          url: null,
+          imageUrl: null,
+          startDate: "2099-08-16",
+          startTime: null,
+          endDate: null,
+          endTime: null,
+          location: "Plaça",
+          visits: 1,
+          origin: "SCRAPE",
+          categories: [],
+        },
+      ],
+    });
+    expect(paged?.content[0]?.titleEs).toBe("Concierto en la plaza");
+    expect("descriptionEs" in (paged?.content[0] ?? {})).toBe(false);
+    expect("descriptionEn" in (paged?.content[0] ?? {})).toBe(false);
   });
 });

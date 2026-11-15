@@ -1636,6 +1636,10 @@
     }
   },
   "Utils": {
+    "EventFallbacks": {
+      "defaultEvent": "Evento",
+      "defaultCulturalEvent": "Evento cultural"
+    },
     "SearchQuery": {
       "forSearch": "para la búsqueda"
     },

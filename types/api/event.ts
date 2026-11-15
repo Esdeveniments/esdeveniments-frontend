@@ -52,8 +52,6 @@ export interface EventSummaryResponseDTO {
   isPromoted: boolean;
   url: string | null;
   description: string;
-  descriptionEs?: string | null;
-  descriptionEn?: string | null;
   imageUrl: string | null;
   startDate: string; // ISO date
   startTime: string | null; // ISO time or null
@@ -118,6 +116,8 @@ export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
   city: CitySummaryResponseDTO;
   region: RegionSummaryResponseDTO;
   province: ProvinceSummaryResponseDTO;
+  descriptionEs?: string | null;
+  descriptionEn?: string | null;
   duration?: string;
   videoUrl?: string;
   tags?: string[];

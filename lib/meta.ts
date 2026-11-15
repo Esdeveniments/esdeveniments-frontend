@@ -160,7 +160,10 @@ export function generateEventMetadata(
 
   let finalDescription: string;
   if (event.metaDescription?.trim() && localeToUse === DEFAULT_LOCALE) {
-    finalDescription = event.metaDescription.trim();
+    finalDescription = appendSentenceIfShort(
+      event.metaDescription.trim(),
+      descriptionSuffix,
+    );
   } else {
     const { formattedStart } = getFormattedDate(
       event.startDate,
@@ -184,28 +187,32 @@ export function generateEventMetadata(
       if (placePart) {
         descriptionParts.push(placePart);
       }
-      finalDescription = smartTruncate(
-        descriptionParts.join(" - "),
-        META_DESCRIPTION_MAX,
+      finalDescription = appendSentenceIfShort(
+        smartTruncate(descriptionParts.join(" - "), META_DESCRIPTION_MAX),
+        descriptionSuffix,
       );
     } else {
-      // Keep the localized date and venue ahead of an untranslated Catalan body
-      // so 156-character truncation never cuts off the localized facts.
+      // On es/en with no translated body, prefer the localized suffix sentence
+      // over appending Catalan prose; use the Catalan tail only when no suffix fits.
       const leadParts = [
         sanitizeInput(localizedTitle),
         formattedStart?.trim() || "",
         placePart,
       ].filter(Boolean);
-      const lead = leadParts.join(" - ");
-      const bodyTail = sanitizeInput(localizedDescription);
-      const combined =
-        lead.length < META_DESCRIPTION_SHORT && bodyTail
-          ? `${lead} - ${bodyTail}`
-          : lead;
-      finalDescription = smartTruncate(combined, META_DESCRIPTION_MAX);
+      const lead = smartTruncate(leadParts.join(" - "), META_DESCRIPTION_MAX);
+      const withSuffix = appendSentenceIfShort(lead, descriptionSuffix);
+      if (withSuffix !== lead) {
+        finalDescription = withSuffix;
+      } else {
+        const bodyTail = sanitizeInput(localizedDescription);
+        const combined =
+          lead.length < META_DESCRIPTION_SHORT && bodyTail
+            ? `${lead} - ${bodyTail}`
+            : lead;
+        finalDescription = smartTruncate(combined, META_DESCRIPTION_MAX);
+      }
     }
   }
-  finalDescription = appendSentenceIfShort(finalDescription, descriptionSuffix);
 
   const image = event.imageUrl ? [event.imageUrl] : [];
   const canonicalBase = url || `${siteUrl}/e/${event.slug}`;

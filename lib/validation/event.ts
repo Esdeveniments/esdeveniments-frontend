@@ -78,8 +78,6 @@ const EventSummaryBaseSchema = z
     isPromoted: z.boolean().default(false),
     url: optionalText,
     description: requiredText,
-    descriptionEs: optionalTranslationText,
-    descriptionEn: optionalTranslationText,
     imageUrl: optionalText,
     startDate: z.string(),
     startTime: z.string().nullable(),
@@ -126,8 +124,6 @@ const RelatedEventSummarySchema = z
     titleEn: optionalTranslationText,
     url: optionalText.optional(),
     description: optionalText.optional(),
-    descriptionEs: optionalTranslationText,
-    descriptionEn: optionalTranslationText,
     imageUrl: optionalText.optional(),
     startDate: z.string(),
     startTime: z.string().nullable().optional(),
@@ -158,6 +154,8 @@ function sanitizeMetaField(
 }
 
 export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
+  descriptionEs: optionalTranslationText,
+  descriptionEn: optionalTranslationText,
   videoUrl: z.string().optional(),
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -233,7 +231,7 @@ export function parsePagedEvents(
   const payload: PagedResponseDTO<EventSummaryResponseDTO> = result.data;
   return {
     ...payload,
-    content: payload.content.map(enhanceEventImage),
+    content: payload.content.map(enhanceEventSummary),
   };
 }
 
@@ -250,7 +248,7 @@ export function parseEventSummaryList(input: unknown): EventSummaryResponseDTO[]
       return [];
     }
     const event: EventSummaryResponseDTO = result.data;
-    return [enhanceEventImage(event)];
+    return [enhanceEventSummary(event)];
   });
 }
 
@@ -274,9 +272,26 @@ export function parseCategorizedEvents(
 
   const categorized: CategorizedEvents = result.data;
   const normalizedEntries = Object.entries(categorized).map(
-    ([category, events]) => [category, events.map(enhanceEventImage)]
+    ([category, events]) => [category, events.map(enhanceEventSummary)]
   );
   return Object.fromEntries(normalizedEntries) as CategorizedEvents;
+}
+
+/**
+ * Cards never render translated descriptions; strip them from passthrough
+ * summary items so listing RSC and SWR payloads stay small.
+ */
+function enhanceEventSummary<
+  T extends { imageUrl?: string | null; hash?: string | null; updatedAt?: string }
+>(event: T): T {
+  const enhanced = enhanceEventImage(event);
+  if ("descriptionEs" in enhanced || "descriptionEn" in enhanced) {
+    const rest = { ...(enhanced as Record<string, unknown>) };
+    delete rest.descriptionEs;
+    delete rest.descriptionEn;
+    return rest as T;
+  }
+  return enhanced;
 }
 
 function enhanceEventImage<
@@ -316,10 +331,8 @@ function enhanceEventDetail(
   return {
     ...normalizedEvent,
     relatedEvents: event.relatedEvents.map((relatedEvent) => ({
-      ...enhanceEventImage(relatedEvent),
+      ...enhanceEventSummary(relatedEvent),
       description: "",
-      descriptionEs: null,
-      descriptionEn: null,
     })) as EventDetailResponseDTO["relatedEvents"],
   };
 }

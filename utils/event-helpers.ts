@@ -8,6 +8,7 @@ import {
 import { EXPIRED_EVENT_NOINDEX_DAYS, MS_PER_DAY } from "@utils/constants";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { toLocalizedUrl } from "@utils/i18n-seo";
+import localeLabels from "../i18n/locale-labels.generated.json";
 import type {
   EventDetailResponseDTO,
   EventSummaryResponseDTO,
@@ -109,13 +110,11 @@ export function isValidEventSlug(slug: string): boolean {
 export function resolveEventLocalizedText(
   event: Pick<
     EventSummaryResponseDTO,
-    | "title"
-    | "description"
-    | "titleEs"
-    | "titleEn"
-    | "descriptionEs"
-    | "descriptionEn"
-  >,
+    "title" | "description" | "titleEs" | "titleEn"
+  > & {
+    descriptionEs?: string | null;
+    descriptionEn?: string | null;
+  },
   locale: AppLocale = DEFAULT_LOCALE,
 ): LocalizedEventText {
   const rawTitle =
@@ -138,14 +137,15 @@ export function resolveEventLocalizedText(
   };
 }
 
-/** Localized fallback event noun when an imported event has an empty title. */
+/** Localized fallback event noun from `messages/*.json` (`Utils.EventFallbacks`). */
 export function getDefaultEventNoun(
   locale: AppLocale = DEFAULT_LOCALE,
   cultural = false,
 ): string {
-  if (locale === "es") return cultural ? "Evento cultural" : "Evento";
-  if (locale === "en") return cultural ? "Cultural event" : "Event";
-  return cultural ? "Esdeveniment cultural" : "Esdeveniment";
+  const fallbacks =
+    localeLabels.eventFallbacks[locale] ??
+    localeLabels.eventFallbacks[DEFAULT_LOCALE];
+  return cultural ? fallbacks.defaultCulturalEvent : fallbacks.defaultEvent;
 }
 
 /** Add-to-calendar data, shared by the sidebar card and the mobile action bar. */

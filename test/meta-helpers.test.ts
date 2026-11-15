@@ -272,12 +272,24 @@ describe("meta helpers (black-box)", () => {
       expect(esMeta.description).toContain("La Llagosta");
     });
 
-    it("keeps localized date and venue ahead of a long untranslated Catalan description on es/en", () => {
+    it("keeps localized date, venue, and localized suffix instead of Catalan body on es/en", () => {
       const longCatalan = {
         ...event,
         description:
           "Una jornada plena d'activitats culturals, tallers infantils, música en directe i degustació de productes artesans per a tota la família al centre del poble.",
       };
+      const esWithSuffix = generateEventMetadata(
+        longCatalan,
+        undefined,
+        undefined,
+        "es",
+        "Consulta horarios y cómo llegar.",
+      );
+      expect(esWithSuffix.description).toBe(
+        "6a Castaween - 7 de octubre de 2099 - La Llagosta. Consulta horarios y cómo llegar.",
+      );
+      expect(esWithSuffix.description).not.toContain("Una jornada plena");
+
       const enMeta = generateEventMetadata(longCatalan, undefined, undefined, "en");
       expect(enMeta.description).toContain("October 7, 2099");
       expect(enMeta.description).toContain("La Llagosta");
