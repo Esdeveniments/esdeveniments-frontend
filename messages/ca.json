@@ -1636,6 +1636,10 @@
     }
   },
   "Utils": {
+    "EventFallbacks": {
+      "defaultEvent": "Esdeveniment",
+      "defaultCulturalEvent": "Esdeveniment cultural"
+    },
     "Validation": {
       "genericError": "Hi ha errors de validació",
       "imageRequired": "Afegeix una imatge",

@@ -85,4 +85,58 @@ describe("schema helpers i18n", () => {
     expect(schema.url).toContain("/e/concert-de-prova-1");
     expect(schema.url).not.toContain("/es/e/");
   });
+
+  it("uses localized event fields and localized empty-field fallbacks per locale", () => {
+    const baseEvent: EventDetailResponseDTO = {
+      id: "2",
+      hash: "h2",
+      slug: "festa-vic",
+      title: "",
+      isPromoted: false,
+      url: null,
+      description: "",
+      imageUrl: null,
+      startDate: "2099-06-20",
+      startTime: null,
+      endDate: null,
+      endTime: null,
+      location: "",
+      visits: 0,
+      origin: "SCRAPE",
+      city: {
+        id: 1,
+        name: "Vic",
+        slug: "vic",
+        postalCode: "08500",
+        latitude: 0,
+        longitude: 0,
+        rssFeed: null,
+        enabled: true,
+      },
+      region: { id: 2, name: "Osona", slug: "osona" },
+      province: { id: 3, name: "Barcelona", slug: "barcelona" },
+      categories: [],
+    };
+
+    const emptyEs = generateJsonData(baseEvent, "es");
+    expect(emptyEs.name).toBe("Evento en Vic");
+    expect(emptyEs.description).toBe("Evento cultural en Vic");
+
+    const emptyEn = generateJsonData(baseEvent, "en");
+    expect(emptyEn.name).toBe("Event in Vic");
+    expect(emptyEn.description).toBe("Cultural event in Vic");
+
+    const translatedEs = generateJsonData(
+      {
+        ...baseEvent,
+        title: "Festa Major de Vic",
+        titleEs: "Fiesta Mayor de Vic",
+        description: "Concerts a la plaça.",
+        descriptionEs: "Conciertos en la plaza.",
+      },
+      "es",
+    );
+    expect(translatedEs.name).toBe("Fiesta Mayor de Vic");
+    expect(translatedEs.description).toBe("Conciertos en la plaza.");
+  });
 });

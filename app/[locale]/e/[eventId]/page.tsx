@@ -2,7 +2,11 @@ import { Suspense, use } from "react";
 import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
-import { getEventAnalyticsSlugs } from "@utils/event-helpers";
+import {
+  getDefaultEventNoun,
+  getEventAnalyticsSlugs,
+  resolveEventLocalizedText,
+} from "@utils/event-helpers";
 import { getCachedEventBySlug } from "@lib/api/events";
 import { cacheLife, cacheTag } from "next/cache";
 import { eventsTag, eventTag } from "@lib/cache/tags";
@@ -41,8 +45,8 @@ import { getEventVenueCoords } from "@utils/event-map";
 import { descriptionFold } from "@utils/text-processing";
 import {
   buildEventIntroText,
-  formatCatalanA,
   formatPlaceName,
+  formatPlacePreposition,
 } from "@utils/helpers";
 import {
   buildEventListItems,
@@ -306,13 +310,14 @@ async function EventPageBody({
     placeType,
   } = getPlaceContext(event, locale);
   const eventSlug = event?.slug ?? "";
-  const title = event?.title ?? "";
+  const { title, description, descriptionTranslated } =
+    resolveEventLocalizedText(event, locale);
   const primaryCategorySlug = event.categories?.[0]?.slug;
   const shareEvent = buildShareKitEvent(event, cityName || regionName, locale);
   const clientEvent = {
     id: event.id,
     slug: event.slug,
-    title: event.title,
+    title,
     startDate: event.startDate,
     endDate: event.endDate,
     startTime: event.startTime,
@@ -329,7 +334,7 @@ async function EventPageBody({
     : explorePlaceHref;
   const jsonData = generateJsonData({ ...event }, locale);
 
-  // Parallelize all translation fetches to eliminate waterfall (7 calls → 1 round trip)
+  // Parallelize all translation fetches to eliminate waterfall (8 calls → 1 round trip)
   const [
     tStatus,
     tEvent,
@@ -338,6 +343,7 @@ async function EventPageBody({
     tCategories,
     tHowTo,
     tBreadcrumbs,
+    tEventsAround,
   ] = await Promise.all([
     getTranslations({ locale, namespace: "Utils.EventStatus" }),
     getTranslations({ locale, namespace: "Components.EventPage" }),
@@ -346,6 +352,7 @@ async function EventPageBody({
     getTranslations({ locale, namespace: "Config.Categories" }),
     getTranslations({ locale, namespace: "Components.HowTo" }),
     getTranslations({ locale, namespace: "Components.Breadcrumbs" }),
+    getTranslations({ locale, namespace: "Components.EventsAround" }),
   ]);
   const primaryCategoryLabel = primaryCategorySlug
     ? getCategoryLabel(
@@ -406,7 +413,7 @@ async function EventPageBody({
         "@id": `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}#related-events`,
         "@context": "https://schema.org",
         "@type": "ItemList",
-        name: "Related Events",
+        name: tEventsAround("relatedEvents"),
         url: `${siteUrl}${withLocalePath(`/e/${event.slug}`, locale)}`,
         numberOfItems: Math.min(event.relatedEvents.length, 10),
         itemListElement: buildEventListItems(
@@ -421,8 +428,9 @@ async function EventPageBody({
     tHowTo("step2"),
     tHowTo("step3"),
   ];
+  const defaultEventNoun = getDefaultEventNoun(locale);
   const howToJsonData = generateHowToSchema(
-    tHowTo("name", { title: title || "Esdeveniment" }),
+    tHowTo("name", { title: title || defaultEventNoun }),
     howToSteps
   );
 
@@ -431,9 +439,9 @@ async function EventPageBody({
   const breadcrumbName = (() => {
     if (title) return title;
     if (placeLabel) {
-      return `Esdeveniment ${formatCatalanA(placeLabel, "general", false)}`;
+      return `${defaultEventNoun} ${formatPlacePreposition(placeLabel, placeType, locale, false)}`;
     }
-    return "Esdeveniment";
+    return defaultEventNoun;
   })();
 
   // Build breadcrumb items with region for cities (SEO: geographic hierarchy)
@@ -464,7 +472,8 @@ async function EventPageBody({
     : null;
   const lcpSizes = getOptimalImageSizes("hero");
 
-  const venue = getEventVenue(event.location, title);
+  // Match venue stripping against the source Catalan title (`event.location` is imported in Catalan).
+  const venue = getEventVenue(event.location, event.title);
   // Venue plus its town once ("Tesr, Aguilar de Segarra, Bages" stays as is).
   const placeText = buildDisplayLocation({
     location: venue,
@@ -472,7 +481,7 @@ async function EventPageBody({
     regionName: cityName ? "" : regionName,
   });
   // Short texts show whole; long ones fold behind "Llegeix més" (very long ones on desktop too).
-  const fold = descriptionFold(`${introText ?? ""}\n${event.description ?? ""}`);
+  const fold = descriptionFold(`${introText ?? ""}\n${description}`);
 
   return (
     <>
@@ -593,10 +602,12 @@ async function EventPageBody({
                   <CollapsibleDescription fold={fold}>
                     <EventDescription
                       slug={event.slug}
-                      description={event.description}
+                      description={description}
                       introText={introText}
                       locale={locale as AppLocale}
-                      showTranslate={temporalStatus.state !== "past"}
+                      showTranslate={
+                        temporalStatus.state !== "past" && !descriptionTranslated
+                      }
                     />
                   </CollapsibleDescription>
                 </DetailSectionTracker>

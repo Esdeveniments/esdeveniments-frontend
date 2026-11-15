@@ -7,7 +7,10 @@ import {
   convertTZ,
 } from "@utils/date-helpers";
 import { getCategoryLabel } from "@utils/category-helpers";
-import { getEventAnalyticsSlugs } from "@utils/event-helpers";
+import {
+  getEventAnalyticsSlugs,
+  resolveEventLocalizedText,
+} from "@utils/event-helpers";
 import type {
   CardContentProps,
   CardData,
@@ -32,7 +35,7 @@ export function prepareCardContentData({
   tCategories?: (key: string) => string;
   isFavorite?: boolean;
 }): CardData {
-  const title = event.title || "";
+  const { title } = resolveEventLocalizedText(event, locale);
 
   const { primaryLabel, secondaryLabel } = buildEventPlaceLabels({
     cityName: event.city?.name,
