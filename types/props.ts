@@ -669,13 +669,15 @@ export interface AvatarInitialsProps {
 }
 
 /** Pixel sizes of `ProfileAvatar`: search rows, the event byline and the organizer card. */
-export type ProfileAvatarSize = "xs" | "sm" | "md";
+export type ProfileAvatarSize = "xs" | "sm" | "md" | "lg";
 
 export interface ProfileAvatarProps {
   avatarUrl?: string | null;
   /** Source of the initial shown when there is no avatar or it fails to load. */
   name: string;
   size: ProfileAvatarSize;
+  /** Load right away: the avatar is above the fold (profile header, edit page). */
+  eager?: boolean;
 }
 
 export interface ProfileEventsSectionProps {
@@ -1044,21 +1046,21 @@ export interface PlaceFestesLinksProps {
 }
 
 // Profile owner actions client island props
+// Owner-only actions next to the profile avatar. totalEventVisits is public on
+// the DTO but reads worse than nothing to a non-owner ("12 visites" on a
+// stranger's profile), so it shows here, behind the owner check.
 export interface ProfileOwnerActionsProps {
   username: string;
+  visits?: number;
 }
 
-// Owner-only visits stat client island: totalEventVisits is public on the
-// DTO but reads worse than nothing to a non-owner ("12 visites" on a stranger's
-// profile), so it's gated behind the same owner check as ProfileOwnerActions.
-export interface ProfileVisitsStatProps {
+export interface ProfileEventsLoadMoreProps {
   username: string;
-  visits: number;
-}
-
-// Profile claim CTA client island props
-export interface ProfileClaimCtaProps {
-  username: string;
+  status: ProfileEventStatus;
+  /** Page size of the server-rendered first page; the next page is 1. */
+  pageSize: number;
+  /** Ids already on screen, so a page that shifted since the render can't repeat them. */
+  initialIds: string[];
 }
 
 // /perfil/[username] and /perfil/[username]/passats — fires profile_page_view
@@ -1112,14 +1114,23 @@ export interface EventActionBarActionsProps {
   calendar: import("./common").CalendarEventData;
 }
 
-// Header share button: native share sheet on touch, small menu elsewhere
-export interface EventShareButtonProps {
-  shareEvent: import("./event").ShareKitEvent;
+// Page share button (event, profile): native share sheet on touch, small menu elsewhere
+export interface ShareTarget {
+  title: string;
+  url: string;
+  /** Message to send, without the URL (the menu appends it). */
+  text: string;
 }
 
-export interface EventShareMenuProps {
+export interface ShareButtonProps {
+  target: ShareTarget;
+  /** GA `share` content_type. */
+  contentType: "event" | "profile";
+}
+
+export interface ShareMenuProps {
   id: string;
-  shareEvent: import("./event").ShareKitEvent;
+  target: ShareTarget;
   onClose: () => void;
   onShared: (method: string) => void;
 }

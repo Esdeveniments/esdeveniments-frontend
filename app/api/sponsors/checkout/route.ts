@@ -9,6 +9,8 @@ import {
   buildInvoicingParams,
 } from "@lib/stripe/checkout-helpers";
 import { isValidPlace } from "@utils/route-validation";
+import { ensureLocale } from "@utils/i18n-routing";
+import { withLocalePath } from "@utils/i18n-seo";
 import { getOccupiedPlaceStatus } from "@lib/db/sponsors";
 import type {
   SponsorDuration,
@@ -39,16 +41,18 @@ async function createStripeCheckoutSession(
   baseUrl: string,
 ): Promise<StripeCheckoutSessionResponse> {
   const params = new URLSearchParams();
+  // Return the buyer to the pages in the language they bought in.
+  const returnBase = `${baseUrl}${withLocalePath("/patrocina", ensureLocale(locale))}`;
 
   // Mode and URLs
   params.append("mode", "payment");
   params.append(
     "success_url",
-    `${baseUrl}/patrocina/upload?session_id={CHECKOUT_SESSION_ID}&place=${encodeURIComponent(
+    `${returnBase}/upload?session_id={CHECKOUT_SESSION_ID}&place=${encodeURIComponent(
       place,
     )}&placeName=${encodeURIComponent(placeName)}`,
   );
-  params.append("cancel_url", `${baseUrl}/patrocina/cancelled`);
+  params.append("cancel_url", `${returnBase}/cancelled`);
 
   // Compose checkout params from helpers
   buildLineItemParams(params, duration, geoScope, locale);

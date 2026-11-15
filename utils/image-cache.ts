@@ -303,6 +303,43 @@ export function buildOptimizedImageUrl(
 }
 
 /**
+ * The original image URL for the browser to load itself when the proxy can't
+ * fetch it, e.g. a council server that only accepts connections from Spain
+ * (fitxers.sabadell.cat). HTTPS only, so the page never loads mixed content.
+ */
+export function directImageUrl(imageUrl: string): string {
+  const normalized = normalizeExternalImageUrl(imageUrl);
+  if (!/^https:\/\//i.test(normalized)) return "";
+  // Without our `?v=` cache key, as the proxy fetches it.
+  return stripImageCacheKey(normalized);
+}
+
+/**
+ * Removes our `v` cache key before the URL reaches the image's own server
+ * (the proxy's upstream fetch, the browser's direct load): some council
+ * servers reject unknown query params. String-based, so every other param
+ * stays byte for byte; URLSearchParams would re-encode the whole query
+ * (`,` → `%2C`, `%20` → `+`, `a` → `a=`). Legacy handlers never get a key,
+ * and their token query stays untouched.
+ */
+export function stripImageCacheKey(url: string): string {
+  if (isLegacyFileHandler(url)) return url;
+  const hashIndex = url.indexOf("#");
+  const queryEnd = hashIndex === -1 ? url.length : hashIndex;
+  const queryIndex = url.indexOf("?");
+  if (queryIndex === -1 || queryIndex > queryEnd) return url;
+
+  const params = url.slice(queryIndex + 1, queryEnd).split("&");
+  const kept = params.filter(
+    (param) => param !== CACHE_PARAM && !param.startsWith(`${CACHE_PARAM}=`),
+  );
+  if (kept.length === params.length) return url;
+
+  const query = kept.length > 0 ? `?${kept.join("&")}` : "";
+  return `${url.slice(0, queryIndex)}${query}${url.slice(queryEnd)}`;
+}
+
+/**
  * Generate URLs for <picture> element sources: WebP plus a fallback URL
  * without a format param (the proxy picks the format from the Accept header).
  * No AVIF source: listed after WebP it is never picked, since every browser

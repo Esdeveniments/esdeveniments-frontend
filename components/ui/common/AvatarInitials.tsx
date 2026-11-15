@@ -8,7 +8,7 @@ export default function AvatarInitials({
   const initial = (name.trim().charAt(0) || "?").toUpperCase();
   return (
     <div
-      className={`${className} shrink-0 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold`}
+      className={`${className} shrink-0 rounded-full bg-muted text-foreground-strong border border-border flex items-center justify-center font-bold`}
       {...(decorative
         ? { "aria-hidden": true }
         : { role: "img", "aria-label": name })}

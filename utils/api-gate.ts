@@ -77,8 +77,8 @@ export const PUBLIC_API_PATTERNS = [
   /^\/api\/(categories|cities|news)(\/[^/]+)?$/,
   // Places: base, [slug], /nearby, or /photo
   /^\/api\/places(\/(nearby|photo|[^/]+))?$/,
-  // Users: base or [username]
-  /^\/api\/users(\/[^/]+)?$/,
+  // Users: base, [username], or [username]/events
+  /^\/api\/users(\/[^/]+(\/events)?)?$/,
 ];
 
 // Routes that require exact match

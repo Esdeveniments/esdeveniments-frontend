@@ -3,6 +3,7 @@ import type { EventImageProps } from "types/event";
 import { getOptimalImageQuality, getResponsiveWidths } from "@utils/image-quality";
 import {
   buildResponsivePictureSourceUrls,
+  directImageUrl,
   normalizeExternalImageUrl,
 } from "@utils/image-cache";
 import { escapeXml } from "@utils/xml-escape";
@@ -50,6 +51,7 @@ const EventImage: FC<EventImageProps> = ({ image, title }) => {
       >
         <EventHeroImageClient
           sources={sources}
+          directSrc={directImageUrl(image ?? "")}
           safeTitle={safeTitle}
           title={title}
         />

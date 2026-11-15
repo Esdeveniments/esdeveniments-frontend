@@ -544,6 +544,7 @@ function createE2EEvent(
     price: data.price,
     visits: 0,
     origin: "MANUAL",
+    ...(extras?.owner ? { owner: extras.owner } : {}),
     city: fallbackCity,
     region: fallbackRegion,
     province: fallbackProvince,

@@ -285,6 +285,13 @@ if (!self.workbox) {
     new workbox.strategies.NetworkOnly()
   );
 
+  // Profile "load more" pages append under a fresh server-rendered first page:
+  // a stale cached page would repeat or skip events at the seam.
+  workbox.routing.registerRoute(
+    ({ url }) => /^\/api\/users\/[^/]+\/events$/.test(url.pathname),
+    new workbox.strategies.NetworkOnly()
+  );
+
   // Strategy for Other Local API Requests - Stale-While-Revalidate
   // This strategy serves a cached response immediately for speed,
   // then updates the cache in the background with a fresh network response for the next time.

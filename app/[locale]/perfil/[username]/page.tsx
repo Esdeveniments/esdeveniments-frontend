@@ -98,7 +98,7 @@ export default async function ProfilePage({
       <Tabs
         items={tabItems}
         active="upcoming"
-        ariaLabel={tProfile("title", { name: profileDisplayName })}
+        ariaLabel={tProfile("events")}
       />
       <ProfilePageTracker
         username={profile.username}
@@ -107,9 +107,7 @@ export default async function ProfilePage({
         status="upcoming"
       />
       <div className="w-full mt-section-y">
-        <Suspense
-          fallback={<EventsGridSkeleton count={3} />}
-        >
+        <Suspense fallback={<EventsGridSkeleton count={3} />}>
           <ProfileEventsSection username={profile.username} status="upcoming" />
         </Suspense>
       </div>

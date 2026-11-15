@@ -41,6 +41,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   form,
   onSubmit,
   submitLabel,
+  loadingLabel,
   analyticsContext,
   isEditMode = false,
   isLoading = false,
@@ -545,7 +546,7 @@ export const EventForm: React.FC<EventFormProps> = ({
                         fill="currentColor"
                       />
                     </svg>
-                    {tForm("publishing")}
+                    {loadingLabel || tForm("publishing")}
                   </>
                 ) : (
                   submitLabel

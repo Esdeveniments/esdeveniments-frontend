@@ -1,6 +1,6 @@
-import crypto from "crypto";
 import { test, expect } from "@playwright/test";
 import { isPaymentE2EEnabled, readPaymentEnv } from "./helpers/paymentEnv";
+import { signStripePayload } from "./helpers/stripe";
 
 /**
  * Payment E2E — Stripe webhook handler.
@@ -14,6 +14,7 @@ import { isPaymentE2EEnabled, readPaymentEnv } from "./helpers/paymentEnv";
  * checkout.session.completed events — no Stripe CLI forwarding needed.
  *
  * @see lib/stripe/webhook.ts — computeSignature / verifyStripeSignature
+ * @see helpers/stripe.ts — signStripePayload
  */
 
 function buildSessionCompletedEvent(sessionId: string, placeSlug: string) {
@@ -42,18 +43,6 @@ function buildSessionCompletedEvent(sessionId: string, placeSlug: string) {
   };
 }
 
-function signPayload(
-  payload: string,
-  secret: string,
-): { signature: string; timestamp: number } {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const sig = crypto
-    .createHmac("sha256", secret)
-    .update(`${timestamp}.${payload}`)
-    .digest("hex");
-  return { signature: `t=${timestamp},v1=${sig}`, timestamp };
-}
-
 test.describe("Payment webhook endpoint (signed synthetic events)", () => {
   test.skip(
     !isPaymentE2EEnabled(),
@@ -75,7 +64,7 @@ test.describe("Payment webhook endpoint (signed synthetic events)", () => {
     const payload = JSON.stringify(
       buildSessionCompletedEvent(sessionId, placeSlug),
     );
-    const { signature } = signPayload(payload, env.stripeWebhookSecret);
+    const signature = signStripePayload(payload, env.stripeWebhookSecret);
 
     const res = await request.post("/api/sponsors/webhook", {
       headers: {

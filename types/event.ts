@@ -357,6 +357,7 @@ export interface EventFormProps {
   form: FormData;
   onSubmit: (e: React.FormEvent) => Promise<void> | void;
   submitLabel: string;
+  loadingLabel?: string;
   analyticsContext?: string;
   isEditMode?: boolean;
   isLoading?: boolean;
@@ -454,3 +455,9 @@ export type UIEvent = EventSummaryResponseDTO & {
   duration: string;
   timeUntilEvent: string;
 };
+
+export interface PostPublishUpsellRecord {
+  slug: string;
+  ownerId: string;
+  createdAt: number;
+}

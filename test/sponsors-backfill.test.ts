@@ -82,3 +82,22 @@ describe("backfill sponsors", () => {
     expect((await getOccupiedPlaceStatus()).has("barcelona")).toBe(true);
   });
 });
+
+describe("sponsor caches across bundles", () => {
+  // Next bundles pages and each API route separately, so each imports its own
+  // copy of this module. A write in the webhook or upload route must still
+  // reach the copy that pages and the checkout route read.
+  it("a write in one copy refreshes what another copy reads", async () => {
+    const page = await loadModule([]);
+    expect(await page.getActiveSponsorForPlace("vic")).toBeNull();
+    expect((await page.getOccupiedPlaceStatus()).size).toBe(0);
+
+    vi.resetModules();
+    const route = await import("@lib/db/sponsors");
+    execute.mockResolvedValue({ rows: [row({ places: '["vic"]' })], rowsAffected: 1 });
+    expect(await route.activateSponsorImage("cs_test_1", "https://img.example/a.png")).toBe(true);
+
+    expect((await page.getActiveSponsorForPlace("vic"))?.sponsor.businessName).toBe("Biz");
+    expect((await page.getOccupiedPlaceStatus()).has("vic")).toBe(true);
+  });
+});

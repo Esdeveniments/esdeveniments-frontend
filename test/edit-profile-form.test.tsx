@@ -28,6 +28,15 @@ vi.mock("next-intl", () => ({
 
 vi.mock("@i18n/routing", () => ({
   useRouter: () => ({ push: mockPush }),
+  Link: ({
+    children,
+    href,
+    ...props
+  }: { children: React.ReactNode; href: string } & Record<string, unknown>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@components/hooks/useAuth", () => ({
@@ -60,10 +69,7 @@ describe("EditProfileForm", () => {
   });
 
   it("lets an onboarding user (no other logout entry point) log out from here", () => {
-    // NavbarClient sends profileCompleted === false users to this page, and
-    // logout otherwise only lives on the owner's completed profile page
-    // (ProfileOwnerActions) — without this, onboarding users on mobile
-    // would have no way to end their session.
+    // The navbar avatar only links here, so this is the one logout control.
     authUser = { ...baseUser, profileCompleted: false };
     render(<EditProfileForm />);
     fireEvent.click(screen.getByText("logout"));
@@ -143,6 +149,16 @@ describe("EditProfileForm", () => {
     expect(screen.queryByText("usernameLockedHint")).toBeNull();
   });
 
+  it("links to the public profile once the username is real, not while it's a placeholder", () => {
+    const { unmount } = render(<EditProfileForm />);
+    expect(screen.getByTestId("edit-profile-view-link")).toHaveAttribute("href", "/perfil/alex91");
+    unmount();
+
+    authUser = { ...baseUser, username: "user-4b34dd41" };
+    render(<EditProfileForm />);
+    expect(screen.queryByTestId("edit-profile-view-link")).toBeNull();
+  });
+
   it("locks the username field once it already holds a real username", () => {
     render(<EditProfileForm />); // baseUser.username is "alex91", not a placeholder
     expect(screen.getByLabelText("fields.username")).toHaveAttribute(
@@ -175,6 +191,30 @@ describe("EditProfileForm", () => {
       await screen.findByText("errors.displayNameRequired"),
     ).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("checks only the field the user leaves, not ones they haven't reached", () => {
+    // A new account has no display name yet; leaving the username field must
+    // not flag it.
+    authUser = { ...baseUser, name: "", username: "user-1a2b", profileCompleted: false };
+    render(<EditProfileForm />);
+    const username = screen.getByLabelText("fields.username");
+    fireEvent.change(username, { target: { value: "alex91" } });
+    fireEvent.blur(username);
+
+    expect(screen.queryByText("errors.displayNameRequired")).not.toBeInTheDocument();
+  });
+
+  it("clears a field's error as the user fixes it, before the field loses focus", () => {
+    authUser = { ...baseUser, name: "" };
+    render(<EditProfileForm />);
+    const displayName = screen.getByLabelText("fields.displayName");
+    fireEvent.blur(displayName);
+    expect(screen.getByText("errors.displayNameRequired")).toBeInTheDocument();
+
+    fireEvent.change(displayName, { target: { value: "Alex" } });
+
+    expect(screen.queryByText("errors.displayNameRequired")).not.toBeInTheDocument();
   });
 
   it("PATCHes the profile and refetches the session on success, with no redirect", async () => {

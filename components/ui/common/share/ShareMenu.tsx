@@ -8,20 +8,20 @@ import {
   LinkIcon,
 } from "@heroicons/react/24/outline";
 import { WhatsappLegacyIcon } from "react-share";
-import { buildShareText, buildWhatsappShareHref, isShareAbort } from "@utils/share-kit";
-import type { EventShareMenuProps } from "types/props";
+import { buildWhatsappShareHref, isShareAbort } from "@utils/share-kit";
+import type { ShareMenuProps } from "types/props";
 
 const itemClassName =
   "flex w-full items-center gap-element-gap rounded-input px-3 min-h-button body-small text-foreground-strong hover:bg-muted focus-visible:bg-muted transition-interactive";
 const iconClassName = "h-5 w-5 flex-shrink-0 text-muted-foreground";
 
 /** Desktop share menu: copy link first (the most common desktop share), then chat and email. */
-export default function EventShareMenu({ id, shareEvent, onClose, onShared }: EventShareMenuProps) {
+export default function ShareMenu({ id, target, onClose, onShared }: ShareMenuProps) {
   const t = useTranslations("Components.ShareKit");
   const ref = useRef<HTMLDivElement>(null);
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
   const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
-  const shareText = buildShareText(shareEvent, shareEvent.url);
+  const shareText = `${target.text}\n${target.url}`;
 
   useEffect(() => {
     const container = ref.current;
@@ -43,7 +43,7 @@ export default function EventShareMenu({ id, shareEvent, onClose, onShared }: Ev
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareEvent.url);
+      await navigator.clipboard.writeText(target.url);
       setCopyState("copied");
       onShared("copy");
     } catch {
@@ -55,9 +55,9 @@ export default function EventShareMenu({ id, shareEvent, onClose, onShared }: Ev
   const nativeShare = async () => {
     try {
       await navigator.share({
-        title: shareEvent.title,
-        text: buildShareText(shareEvent),
-        url: shareEvent.url,
+        title: target.title,
+        text: target.text,
+        url: target.url,
       });
       onShared("native");
       onClose();
@@ -66,7 +66,7 @@ export default function EventShareMenu({ id, shareEvent, onClose, onShared }: Ev
     }
   };
 
-  const mailto = `mailto:?subject=${encodeURIComponent(shareEvent.title)}&body=${encodeURIComponent(shareText)}`;
+  const mailto = `mailto:?subject=${encodeURIComponent(target.title)}&body=${encodeURIComponent(shareText)}`;
 
   return (
     <div
@@ -83,7 +83,7 @@ export default function EventShareMenu({ id, shareEvent, onClose, onShared }: Ev
           <p className="body-small text-error-dark">{t("copyError")}</p>
           <input
             readOnly
-            value={shareEvent.url}
+            value={target.url}
             aria-label={t("copyLinkLabel")}
             onFocus={(event) => event.currentTarget.select()}
             className="w-full rounded-input border border-input px-2 py-1 body-small"

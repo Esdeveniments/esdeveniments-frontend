@@ -171,7 +171,7 @@ describe("Server Actions - Next.js 16 caching", () => {
   });
 
   describe("createEventAction", () => {
-    it("calls updateTag for events and events:categorized tags", async () => {
+    it("calls updateTag for events, events:categorized, and the created event slug", async () => {
       const mockEvent = buildEvent();
 
       mockCreateEvent.mockResolvedValue(mockEvent);
@@ -196,7 +196,8 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockCreateEvent).toHaveBeenCalledWith(eventData, null);
       expect(mockUpdateTag).toHaveBeenCalledWith("events");
       expect(mockUpdateTag).toHaveBeenCalledWith("events:categorized");
-      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockUpdateTag).toHaveBeenCalledWith("event:test-event");
+      expect(mockRefresh).not.toHaveBeenCalled();
       expect(mockPurgeEventPagesFromCdn).toHaveBeenCalledWith([mockEvent]);
       expect(result).toEqual({ success: true, event: mockEvent });
     });
@@ -222,7 +223,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(mockCreateEvent).not.toHaveBeenCalled();
     });
 
-    it("calls refresh after updateTag calls", async () => {
+    it("invalidates the created slug tag without calling refresh on create", async () => {
       const mockEvent = buildEvent();
 
       mockCreateEvent.mockResolvedValue(mockEvent);
@@ -244,10 +245,8 @@ describe("Server Actions - Next.js 16 caching", () => {
 
       await createEventAction(toFormData(eventData));
 
-      // Verify refresh is called after updateTag calls
-      const updateTagCalls = mockUpdateTag.mock.calls.length;
-      expect(updateTagCalls).toBeGreaterThan(0);
-      expect(mockRefresh).toHaveBeenCalledTimes(1);
+      expect(mockUpdateTag).toHaveBeenCalledWith("event:test-event");
+      expect(mockRefresh).not.toHaveBeenCalled();
     });
 
     const buildEventData = (title: string): EventCreateRequestDTO => ({

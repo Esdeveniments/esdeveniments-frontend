@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@i18n/routing";
 import { RocketLaunchIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
@@ -8,6 +8,7 @@ import Modal from "@components/ui/common/modal";
 import Button from "@components/ui/common/button";
 import ShareKit from "@components/ui/shareKit/ShareKit";
 import { sendGoogleEvent } from "@utils/analytics";
+import { clearPendingPostPublishUpsell } from "@utils/post-publish-upsell";
 import type { PromoteUpsellModalProps } from "types/props";
 
 // Drops ?promote=1 so a back navigation or a tab reload doesn't reopen the
@@ -15,6 +16,7 @@ import type { PromoteUpsellModalProps } from "types/props";
 // cancel each other. EventClient keeps the modal open once it has shown.
 function removePromoteMarker() {
   const url = new URL(window.location.href);
+  if (!url.searchParams.has("promote")) return;
   url.searchParams.delete("promote");
   window.history.replaceState(window.history.state, "", url);
 }
@@ -31,6 +33,12 @@ export default function PromoteUpsellModal({
   // Promotion pays the bills, so it comes first; sharing is offered only
   // after the organiser declines it.
   const [step, setStep] = useState<"promote" | "share">("promote");
+
+  // Clear the durable post-publish marker only once this dynamic modal mounts,
+  // so reloading/leaving before the chunk finishes loading preserves recovery.
+  useEffect(() => {
+    clearPendingPostPublishUpsell(slug);
+  }, [slug]);
 
   const handlePromote = () => {
     sendGoogleEvent("promote_modal_cta_click", {

@@ -39,6 +39,21 @@ export const CitySummaryResponseDTOSchema = z.object({
   enabled: z.boolean(),
 });
 
+// The AI importer stored the word "null" as text for missing values
+// (esdeveniments-backend#114). Read it, like blank text, as missing so no page
+// shows "null".
+const isMissingText = (value: string): boolean => {
+  const trimmed = value.trim();
+  return !trimmed || trimmed.toLowerCase() === "null";
+};
+const optionalText = z
+  .string()
+  .nullable()
+  .transform((value) => (value === null || isMissingText(value) ? null : value));
+const requiredText = z
+  .string()
+  .transform((value) => (isMissingText(value) ? "" : value));
+
 // Base event schema for list endpoints - does not include location fields
 const EventSummaryBaseSchema = z
   .object({
@@ -50,14 +65,14 @@ const EventSummaryBaseSchema = z
     title: z.string(),
     // Absent on the pre-v2 backend still serving prod; default keeps it parsing.
     isPromoted: z.boolean().default(false),
-    url: z.string().nullable(),
-    description: z.string(),
-    imageUrl: z.string().nullable(),
+    url: optionalText,
+    description: requiredText,
+    imageUrl: optionalText,
     startDate: z.string(),
     startTime: z.string().nullable(),
     endDate: z.string().nullable(),
     endTime: z.string().nullable(),
-    location: z.string(),
+    location: requiredText,
     // A bad coordinate drops the pin, never the event.
     latitude: z.number().nullish().catch(null),
     longitude: z.number().nullish().catch(null),
@@ -101,14 +116,14 @@ const RelatedEventSummarySchema = z
     id: z.string().optional(),
     slug: z.string(),
     title: z.string(),
-    url: z.string().nullable().optional(),
-    description: z.string().nullable().optional(),
-    imageUrl: z.string().nullable().optional(),
+    url: optionalText.optional(),
+    description: optionalText.optional(),
+    imageUrl: optionalText.optional(),
     startDate: z.string(),
     startTime: z.string().nullable().optional(),
     endDate: z.string().nullable().optional(),
     endTime: z.string().nullable().optional(),
-    location: z.string().optional(),
+    location: requiredText.optional(),
     visits: z.number().optional(),
     categories: z.array(CategorySummaryResponseDTOSchema).optional(),
     city: CitySummaryResponseDTOSchema.optional().nullable(),
@@ -135,7 +150,8 @@ function sanitizeMetaField(
 ): string | null | undefined {
   if (!value || typeof value !== "string") return value;
   // Remove HTML tags and trim whitespace
-  return value.replace(/<[^>]*>/g, "").trim() || null;
+  const text = value.replace(/<[^>]*>/g, "").trim();
+  return isMissingText(text) ? null : text;
 }
 
 export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
@@ -144,7 +160,7 @@ export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
   tags: z.array(z.string()).optional(),
   relatedEvents: z.array(RelatedEventSummarySchema).optional(),
   // No length cap: a long price must not fail the whole event payload.
-  price: z.string().nullable().optional(),
+  price: optionalText.optional(),
   metaTitle: z
     .string()
     .max(200, "Meta title too long")

@@ -99,7 +99,7 @@ describe("image proxy responses are cacheable by URL alone", () => {
 });
 
 describe("image proxy size guard", () => {
-  it("drops an upstream body that streams past 5 MB without a Content-Length", async () => {
+  it("drops an upstream body that streams past 15 MB without a Content-Length", async () => {
     let pulled = 0;
     let cancelled = false;
     const chunk = new Uint8Array(1_000_000);
@@ -123,6 +123,6 @@ describe("image proxy size guard", () => {
 
     expect(res.status).toBe(502);
     expect(cancelled).toBe(true);
-    expect(pulled).toBeLessThan(10);
+    expect(pulled).toBeLessThan(20);
   });
 });

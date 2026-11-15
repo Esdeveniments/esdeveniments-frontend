@@ -7,6 +7,7 @@ import { Link, useRouter } from "@i18n/routing";
 import { ArrowLeftIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
 import { sendGoogleEvent, ensureGtag } from "@utils/analytics";
+import { clearPendingPostPublishUpsell } from "@utils/post-publish-upsell";
 import {
   minorToMajor,
   savePendingCheckout,
@@ -125,6 +126,7 @@ export default function PromoteEventClient({
   const hasTrackedPageViewRef = useRef(false);
   useEffect(() => {
     if (hasTrackedPageViewRef.current) return;
+    clearPendingPostPublishUpsell(slug);
     ensureGtag();
     sendGoogleEvent("promote_page_view", { event_slug: slug });
     hasTrackedPageViewRef.current = true;

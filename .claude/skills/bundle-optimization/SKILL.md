@@ -23,6 +23,7 @@ import Image from "@components/ui/common/image"; // picks ImageServer or ClientI
 - Sizes and widths: `getOptimalImageSizes(context)` and `getResponsiveWidths(context)` (`card`, `hero`, `list`, `detail`). Read the strings in `utils/image-quality.ts`; don't copy them.
 - URLs: `buildResponsivePictureSourceUrls` (`utils/image-cache.ts`). Never hand-build `/api/image-proxy` URLs.
 - Retries: see `components/ui/common/image/ClientImage.tsx` (`useImageRetry(2)`, `key={getImageKey(...)}`, `onError={handleError}`).
+- Direct fallback: when the proxy fails on an `https` image (some council servers only accept Spanish IPs), `ClientImage` and the event hero load the original once, then show the default image. Build that URL with `directImageUrl` (drops our `v` key, string-based) and keep `referrerPolicy="no-referrer"` on those `<img>` only. It is the full original, not a resized card.
 
 ## One LCP image + preload
 

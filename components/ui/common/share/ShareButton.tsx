@@ -1,32 +1,31 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import Button from "@components/ui/common/button";
 import { getShareItemId, sendGoogleEvent } from "@utils/analytics";
-import { buildShareText, isShareAbort } from "@utils/share-kit";
-import type { EventShareButtonProps } from "types/props";
+import { isShareAbort } from "@utils/share-kit";
+import type { ShareButtonProps } from "types/props";
 
 // Phones use the system share sheet; the desktop menu loads on first click.
-const EventShareMenu = dynamic(() => import("./EventShareMenu"), { ssr: false });
+const ShareMenu = dynamic(() => import("./ShareMenu"), { ssr: false });
 
-const MENU_ID = "event-share-menu";
-
-export default function EventShareButton({ shareEvent }: EventShareButtonProps) {
+export default function ShareButton({ target, contentType }: ShareButtonProps) {
   const t = useTranslations("Components.ShareKit");
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
 
   const trackShare = useCallback(
     (method: string) =>
       sendGoogleEvent("share", {
         method,
-        content_type: "event",
-        item_id: getShareItemId(shareEvent.url),
+        content_type: contentType,
+        item_id: getShareItemId(target.url),
       }),
-    [shareEvent.url],
+    [contentType, target.url],
   );
 
   const closeMenu = useCallback(() => {
@@ -40,9 +39,9 @@ export default function EventShareButton({ shareEvent }: EventShareButtonProps) 
     if (isTouch && typeof navigator.share === "function") {
       try {
         await navigator.share({
-          title: shareEvent.title,
-          text: buildShareText(shareEvent),
-          url: shareEvent.url,
+          title: target.title,
+          text: target.text,
+          url: target.url,
         });
         trackShare("native");
       } catch (error) {
@@ -60,17 +59,17 @@ export default function EventShareButton({ shareEvent }: EventShareButtonProps) 
         type="button"
         variant="ghost"
         className="h-button w-button p-0"
-        aria-label={t("shareLabel", { title: shareEvent.title })}
+        aria-label={t("shareLabel", { title: target.title })}
         aria-expanded={open}
-        aria-controls={open ? MENU_ID : undefined}
+        aria-controls={open ? menuId : undefined}
         onClick={handleClick}
       >
         <ShareIcon className="h-6 w-6 text-foreground-strong" aria-hidden="true" />
       </Button>
       {open && (
-        <EventShareMenu
-          id={MENU_ID}
-          shareEvent={shareEvent}
+        <ShareMenu
+          id={menuId}
+          target={target}
           onClose={closeMenu}
           onShared={trackShare}
         />

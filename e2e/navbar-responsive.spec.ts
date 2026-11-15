@@ -1,4 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
+import { MOCK_USER } from "./helpers/auth";
+import { SIGNED_IN_HINT_KEY } from "@utils/constants";
 
 test.describe("Responsive navbar", () => {
   test("keeps compact actions inside the 390px viewport gutter", async ({
@@ -205,4 +207,79 @@ test.describe("Responsive navbar", () => {
       paddingBottom: "48px",
     });
   });
+
+  // While auth loads the slot holds the login button's width, or the avatar's
+  // on a browser that was signed in last time (SIGNED_IN_HINT_KEY). Either
+  // way, the real action must not move its neighbours (it used to: 52 px on
+  // mobile), and a signed-in avatar must not leave a gap beside them.
+  for (const { name, width, height, neighbour } of [
+    {
+      name: "mobile",
+      width: 390,
+      height: 844,
+      neighbour: (page: Page): Locator =>
+        page.getByTestId("compact-navbar-actions").getByRole("button").first(),
+    },
+    {
+      // Just above the nav breakpoint, where the links and the slot are tightest.
+      name: "desktop",
+      width: 960,
+      height: 800,
+      neighbour: (page: Page): Locator =>
+        page.getByTestId("desktop-navbar-actions").getByRole("link").first(),
+    },
+  ]) {
+    for (const signedIn of [true, false]) {
+      const action = signedIn ? "avatar" : "login link";
+      test(`keeps the ${name} header still when the ${action} loads`, async ({ page }) => {
+        let release = () => {};
+        const authAnswered = new Promise<void>((resolve) => (release = resolve));
+        await page.route("**/api/auth/me", async (route) => {
+          await authAnswered;
+          await route.fulfill(
+            signedIn
+              ? { status: 200, json: { user: MOCK_USER } }
+              : { status: 401, json: { user: null } }
+          );
+        });
+        if (signedIn) {
+          await page.addInitScript((key) => localStorage.setItem(key, "1"), SIGNED_IN_HINT_KEY);
+        }
+        await page.setViewportSize({ width, height });
+        await page.goto("/", { waitUntil: "domcontentloaded", timeout: 90000 });
+
+        const target = neighbour(page);
+        await expect(target).toBeVisible({ timeout: 30000 });
+        const before = await target.boundingBox();
+        // Only a browser that was signed in gets the avatar skeleton.
+        const skeleton = page.getByTestId(`${name}-avatar-skeleton`);
+        if (signedIn) await expect(skeleton).toBeVisible();
+        else await expect(skeleton).toBeHidden();
+        release();
+        const actionId = `${name}-${signedIn ? "avatar" : "login"}-link`;
+        const real = page.getByTestId(actionId);
+        await expect(real).toBeVisible();
+        await expect(skeleton).toHaveCount(0);
+        const after = await target.boundingBox();
+
+        expect(before).not.toBeNull();
+        expect(after?.x).toBe(before?.x);
+
+        if (name === "desktop") {
+          // The slot must not shrink under its content and cover the links.
+          const links = page.getByTestId("desktop-navbar-actions").getByRole("link");
+          const lastNavLink = await links.nth((await links.count()) - 2).boundingBox();
+          const box = await real.boundingBox();
+          expect(box?.x ?? 0).toBeGreaterThanOrEqual((lastNavLink?.x ?? 0) + (lastNavLink?.width ?? 0));
+        }
+
+        if (signedIn && name === "mobile") {
+          // No empty space between the language picker and the avatar.
+          const avatar = await real.boundingBox();
+          const gap = (avatar?.x ?? 0) - ((after?.x ?? 0) + (after?.width ?? 0));
+          expect(gap).toBeLessThanOrEqual(8);
+        }
+      });
+    }
+  }
 });

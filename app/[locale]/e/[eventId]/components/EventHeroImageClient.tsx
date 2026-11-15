@@ -12,21 +12,60 @@ import { getOptimalImageSizes } from "@utils/image-quality";
  */
 export default function EventHeroImageClient({
   sources,
+  directSrc,
   safeTitle,
   title,
 }: {
   sources: ResponsivePictureSourceUrls;
+  /** The original HTTPS URL, tried once when the proxy fails. */
+  directSrc: string;
   safeTitle: string;
   title: string;
 }) {
-  const [hasFailed, setHasFailed] = useState(false);
+  const [stage, setStage] = useState<"proxy" | "direct" | "failed">("proxy");
   const sizes = getOptimalImageSizes("detail");
+  const handleError = () =>
+    setStage(stage === "proxy" && directSrc ? "direct" : "failed");
+  // The hero loads eagerly, so it can fail before hydration, when React isn't
+  // listening for `error` yet (a host the proxy marked unreachable fails fast).
+  const checkAlreadyFailed = (img: HTMLImageElement | null) => {
+    if (img?.complete && img.naturalWidth === 0 && img.currentSrc) handleError();
+  };
 
-  if (hasFailed) {
+  if (stage === "failed") {
     return (
       <div className="absolute inset-0">
         <ImgDefaultServer title={title} />
       </div>
+    );
+  }
+
+  // The proxy failed: the browser loads the original (some council servers
+  // only accept connections from Spain, which the proxy's server isn't in).
+  // No Referer: the council's server gets neither the page nor our origin.
+  if (stage === "direct") {
+    return (
+      <>
+        <picture>
+          <img
+            src={directSrc}
+            alt=""
+            decoding="async"
+            referrerPolicy="no-referrer"
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
+          />
+        </picture>
+        <picture>
+          <img
+            src={directSrc}
+            alt={safeTitle}
+            decoding="async"
+            referrerPolicy="no-referrer"
+            className="object-contain w-full h-full absolute inset-0 z-10"
+            onError={handleError}
+          />
+        </picture>
+      </>
     );
   }
 
@@ -55,7 +94,8 @@ export default function EventHeroImageClient({
           fetchPriority="high"
           sizes={sizes}
           className="object-contain w-full h-full absolute inset-0 z-10"
-          onError={() => setHasFailed(true)}
+          ref={checkAlreadyFailed}
+          onError={handleError}
         />
       </picture>
     </>

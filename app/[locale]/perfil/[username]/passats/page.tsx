@@ -29,9 +29,11 @@ export async function generateMetadata({
     return { title: "Not Found" };
   }
 
-  const nameOf = formatNameOf(getProfileDisplayName(profile), locale);
-  const title = t("pastTitle", { nameOf });
-  const description = t("pastMetaDescription", { nameOf });
+  const name = getProfileDisplayName(profile);
+  const title = t("pastTitle", { name });
+  const description = t("pastMetaDescription", {
+    nameOf: formatNameOf(name, locale),
+  });
   const canonical = toLocalizedUrl(`/perfil/${profile.username}/passats`, locale);
 
   return buildPageMeta({
@@ -61,7 +63,6 @@ export default async function ProfilePastEventsPage({
     notFound();
   }
 
-  const displayName = getProfileDisplayName(profile);
 
   const tabItems = buildProfileTabItems(profile, tProfile);
 
@@ -70,7 +71,7 @@ export default async function ProfilePastEventsPage({
       <Tabs
         items={tabItems}
         active="past"
-        ariaLabel={tProfile("title", { name: displayName })}
+        ariaLabel={tProfile("events")}
       />
       <ProfilePageTracker
         username={profile.username}
@@ -79,9 +80,7 @@ export default async function ProfilePastEventsPage({
         status="past"
       />
       <div className="w-full mt-section-y">
-        <Suspense
-          fallback={<EventsGridSkeleton count={3} />}
-        >
+        <Suspense fallback={<EventsGridSkeleton count={3} />}>
           <ProfileEventsSection username={profile.username} status="past" />
         </Suspense>
       </div>

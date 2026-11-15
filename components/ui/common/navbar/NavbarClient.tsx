@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 
 import { UserCircleIcon } from "@heroicons/react/24/outline";
@@ -8,11 +9,22 @@ import { SPRITE_ICON } from "@components/ui/common/IconSprite";
 import PressableLink from "@components/ui/primitives/PressableLink";
 import { useAuth } from "@components/hooks/useAuth";
 import { getProfileSlug } from "@utils/user-helpers";
+import { SIGNED_IN_HINT_KEY } from "@utils/constants";
 import type { NavbarClientProps } from "types/props";
 import type { Href } from "types/common";
 
 import LanguageSwitcher from "./LanguageSwitcher";
 import NavbarLoginLink from "./NavbarLoginLink";
+
+// The login link and the invisible copy that holds its place while auth
+// loads share these classes, so the reserved width matches the real button.
+const MOBILE_LOGIN_CLASS = "btn-outline btn-sm whitespace-nowrap";
+const DESKTOP_LOGIN_CLASS = "btn-outline text-xs whitespace-nowrap";
+// On browsers marked by SIGNED_IN_HINT_SCRIPT, CSS (styles/globals.css) swaps
+// the invisible login copy for an avatar skeleton while auth loads.
+const AUTH_PLACEHOLDER_CLASS = "invisible auth-slot-placeholder";
+// Same block as components/ui/common/skeletons/ (ProfilePageSkeleton).
+const AVATAR_SKELETON_CLASS = "w-9 h-9 rounded-full bg-border/40 animate-pulse";
 
 // No usePathname() here: it suspends while Next prerenders the generic shell
 // of routes with params, which would push the whole navbar out of the static
@@ -22,6 +34,21 @@ import NavbarLoginLink from "./NavbarLoginLink";
 export default function NavbarClient({ navigation, labels }: NavbarClientProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const logoAlt = labels.logoAlt?.trim() || "Esdeveniments";
+  const avatarUser =
+    isAuthenticated && user && !user.profileEnrichmentFailed ? user : null;
+  const showsAvatar = avatarUser !== null;
+
+  // Remember what this browser shows, so SIGNED_IN_HINT_SCRIPT can reserve
+  // the right width before the next page's first paint.
+  useEffect(() => {
+    if (isLoading) return;
+    try {
+      if (showsAvatar) localStorage.setItem(SIGNED_IN_HINT_KEY, "1");
+      else localStorage.removeItem(SIGNED_IN_HINT_KEY);
+    } catch {
+      // Storage blocked: the slot just reserves the login button's width.
+    }
+  }, [isLoading, showsAvatar]);
 
   // Build a URL-safe slug for the /perfil/{slug} URL. Prefer the
   // server-slugified username, fall back to a slugified display name, and
@@ -81,55 +108,66 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
               data-testid="compact-navbar-actions"
             >
               <LanguageSwitcher compact />
-              {isLoading ? (
-                // Same box as the logged-out button (most visitors) so the
-                // header doesn't shift when auth resolves.
-                <span
-                  className="btn-outline btn-sm whitespace-nowrap shrink-0 invisible"
-                  aria-hidden="true"
-                  data-testid="mobile-auth-slot"
-                >
-                  <UserCircleIcon className="h-5 w-5" />
-                  {labels.loginShort}
-                </span>
-              ) : (
-                isAuthenticated && user && !user.profileEnrichmentFailed ? (
-                  <PressableLink
-                    href={profileHref || "/perfil/edita"}
-                    prefetch={false}
-                    variant="inline"
-                    className="flex-center w-11 h-11 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    aria-label={labels.myProfile}
-                    data-testid="mobile-avatar-link"
-                  >
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt=""
-                        className="w-9 h-9 rounded-full object-cover bg-background"
-                      />
-                    ) : (
-                      <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                        {(user.name || user.email).charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </PressableLink>
-                ) : (
-                  <NavbarLoginLink
-                    className="btn-outline btn-sm whitespace-nowrap shrink-0"
-                    aria-label={
-                      user?.profileEnrichmentFailed
-                        ? `${labels.loginShort}. ${labels.incompleteProfile}`
-                        : undefined
-                    }
-                    data-testid="mobile-login-link"
-                    data-analytics-action="navbar_login_mobile_header"
-                  >
-                    <UserCircleIcon className="h-5 w-5" aria-hidden="true" />
-                    {labels.loginShort}
-                  </NavbarLoginLink>
-                )
-              )}
+              {/* Auth slot, as tall as the avatar. While auth loads it holds
+                  the login button's width, or the avatar's (min-w-11) on a
+                  browser that was signed in last time, so the header doesn't
+                  move when auth resolves and the avatar never floats. */}
+              <div className="flex h-11 min-w-11 shrink-0 items-center justify-end">
+                {isLoading ? (
+                  <>
+                    <span
+                      className={`${MOBILE_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
+                      aria-hidden="true"
+                      data-testid="mobile-auth-slot"
+                    >
+                      <UserCircleIcon className="h-5 w-5" />
+                      {labels.loginShort}
+                    </span>
+                    <span
+                      className="auth-slot-skeleton hidden w-11 h-11 items-center justify-center"
+                      aria-hidden="true"
+                      data-testid="mobile-avatar-skeleton"
+                    >
+                      <span className={`block ${AVATAR_SKELETON_CLASS}`} />
+                    </span>
+                  </>
+                ) : avatarUser ? (
+                    <PressableLink
+                      href={profileHref || "/perfil/edita"}
+                      prefetch={false}
+                      variant="inline"
+                      className={`flex-center w-11 h-11 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
+                      aria-label={labels.myProfile}
+                      data-testid="mobile-avatar-link"
+                    >
+                      {avatarUser.avatarUrl ? (
+                        <img
+                          src={avatarUser.avatarUrl}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover bg-border/40"
+                        />
+                      ) : (
+                        <span className="flex-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                          {(avatarUser.name || avatarUser.email).charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </PressableLink>
+                  ) : (
+                    <NavbarLoginLink
+                      className={MOBILE_LOGIN_CLASS}
+                      aria-label={
+                        user?.profileEnrichmentFailed
+                          ? `${labels.loginShort}. ${labels.incompleteProfile}`
+                          : undefined
+                      }
+                      data-testid="mobile-login-link"
+                      data-analytics-action="navbar_login_mobile_header"
+                    >
+                      <UserCircleIcon className="h-5 w-5" aria-hidden="true" />
+                      {labels.loginShort}
+                    </NavbarLoginLink>
+                  )}
+              </div>
             </div>
 
             <div
@@ -148,37 +186,51 @@ export default function NavbarClient({ navigation, labels }: NavbarClientProps) 
                 ))}
               </div>
 
-              {/* Desktop auth: one-click profile navigation, matching the compact header. */}
-              {!isLoading && (
-                isAuthenticated && user && !user.profileEnrichmentFailed ? (
-                  <PressableLink
-                    href={profileHref || "/perfil/edita"}
-                    prefetch={false}
-                    variant="inline"
-                    className="flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    aria-label={labels.myProfile}
-                    data-testid="desktop-avatar-link"
-                  >
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt=""
-                        className="w-9 h-9 rounded-full object-cover bg-background"
-                      />
-                    ) : (
-                      (user.name || user.email).charAt(0).toUpperCase()
-                    )}
-                  </PressableLink>
-                ) : (
-                  <NavbarLoginLink
-                    className="btn-outline text-xs whitespace-nowrap"
-                    data-testid="desktop-login-link"
-                    data-analytics-action="navbar_login_desktop"
-                  >
-                    {labels.login}
-                  </NavbarLoginLink>
-                )
-              )}
+              {/* Desktop auth slot, reserved the same way so the links don't move. */}
+              <div className="flex min-w-9 shrink-0 items-center justify-end">
+                {isLoading ? (
+                  <>
+                    <span
+                      className={`${DESKTOP_LOGIN_CLASS} ${AUTH_PLACEHOLDER_CLASS}`}
+                      aria-hidden="true"
+                    >
+                      {labels.login}
+                    </span>
+                    <span
+                      className={`auth-slot-skeleton hidden ${AVATAR_SKELETON_CLASS}`}
+                      aria-hidden="true"
+                      data-testid="desktop-avatar-skeleton"
+                    />
+                  </>
+                ) : avatarUser ? (
+                    <PressableLink
+                      href={profileHref || "/perfil/edita"}
+                      prefetch={false}
+                      variant="inline"
+                      className={`flex-center w-9 h-9 rounded-full bg-primary text-white text-sm font-bold hover:opacity-90 transition-interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2`}
+                      aria-label={labels.myProfile}
+                      data-testid="desktop-avatar-link"
+                    >
+                      {avatarUser.avatarUrl ? (
+                        <img
+                          src={avatarUser.avatarUrl}
+                          alt=""
+                          className="w-9 h-9 rounded-full object-cover bg-border/40"
+                        />
+                      ) : (
+                        (avatarUser.name || avatarUser.email).charAt(0).toUpperCase()
+                      )}
+                    </PressableLink>
+                  ) : (
+                    <NavbarLoginLink
+                      className={DESKTOP_LOGIN_CLASS}
+                      data-testid="desktop-login-link"
+                      data-analytics-action="navbar_login_desktop"
+                    >
+                      {labels.login}
+                    </NavbarLoginLink>
+                  )}
+              </div>
 
               <LanguageSwitcher />
             </div>

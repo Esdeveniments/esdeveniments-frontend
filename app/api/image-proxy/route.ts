@@ -13,11 +13,12 @@ import { Agent, fetch as undiciFetch, type Response as UpstreamResponse } from "
 import { readBodyWithLimit } from "@utils/read-body-with-limit";
 import {
   normalizeExternalImageUrl,
-  isLegacyFileHandler,
+  stripImageCacheKey,
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
 import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
+import { getErrorChain } from "@utils/error-chain";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
 import {
   fetchWithLenientParser,
@@ -31,7 +32,10 @@ import {
 // Dynamic import to avoid Turbopack bundling issues with native modules
 import type { Sharp } from "sharp";
 
-const MAX_BYTES = 5_000_000; // 5MB guard
+// Councils post A4 posters as 300 dpi PNGs (7.4 MB from lesquirol.cat). Over the
+// cap the browser loads the original itself, so a lower one only moves the bytes
+// to the visitor's phone.
+const MAX_BYTES = 15_000_000;
 const TIMEOUT_MS = 5000; // DNS check, connect, headers and redirects
 // Whole upstream exchange, body included. Linked to the client's signal so a
 // disconnect also frees the socket and the buffered chunks.
@@ -39,6 +43,36 @@ const TOTAL_TIMEOUT_MS = 15_000;
 const SNIFF_BYTES = 64;
 const ONE_YEAR = 31536000;
 const MAX_REDIRECTS = 2;
+// A host the proxy can't connect to (fitxers.sabadell.cat only accepts
+// connections from Spain) is skipped for a while, so the other cards on the
+// page fail at once instead of each waiting TIMEOUT_MS. The browser then loads
+// the original itself (ClientImage).
+const UNREACHABLE_HOST_TTL_MS = 10 * 60_000;
+const MAX_UNREACHABLE_HOSTS = 500;
+const CONNECT_ERROR_CODES = new Set([
+  "UND_ERR_CONNECT_TIMEOUT",
+  "ECONNREFUSED",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+  "ETIMEDOUT",
+]);
+const unreachableHosts = new Map<string, number>();
+
+function isUnreachable(origin: string): boolean {
+  const until = unreachableHosts.get(origin);
+  if (until === undefined) return false;
+  if (until > Date.now()) return true;
+  unreachableHosts.delete(origin);
+  return false;
+}
+
+function markUnreachable(origin: string) {
+  if (unreachableHosts.size >= MAX_UNREACHABLE_HOSTS) {
+    const oldest = unreachableHosts.keys().next().value;
+    if (oldest !== undefined) unreachableHosts.delete(oldest);
+  }
+  unreachableHosts.set(origin, Date.now() + UNREACHABLE_HOST_TTL_MS);
+}
 const UPSTREAM_HEADERS = { "user-agent": IMAGE_PROXY_USER_AGENT };
 
 // Image optimization defaults
@@ -141,6 +175,11 @@ async function fetchWithTimeout(
   redirectsRemaining = MAX_REDIRECTS,
   deadline = Date.now() + TIMEOUT_MS,
 ): Promise<UpstreamResponse> {
+  // By origin: an https port that drops packets says nothing about http.
+  const origin = new URL(url).origin;
+  if (isUnreachable(origin)) {
+    throw new Error(`Image upstream ${origin} was unreachable recently`);
+  }
   const targetSafety = await getPublicFetchSafety(url);
   if (!targetSafety.isSafe) {
     throw new Error("Blocked unsafe image upstream");
@@ -179,15 +218,28 @@ async function fetchWithTimeout(
     // compressed upstream responses.
     let response: UpstreamResponse;
     try {
-      response = await undiciFetch(url, init);
-    } catch (error) {
-      response = await retryBrowserTolerableFailure(
-        error,
-        url,
-        signal,
-        targetSafety.dnsRecords,
-        bypassTls,
+      response = await undiciFetch(url, init).catch((error: unknown) =>
+        retryBrowserTolerableFailure(
+          error,
+          url,
+          signal,
+          targetSafety.dnsRecords,
+          bypassTls,
+        ),
       );
+    } catch (error) {
+      // No headers before the deadline, or no connection at all. A client that
+      // went away (outerSignal) says nothing about the host. Only this
+      // request's own failure counts, not a redirect target's. A redirect
+      // target inherits what's left of the deadline, so its timeout proves nothing.
+      const noHeaders =
+        redirectsRemaining === MAX_REDIRECTS &&
+        headerController.signal.aborted &&
+        !outerSignal.aborted;
+      if (noHeaders || getErrorChain(error).some(({ code }) => code && CONNECT_ERROR_CODES.has(code))) {
+        markUnreachable(origin);
+      }
+      throw error;
     }
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
@@ -291,22 +343,6 @@ function hasStrongCacheKey(upstreamUrl: string): boolean {
   }
 }
 
-/**
- * Strip our cache-busting `?v=` param before fetching from upstream.
- * Some external servers reject URLs with unexpected query params.
- * The CDN still caches by the full proxy URL (with ?v=), so cache-busting
- * works on our side without affecting upstream servers.
- */
-function stripCacheKeyForUpstream(imageUrl: string): string {
-  try {
-    const urlObj = new URL(imageUrl);
-    urlObj.searchParams.delete("v");
-    return urlObj.toString();
-  } catch {
-    return imageUrl;
-  }
-}
-
 function buildFetchCandidates(
   absoluteUrl: string,
   originalWasHttp: boolean
@@ -384,12 +420,8 @@ export async function GET(request: Request) {
   // Check if URL has cache key BEFORE stripping (for cache header logic later)
   const hasCacheKey = hasStrongCacheKey(normalized);
 
-  // Strip ?v= before fetching upstream - some servers reject unknown query params.
-  // Skip for legacy file handlers (.ashx) which have non-standard query strings
-  // that get corrupted by URL object serialization (adds trailing "=").
-  const upstreamUrl = isLegacyFileHandler(normalized)
-    ? normalized
-    : stripCacheKeyForUpstream(normalized);
+  // The CDN caches by the full proxy URL (with ?v=); the upstream never sees it.
+  const upstreamUrl = stripImageCacheKey(normalized);
 
   const originalWasHttp = (() => {
     try {

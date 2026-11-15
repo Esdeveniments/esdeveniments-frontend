@@ -51,6 +51,7 @@ Parsers may also normalize after validation: `parseEventDetail` and `parsePagedE
 ## Writing a schema for a backend DTO
 
 - Match what the backend really sends, not what you wish it sent. The backend writes unset fields as explicit `null`, so optional fields are usually `.nullish()`, often with `.transform((v) => v ?? undefined)` to fit an optional DTO field (see `lib/validation/user.ts`).
+- Event free text (price, url, image, description, location) uses `optionalText`/`requiredText` in `lib/validation/event.ts`, which read the word "null" and blank text as missing: the AI importer stored "null" as text (LESSONS.md).
 - Use `.passthrough()` when extra fields must survive (`CategoryDetailResponseDTOSchema`); the parser then needs a cast to the DTO type.
 - Sanitize free text that ends up in `<head>` or JSON-LD in the schema (see `sanitizeMetaField` in `lib/validation/event.ts`).
 - When the backend changes a field, accept both shapes during the transition rather than failing the whole payload (see the comments on `UserPublicResponseDTOSchema`).

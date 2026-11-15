@@ -151,3 +151,95 @@ describe("image proxy with a malformed upstream response header", () => {
     expect(resolveMissingIssuers).not.toHaveBeenCalled();
   });
 });
+
+describe("image proxy with an upstream host it can't connect to", () => {
+  function proxyFrom(source: string) {
+    return GET(
+      new Request(`http://localhost/api/image-proxy?url=${encodeURIComponent(source)}`),
+    );
+  }
+
+  it("skips the host for its other images instead of waiting again", async () => {
+    vi.mocked(undiciFetch).mockRejectedValue(fetchFailure("UND_ERR_CONNECT_TIMEOUT"));
+
+    expect((await proxyFrom("https://fitxers.example.cat/agenda/1.jpg")).status).toBe(502);
+    expect((await proxyFrom("https://fitxers.example.cat/agenda/2.jpg")).status).toBe(502);
+
+    expect(undiciFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("still tries http when the same host's https port refuses", async () => {
+    vi.mocked(undiciFetch)
+      .mockRejectedValueOnce(fetchFailure("ECONNREFUSED"))
+      .mockResolvedValueOnce(imageResponse());
+
+    const res = await proxyFrom("http://http-only.example.cat/agenda/1.jpg");
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(undiciFetch).mock.calls.map(([url]) => String(url))).toEqual([
+      "https://http-only.example.cat/agenda/1.jpg",
+      "http://http-only.example.cat/agenda/1.jpg",
+    ]);
+  });
+
+  it("doesn't blame a host for its redirect target being unreachable", async () => {
+    vi.mocked(undiciFetch)
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          headers: { location: "https://down.example.cat/1.jpg" },
+        }) as never,
+      )
+      .mockRejectedValueOnce(fetchFailure("UND_ERR_CONNECT_TIMEOUT"))
+      .mockResolvedValueOnce(imageResponse());
+
+    expect((await proxyFrom("https://redirects.example.cat/1.jpg")).status).toBe(502);
+    expect((await proxyFrom("https://redirects.example.cat/2.jpg")).status).toBe(200);
+  });
+
+  it("keeps fetching a host that answered with an error status", async () => {
+    vi.mocked(undiciFetch).mockResolvedValue(new Response(null, { status: 404 }) as never);
+
+    await proxyFrom("https://other.example.cat/agenda/1.jpg");
+    await proxyFrom("https://other.example.cat/agenda/2.jpg");
+
+    expect(undiciFetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("image proxy upstream URL", () => {
+  it("drops our cache key and keeps the image's own query byte for byte", async () => {
+    vi.mocked(undiciFetch).mockResolvedValueOnce(imageResponse());
+    const source = "https://i0.wp.com/query.example.cat/poster.jpg?fit=1024,576&ssl&v=abc";
+
+    const res = await GET(
+      new Request(`http://localhost/api/image-proxy?url=${encodeURIComponent(source)}`),
+    );
+
+    expect(res.status).toBe(200);
+    expect(String(vi.mocked(undiciFetch).mock.calls[0][0])).toBe(
+      "https://i0.wp.com/query.example.cat/poster.jpg?fit=1024,576&ssl",
+    );
+  });
+
+  it("resizes a poster over 5 MB instead of leaving it to the browser", async () => {
+    const side = 1400;
+    const noise = Buffer.alloc(side * side * 3);
+    for (let i = 0; i < noise.length; i++) noise[i] = (i * 2654435761) >>> 24;
+    const png = await sharp(noise, { raw: { width: side, height: side, channels: 3 } })
+      .png({ compressionLevel: 0 })
+      .toBuffer();
+    expect(png.length).toBeGreaterThan(5_000_000);
+    vi.mocked(undiciFetch).mockResolvedValueOnce(
+      new Response(new Uint8Array(png), {
+        status: 200,
+        headers: { "content-type": "image/png" },
+      }) as never,
+    );
+
+    const res = await proxy();
+
+    expect(res.status).toBe(200);
+    expect((await res.arrayBuffer()).byteLength).toBeLessThan(png.length);
+  });
+});

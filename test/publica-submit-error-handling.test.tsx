@@ -71,11 +71,14 @@ vi.mock("@components/ui/EventForm", () => ({
   default: ({
     onSubmit,
     handleImageChange,
+    loadingLabel,
   }: {
     onSubmit: (e?: unknown) => void;
     handleImageChange: (file: File | null) => void;
+    loadingLabel?: string;
   }) => (
     <div>
+      {loadingLabel && <span data-testid="loading-label">{loadingLabel}</span>}
       <button
         type="button"
         onClick={() =>
@@ -92,12 +95,14 @@ vi.mock("@components/ui/EventForm", () => ({
 }));
 
 import Publica from "@app/[locale]/publica/page";
+import { hasPendingPostPublishUpsell } from "@utils/post-publish-upsell";
 
 describe("Publica submit-time createEventAction result handling", () => {
   afterEach(() => vi.restoreAllMocks());
   beforeEach(() => {
     mockCreateEventAction.mockReset();
     vi.clearAllMocks();
+    window.localStorage.clear();
     storage.load.mockResolvedValue({ ok: true, status: "empty", revision: null });
     storage.discard.mockResolvedValue({ ok: true, revision: "deleted" });
     storage.save.mockResolvedValue({ ok: true, revision: "saved" });
@@ -152,6 +157,8 @@ describe("Publica submit-time createEventAction result handling", () => {
 
     await waitFor(() => expect(mockCreateEventAction).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(storage.push).toHaveBeenCalledWith("/e/test-event?promote=1"));
+    expect(screen.getByTestId("loading-label")).toHaveTextContent("publishCta.redirecting");
+    expect(hasPendingPostPublishUpsell("test-event", authUser.id)).toBe(true);
     expect(storage.discard).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId("complete-profile-gate")).not.toBeInTheDocument();
     expect(screen.queryByText("errorStaleSession")).not.toBeInTheDocument();
@@ -161,6 +168,7 @@ describe("Publica submit-time createEventAction result handling", () => {
     mockCreateEventAction.mockRejectedValue(new Error("Network failed"));
     await renderAndSubmit();
     await screen.findByText("errorGeneric");
+    expect(hasPendingPostPublishUpsell("test-event", authUser.id)).toBe(false);
     expect(storage.discard).not.toHaveBeenCalled();
     expect(storage.push).not.toHaveBeenCalled();
   });
@@ -185,5 +193,16 @@ describe("Publica submit-time createEventAction result handling", () => {
     const savesAfterCreation = storage.save.mock.calls.length;
     await act(async () => { view.unmount(); });
     expect(storage.save).toHaveBeenCalledTimes(savesAfterCreation);
+  });
+
+  it("still navigates and avoids errorGeneric if draft cleanup throws unexpectedly", async () => {
+    mockCreateEventAction.mockResolvedValue({ success: true, event: { slug: "created-throw" } });
+    storage.discard.mockRejectedValue(new Error("IDB explosion"));
+
+    await renderAndSubmit();
+
+    await waitFor(() => expect(window.alert).toHaveBeenCalledWith("draftCleanupFailed"));
+    expect(storage.push).toHaveBeenCalledWith("/e/created-throw?promote=1");
+    expect(screen.queryByText("errorGeneric")).not.toBeInTheDocument();
   });
 });

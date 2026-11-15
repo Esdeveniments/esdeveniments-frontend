@@ -12,7 +12,7 @@ import { redirect, notFound } from "next/navigation";
 import EventMedia from "./components/EventMedia";
 import EventHeader from "./components/EventHeader";
 import EventFacts from "./components/EventFacts";
-import EventShareButton from "./components/EventShareButton";
+import ShareButton from "@components/ui/common/share/ShareButton";
 import EventActionBar from "./components/EventActionBar";
 import EventReportLink from "./components/EventReportLink";
 import EventAdSlot from "./components/EventAdSlot";
@@ -57,6 +57,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import { withLocalePath, toLocalizedUrl } from "@utils/i18n-seo";
 import { buildShareKitEvent } from "@utils/share-kit-event";
+import { buildShareText } from "@utils/share-kit";
 import type { AppLocale } from "types/i18n";
 import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
@@ -546,7 +547,14 @@ async function EventPageBody({
                     owner={event.owner}
                     actions={
                       <>
-                        <EventShareButton shareEvent={shareEvent} />
+                        <ShareButton
+                          target={{
+                            title: shareEvent.title,
+                            url: shareEvent.url,
+                            text: buildShareText(shareEvent),
+                          }}
+                          contentType="event"
+                        />
                         {shouldShowFavoriteButton && (
                           <FavoriteButton
                             eventSlug={event.slug}

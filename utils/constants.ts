@@ -81,6 +81,8 @@ export const PUBLISH_DRAFT_AUTOSAVE_DELAY_MS = 600;
 export const PUBLISH_RESUME_TTL_MS = 60 * 60 * 1000;
 export const PUBLISH_RESUME_STORAGE_KEY = "publish-resume-v1";
 export const PUBLISH_RESUME_PATH = "/publica?resume=1";
+export const POST_PUBLISH_UPSELL_STORAGE_PREFIX = "esdeveniments:post_publish_upsell:";
+export const POST_PUBLISH_UPSELL_TTL_MS = 60 * 60 * 1000;
 export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
 export const PUBLISH_DRAFT_MAX_COUNT = 5;
 // Sitemap chunking: places per chunk to keep response sizes manageable
@@ -435,6 +437,14 @@ export const NO_VIGNETTE_LINK_ATTRS = {
 // test/react-reveal-throttle.test.ts fails if React changes this contract.
 export const REVEAL_THROTTLE_OFF_SCRIPT =
   '(function(){var t;Object.defineProperty(window,"$RT",{get:function(){return document.hidden?t:void 0},set:function(v){t=v}})})();';
+
+// The navbar reserves room for the avatar or for the "Entra" button while
+// auth loads. This inline <head> script marks <html data-signed-in> before
+// the first paint when this browser showed the avatar last time (NavbarClient
+// stores the key; logout clears it), so the slot already has the right width.
+// It's wrong only on the first page after a login: one shift, then it's right.
+export const SIGNED_IN_HINT_KEY = "esdeveniments:signed-in";
+export const SIGNED_IN_HINT_SCRIPT = `try{if(localStorage.getItem("${SIGNED_IN_HINT_KEY}"))document.documentElement.setAttribute("data-signed-in","")}catch(e){}`;
 
 // Fair-use read limit we publish for agents. Only /mcp enforces it in code.
 export const PUBLIC_RATE_LIMIT_PER_MINUTE = 60;

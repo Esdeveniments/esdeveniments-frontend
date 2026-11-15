@@ -235,3 +235,32 @@ describe("Sponsor Checkout Idempotency-Key", () => {
     expect((await res.json()).error).toContain("Idempotency-Key");
   });
 });
+
+describe("Sponsor Checkout return URLs", () => {
+  const mockStripeRequest = vi.mocked(stripeRequest);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetOccupiedPlaceStatus.mockResolvedValue(new Map());
+  });
+
+  async function returnUrls(locale: unknown) {
+    await POST(createCheckoutRequest({ ...validBody, locale }));
+    const body = (mockStripeRequest.mock.calls[0]?.[1] as { body: URLSearchParams }).body;
+    return { success: body.get("success_url"), cancel: body.get("cancel_url") };
+  }
+
+  it.each([
+    ["en", "https://www.esdeveniments.cat/en/patrocina"],
+    ["es", "https://www.esdeveniments.cat/es/patrocina"],
+    ["ca", "https://www.esdeveniments.cat/patrocina"],
+    ["fr", "https://www.esdeveniments.cat/patrocina"],
+  ])("returns a %s buyer to %s", async (locale, base) => {
+    const { success, cancel } = await returnUrls(locale);
+
+    expect(success).toBe(
+      `${base}/upload?session_id={CHECKOUT_SESSION_ID}&place=barcelona&placeName=Barcelona`,
+    );
+    expect(cancel).toBe(`${base}/cancelled`);
+  });
+});

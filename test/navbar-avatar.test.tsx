@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { vi } from "vitest";
 import type { AuthUser } from "types/auth";
 import type { NavbarLabels } from "types/props";
+import { SIGNED_IN_HINT_KEY } from "@utils/constants";
 
 let authLoading = false;
+let authenticated = true;
 
 const authUser: AuthUser = {
   id: "ff3da805-08f2-4fd0-acd5-6372344aa339",
@@ -47,8 +49,8 @@ vi.mock("@components/ui/common/navbar/LanguageSwitcher", () => ({
 
 vi.mock("@components/hooks/useAuth", () => ({
   useAuth: () => ({
-    user: authUser,
-    isAuthenticated: true,
+    user: authenticated ? authUser : null,
+    isAuthenticated: authenticated,
     isLoading: authLoading,
     logout: vi.fn(),
   }),
@@ -75,6 +77,8 @@ const labels: NavbarLabels = {
 describe("NavbarClient avatar", () => {
   afterEach(() => {
     authLoading = false;
+    authenticated = true;
+    localStorage.clear();
   });
 
   it("keeps the logo at its aspect ratio and uses the compact layout below the nav breakpoint", () => {
@@ -107,13 +111,35 @@ describe("NavbarClient avatar", () => {
     expect(slot).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByTestId("mobile-avatar-link")).toBeNull();
     expect(screen.queryByTestId("mobile-login-link")).toBeNull();
+    // Hidden unless SIGNED_IN_HINT_SCRIPT marked <html>; see styles/globals.css.
+    for (const id of ["mobile-avatar-skeleton", "desktop-avatar-skeleton"]) {
+      const skeleton = screen.getByTestId(id);
+      expect(skeleton).toHaveClass("auth-slot-skeleton", "hidden");
+      expect(skeleton).toHaveAttribute("aria-hidden", "true");
+    }
   });
 
-  it("gives a transparent-background upload a neutral backdrop instead of the fallback button color", () => {
+  it("remembers whether this browser shows the avatar, for the next page's first paint", () => {
+    authLoading = true;
+    localStorage.setItem(SIGNED_IN_HINT_KEY, "1");
+    const { rerender } = render(<NavbarClient navigation={[]} labels={labels} />);
+    expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBe("1");
+
+    authLoading = false;
+    authenticated = false;
+    rerender(<NavbarClient navigation={[]} labels={labels} />);
+    expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBeNull();
+
+    authenticated = true;
+    rerender(<NavbarClient navigation={[]} labels={labels} />);
+    expect(localStorage.getItem(SIGNED_IN_HINT_KEY)).toBe("1");
+  });
+
+  it("keeps the avatar photo on the skeleton color while it downloads", () => {
     render(<NavbarClient navigation={[]} labels={labels} />);
     const img = screen.getByTestId("desktop-avatar-link").querySelector("img");
     expect(img).toHaveAttribute("src", authUser.avatarUrl);
-    expect(img).toHaveClass("bg-background");
+    expect(img).toHaveClass("bg-border/40");
   });
 
   it("gives the avatar toggle a visible focus ring, matching every other nav control", () => {
