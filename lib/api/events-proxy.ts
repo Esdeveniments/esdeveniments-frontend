@@ -1,9 +1,8 @@
 import { createKeyedCache } from "@lib/api/cache";
 import { PROXY_LIST_TTL_MS, PROXY_TIMEOUT_MS } from "@lib/api/proxy-list";
 import { isApiUrlConfigured } from "@utils/api-helpers";
-import { isExpiredEvent } from "@utils/event-helpers";
+import { isExpiredEventDates } from "@utils/event-helpers";
 import { isFestaMajorTitle } from "@utils/festa-major-name";
-import { parseDateFromIso } from "@utils/schema-helpers";
 import { fetchEventBySlug } from "./events-external";
 
 // An expired act stays expired, so an answer can be kept as long as the lists.
@@ -26,11 +25,9 @@ export async function getExpiredFestaActTown(
       signal: AbortSignal.timeout(PROXY_TIMEOUT_MS),
     }).catch(() => null);
     const town = event?.city?.slug;
-    // Many events have no end date: fall back to the start, as the events
-    // sitemap does.
     return town &&
       isFestaMajorTitle(event.title) &&
-      isExpiredEvent(parseDateFromIso(event.endDate || event.startDate, true))
+      isExpiredEventDates(event)
       ? town
       : null;
   });

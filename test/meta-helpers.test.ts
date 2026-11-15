@@ -1,5 +1,8 @@
 import { describe, it, expect, afterEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { generateEventMetadata, getCanonicalUrl } from "../lib/meta";
+import { EXPIRED_EVENT_NOINDEX_DAYS } from "@utils/constants";
 
 describe("meta helpers (black-box)", () => {
   it("generateEventMetadata returns expected fields", () => {
@@ -174,6 +177,22 @@ describe("meta helpers (black-box)", () => {
       const meta = generateEventMetadata(malformedEvent);
       expect(meta.robots).toEqual({ index: false, follow: true });
     });
+
+    // Imported single-day events come with endDate: null (summer-moguda,
+    // #808): the start day is then the last day.
+    it.each([
+      [61, { index: false, follow: true }],
+      [30, undefined],
+    ])("a single-day event with no end date, %i days ago", (daysAgo, robots) => {
+      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+      const startDate = new Date(Date.now() - daysAgo * 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+      const meta = generateEventMetadata({ ...baseEvent, startDate, endDate: null });
+      if (robots) expect(meta.robots).toEqual(robots);
+      else expect(meta.robots).not.toEqual({ index: false, follow: true });
+    });
   });
 
   describe("generateEventMetadata title and description", () => {
@@ -252,5 +271,13 @@ describe("meta helpers (black-box)", () => {
       );
       expect(long.description).not.toContain(suffix);
     });
+  });
+});
+
+describe("EXPIRED_EVENT_NOINDEX_DAYS", () => {
+  it("matches the SEO audit's expired events threshold", () => {
+    const script = readFileSync(join(process.cwd(), "scripts", "seo-audit.py"), "utf8");
+    const days = script.match(/^EXPIRED_EVENT_NOINDEX_DAYS = (\d+)$/m)?.[1];
+    expect(Number(days)).toBe(EXPIRED_EVENT_NOINDEX_DAYS);
   });
 });

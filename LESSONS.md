@@ -335,6 +335,25 @@ staging and production, for weeks. The event schemas in
 (`optionalText`, `requiredText`). Use them for any new free-text event field,
 and never show backend text on a page without going through a schema.
 
+## A DTO type must not promise more than its Zod schema
+
+Imported single-day events arrive with `endDate: null` (the backend column is
+nullable; only the publish form requires it). The Zod schema allowed it, but
+`EventSummaryResponseDTO` said `endDate: string` and the parsers cast
+`result.data as …DTO`, so the `null` vanished from the types. `lib/meta.ts`
+trusted the type and checked only `endDate` for its 60-day noindex, so those
+events stayed indexed forever, while the events sitemap and the festa major
+proxy had added `|| startDate` by hand and dropped them (#808). The parsers in
+`lib/validation/event.ts` now assign `result.data` to the DTO type instead
+of casting, so a type stricter than its schema fails `yarn typecheck`. That
+check found more of the same (`city`, `region`, `province`, `weather` and
+`metaTitle` could be `null` against non-null types). Don't add `as` back;
+fix the type, or turn `null` into `undefined` in the schema
+(`nullAsMissing`). The one cast left is `relatedEvents`, whose schema is
+lenient on purpose. Whether an event is past its noindex window
+comes from `isExpiredEventDates` (`utils/event-helpers.ts`), shared by the
+page, the sitemap and the proxy.
+
 ## Module-level state is not shared between a server action and a route handler
 
 `lib/cache/event-detail-cache.ts` kept its cache in a module-level `Map` and

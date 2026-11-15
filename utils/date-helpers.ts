@@ -57,7 +57,7 @@ const MAX_DATE_LABEL_RANGE_DAYS = 31;
  */
 export function formatShortDateRange(
   start: string | Date,
-  end: string | Date | undefined,
+  end: string | Date | null | undefined,
   locale: AppLocale,
 ): string {
   const startDate = new Date(start);
@@ -107,7 +107,7 @@ const formatDateForLocale = (
 /** One-line event date: `formatRange(start, end)` for a range, else "dijous, 8 d'octubre del 2026". */
 export const formatEventDateLabel = (
   startDate: string,
-  endDate: string | undefined,
+  endDate: string | null | undefined,
   locale: AppLocale,
   formatRange: (start: string, end: string) => string,
 ): string => {
@@ -123,7 +123,7 @@ export const formatEventDateLabel = (
 
 export const getFormattedDate = (
   start: string | DateObject,
-  end?: string | DateObject,
+  end?: string | DateObject | null,
   locale: AppLocale = DEFAULT_LOCALE,
 ): FormattedDateResult => {
   const localeToUse = locale ?? DEFAULT_LOCALE;
@@ -479,7 +479,7 @@ export const formatEventTimeDisplayDetail = (
  */
 export const formatCardDate = (
   start: string,
-  end?: string,
+  end?: string | null,
   locale: AppLocale = DEFAULT_LOCALE,
 ): { cardDate: string; isMultiDay: boolean; endLabel?: string; endDay?: number } => {
   const shortDays = getShortDayNames(locale);
