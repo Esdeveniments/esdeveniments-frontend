@@ -35,6 +35,7 @@ vi.mock("../lib/cache/revalidate-profile-pages", () => ({
 const getCookie = vi.mocked(authCookies.getValidAccessToken);
 const patchExternal = vi.mocked(usersExternal.patchMeProfileExternal);
 const invalidate = vi.mocked(profilePages.invalidateProfilePages);
+const readUsername = vi.mocked(profilePages.readCurrentUsername);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -66,6 +67,8 @@ describe("PATCH /api/users/me/profile", () => {
     const res = await PATCH(req as never);
     expect(res.status).toBe(400);
     expect(patchExternal).not.toHaveBeenCalled();
+    // A bad body never reaches the backend, not even to read the username.
+    expect(readUsername).not.toHaveBeenCalled();
   });
 
   it("returns 400 when Zod safeParse fails (invalid field values)", async () => {

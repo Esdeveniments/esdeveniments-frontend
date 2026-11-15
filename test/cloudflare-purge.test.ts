@@ -106,6 +106,16 @@ describe("purgeCloudflareCache", () => {
     expect(captureException).toHaveBeenCalledTimes(1);
   });
 
+  it("skips the profile purge with no usernames or no site host", async () => {
+    await expect(purgeProfilePagesFromCdn([])).resolves.toEqual({ success: true, skipped: true });
+    process.env.NEXT_PUBLIC_SITE_URL = "not a url";
+    await expect(purgeProfilePagesFromCdn(["alex91"])).resolves.toEqual({
+      success: true,
+      skipped: true,
+    });
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it("purges the profile pages of each username in one request", async () => {
     await purgeProfilePagesFromCdn(["alex_old", "alex91"]);
 

@@ -99,6 +99,8 @@ export async function purgeProfilePagesFromCdn(
   usernames: readonly string[],
 ): Promise<CloudflarePurgeOutcome> {
   const host = getCdnHost();
+  // Like buildPageCdnTags: with no host, no page carries a matching tag.
+  if (!host || usernames.length === 0) return { success: true, skipped: true };
   return purgeCloudflareCache({
     tags: usernames.map((username) => cdnTag(host, "user", username)),
   });

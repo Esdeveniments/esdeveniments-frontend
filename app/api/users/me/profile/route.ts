@@ -32,10 +32,6 @@ export async function PATCH(request: NextRequest): Promise<Response> {
     );
   }
 
-  // The username before the save: a rename must expire the old profile too.
-  // Read in parallel with the body, before the PATCH can change it.
-  const previousUsername = readCurrentUsername(accessToken);
-
   // Defense-in-depth: re-validate the payload shape on the server. The
   // client also validates (live feedback) but a bot/curl hitting the route
   // with garbage should 400 here without ever reaching the backend.
@@ -53,7 +49,8 @@ export async function PATCH(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const oldUsername = await previousUsername;
+    // The username before the save: a rename must expire the old profile too.
+    const oldUsername = await readCurrentUsername(accessToken);
     const updated = await patchMeProfileExternal(body, accessToken);
     if (!updated) {
       return NextResponse.json(
