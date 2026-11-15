@@ -21,7 +21,6 @@ import { markEventReadFailed } from "./event-outage";
 import {
   parseEventDetail,
   parsePagedEvents,
-  parseCategorizedEvents,
 } from "@lib/validation/event";
 import {
   fetchCategorizedEventsExternal,
@@ -567,9 +566,8 @@ export async function fetchCategorizedEvents(
 ): Promise<CategorizedEvents> {
   try {
     const data = await fetchCategorizedEventsExternal(maxEventsPerCategory);
-    const validated = parseCategorizedEvents(data);
-    if (validated && Object.keys(validated).length > 0) {
-      return validated;
+    if (Object.keys(data).length > 0) {
+      return data;
     }
     console.error("fetchCategorizedEvents: validation failed or empty");
   } catch (e) {

@@ -4,6 +4,17 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: AppLocale = "ca";
 
+export type NonDefaultLocale = Exclude<AppLocale, typeof DEFAULT_LOCALE>;
+
+export const NON_DEFAULT_LOCALES = SUPPORTED_LOCALES.filter(
+  (locale): locale is NonDefaultLocale => locale !== DEFAULT_LOCALE,
+);
+
+export const DEEPL_TARGET_LANG: Record<NonDefaultLocale, string> = {
+  es: "ES",
+  en: "EN",
+};
+
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 
 export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;

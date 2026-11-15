@@ -5,10 +5,7 @@ import { getProfileSlug, isVerifiedOrganization } from "@utils/user-helpers";
 import { getProfileDisplayName } from "@utils/profile-name";
 import { getEventPriceText, parseSchemaPrice } from "@utils/event-price";
 import { formatPlacePreposition } from "@utils/string-helpers";
-import {
-  getDefaultEventNoun,
-  resolveEventLocalizedText,
-} from "@utils/event-helpers";
+import { getDefaultEventNoun } from "@utils/event-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
 import { TIMEZONE_MADRID } from "@utils/constants";
 import { resolveEventWindow } from "@utils/event-window";
@@ -126,20 +123,14 @@ const buildOrganizer = (
 
 /** List entries that link to each event page (see SchemaEventListItem). */
 export const buildEventListItems = (
-  events: Pick<
-    EventSummaryResponseDTO,
-    "slug" | "title" | "titleEs" | "titleEn"
-  >[],
+  events: Pick<EventSummaryResponseDTO, "slug" | "title">[],
   locale: AppLocale = DEFAULT_LOCALE,
 ): SchemaEventListItem[] =>
   events.map((event, index) => ({
     "@type": "ListItem",
     position: index + 1,
     url: toLocalizedUrl(`/e/${event.slug}`, locale),
-    name: resolveEventLocalizedText(
-      { ...event, description: "" },
-      locale,
-    ).title,
+    name: event.title,
   }));
 
 export const generateJsonData = (
@@ -147,10 +138,10 @@ export const generateJsonData = (
   locale?: AppLocale,
 ): SchemaOrgEvent => {
   const localeToUse = locale ?? DEFAULT_LOCALE;
-  const { title: localizedTitle, description: localizedDescription } =
-    resolveEventLocalizedText(event, localeToUse);
   const {
+    title,
     slug,
+    description,
     startDate,
     endDate,
     location,
@@ -168,7 +159,7 @@ export const generateJsonData = (
   const endTime = "endTime" in event ? event.endTime : null;
   const normalizedEndTime = normalizeEndTime(startTime, endTime);
 
-  const trimmedTitle = sanitizeText(localizedTitle);
+  const trimmedTitle = sanitizeText(title);
   const sanitizedLocation = sanitizeText(location);
   const cityName = sanitizeText(city?.name);
   const regionName = sanitizeText(region?.name);
@@ -209,7 +200,7 @@ export const generateJsonData = (
 
   // Imported descriptions carry markdown (`**`, `[text](url)`) and HTML.
   const sanitizedDescription = sanitizeText(
-    localizedDescription ? descriptionToPlainText(localizedDescription) : "",
+    description ? descriptionToPlainText(description) : "",
   );
   if (!sanitizedDescription) {
     logSchemaWarning(slug, "description");

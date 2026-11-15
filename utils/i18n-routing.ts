@@ -2,6 +2,7 @@ import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   type AppLocale,
+  type NonDefaultLocale,
 } from "types/i18n";
 
 export function stripLocalePrefix(pathname: string): {
@@ -34,6 +35,16 @@ export function ensureLocale(locale: string | null | undefined): AppLocale {
     return locale as AppLocale;
   }
   return DEFAULT_LOCALE;
+}
+
+export function isNonDefaultLocale(
+  locale: string | null | undefined,
+): locale is NonDefaultLocale {
+  return Boolean(
+    locale &&
+      locale !== DEFAULT_LOCALE &&
+      SUPPORTED_LOCALES.includes(locale as AppLocale),
+  );
 }
 
 /**
