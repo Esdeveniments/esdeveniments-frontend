@@ -73,7 +73,6 @@ describe("useEvents load more (integration)", () => {
     // Mock fetch for /api/events
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      // First activation fetch should be page=0 (SWR uses 0-based indexing)
       const u = new URL(url, "http://localhost");
       const page = u.searchParams.get("page");
 
@@ -83,7 +82,7 @@ describe("useEvents load more (integration)", () => {
         pageSize: 10,
       };
 
-      // Page 0 is the SSR/fallback page (should not be requested due to fallbackData)
+      // Page 0 is the SSR/fallback page
       if (page === "0") {
         return new Response(
           JSON.stringify({
@@ -193,5 +192,45 @@ describe("useEvents load more (integration)", () => {
       },
       { timeout: 3000 }
     );
+
+    // The server already rendered page 0: only the pages after it are fetched.
+    const pages = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.map(([input]) =>
+        new URL(String(input), "http://localhost").searchParams.get("page"),
+      );
+    expect(pages).toEqual(["1", "2"]);
+  });
+
+  it("fetches nothing before the first click and never sends category=tots", async () => {
+    render(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <EventsHarness
+          place="catalunya"
+          category="tots"
+          date="cap-de-setmana"
+          initialSize={10}
+          fallbackData={[
+            createMockEvent("1", "Event 1", "e1"),
+            createMockEvent("2", "Event 2", "e2"),
+          ]}
+          serverHasMore={true}
+        />
+      </SWRConfig>
+    );
+
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText("Load"));
+    await waitFor(() => {
+      expect(screen.getByTestId("count").textContent).toBe("4");
+    });
+
+    const params = new URL(
+      String(vi.mocked(globalThis.fetch).mock.calls[0]?.[0]),
+      "http://localhost",
+    ).searchParams;
+    expect(params.has("category")).toBe(false);
+    expect(params.has("place")).toBe(false);
   });
 });
