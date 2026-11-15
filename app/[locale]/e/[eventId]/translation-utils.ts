@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import type { NonDefaultLocale } from "types/i18n";
+
 /**
  * Generates a stable hash for a given text to be used as part of a cache key.
  * Uses SHA-256 and takes the first 16 characters of the hex digest.
@@ -13,6 +15,6 @@ export function hashText(text: string): string {
 /**
  * Builds a cache key for a translation request.
  */
-export function getCacheKey(text: string, targetLang: "en" | "es") {
+export function getCacheKey(text: string, targetLang: NonDefaultLocale) {
   return `${targetLang}:${hashText(text)}`;
 }

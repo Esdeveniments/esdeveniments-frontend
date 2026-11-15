@@ -1,6 +1,5 @@
 import type { EventDetailResponseDTO } from "types/api/event";
 import { getFormattedDate, normalizeEndTime } from "@utils/date-helpers";
-import { resolveEventLocalizedText } from "@utils/event-helpers";
 import {
   capitalizeFirstLetter,
   escapeRegex,
@@ -108,8 +107,7 @@ export async function buildEventIntroText(
   labels: EventCopyLabels = defaultEventCopyLabels,
   locale: AppLocale = DEFAULT_LOCALE
 ): Promise<string> {
-  const { title: localizedTitle } = resolveEventLocalizedText(event, locale);
-  const title = toQuotedTitle(localizedTitle, locale);
+  const title = toQuotedTitle(event.title || "", locale);
   if (!title) return "";
 
   const cityName = formatPlaceName(event.city?.name || "");

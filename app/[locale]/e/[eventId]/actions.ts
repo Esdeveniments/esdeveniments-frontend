@@ -5,7 +5,9 @@ import { captureException } from "@sentry/nextjs";
 import { createKeyedCache } from "@lib/api/cache";
 import { getCachedEventBySlug } from "@lib/api/events";
 import { isValidEventSlug } from "@utils/event-helpers";
+import { isNonDefaultLocale } from "@utils/i18n-routing";
 import { createRateLimiter } from "@utils/rate-limit";
+import { DEEPL_TARGET_LANG, type NonDefaultLocale } from "types/i18n";
 import { getCacheKey } from "./translation-utils";
 
 const TRANSLATION_TTL_MS = 1000 * 60 * 60 * 24; // 24h
@@ -43,12 +45,12 @@ function getBaseUrl() {
   return DEFAULT_BASE_URL;
 }
 
-function buildRequestBody(trimmed: string, targetLang: "en" | "es") {
+function buildRequestBody(trimmed: string, targetLang: NonDefaultLocale) {
   // Catalan is a Beta language, so we need to enable beta languages.
   // DeepL expects `text` as an array of strings.
   return {
     text: [trimmed],
-    target_lang: targetLang.toUpperCase(),
+    target_lang: DEEPL_TARGET_LANG[targetLang],
     source_lang: "CA",
     enable_beta_languages: true,
   };
@@ -56,7 +58,7 @@ function buildRequestBody(trimmed: string, targetLang: "en" | "es") {
 
 async function fetchTranslationFromDeepL(args: {
   trimmed: string;
-  targetLang: "en" | "es";
+  targetLang: NonDefaultLocale;
   authKey: string;
   baseUrl: string;
 }): Promise<string> {
@@ -140,9 +142,9 @@ export async function translateDescription({
   targetLang,
 }: {
   slug: string;
-  targetLang: "en" | "es";
+  targetLang: string;
 }) {
-  if (targetLang !== "en" && targetLang !== "es") {
+  if (!isNonDefaultLocale(targetLang)) {
     return { ok: false as const, error: "unsupported-lang" as const };
   }
 
