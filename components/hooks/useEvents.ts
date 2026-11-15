@@ -46,7 +46,6 @@ export const useEvents = ({
   serverHasMore = false,
 }: UseEventsOptions): UseEventsReturn => {
   const [activationKey, setActivationKey] = useState<string | null>(null);
-  const [targetPageCount, setTargetPageCount] = useState<number | null>(null);
 
   const currentKey = `${place}|${category}|${date}|${search}|${distance}|${price}|${explicitFrom}|${explicitTo}|${lat}|${lon}|${profileSlug}|${initialSize}`;
 
@@ -133,6 +132,7 @@ export const useEvents = ({
     data: pages,
     error,
     isLoading: isSWRLoading,
+    size,
     setSize,
     mutate,
   } = useSWRInfinite<PagedResponseDTO<EventSummaryResponseDTO>>(
@@ -212,15 +212,14 @@ export const useEvents = ({
       ? !lastPage.last
       : !hasClientFilters && serverHasMore;
   const currentPageCount = pages?.length ?? 0;
-  const isLoadingMore =
-    targetPageCount !== null && currentPageCount < targetPageCount && !error;
+  // SWR keeps `size` per key, so a filter change can't leave a stale target.
+  const isLoadingMore = isActivated && currentPageCount < size && !error;
 
   const loadMore = async () => {
     if (!isActivated) {
       if (!serverHasMore) return;
       // Giving SWR a key fetches its first page (page 1).
       setActivationKey(currentKey);
-      setTargetPageCount(1);
       return;
     }
     if (!hasMore || isLoadingMore) return;
@@ -230,7 +229,6 @@ export const useEvents = ({
       return;
     }
 
-    setTargetPageCount(currentPageCount + 1);
     await setSize((prev) => prev + 1);
   };
 

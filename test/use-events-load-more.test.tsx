@@ -53,11 +53,12 @@ function createMockEvent(
 
 // Simple harness to exercise the hook without rendering app UI
 function EventsHarness(props: UseEventsOptions) {
-  const { events, hasMore, loadMore } = useEvents(props);
+  const { events, hasMore, loadMore, isLoadingMore } = useEvents(props);
   return (
     <div>
       <div data-testid="count">{events.length}</div>
       <div data-testid="hasMore">{String(hasMore)}</div>
+      <div data-testid="loadingMore">{String(isLoadingMore)}</div>
       <button onClick={loadMore}>Load</button>
     </div>
   );
@@ -200,6 +201,34 @@ describe("useEvents load more (integration)", () => {
         new URL(String(input), "http://localhost").searchParams.get("page"),
       );
     expect(pages).toEqual(["1", "2"]);
+  });
+
+  it("is not stuck loading when a filter is applied after loading more", async () => {
+    const props: UseEventsOptions = {
+      place: "barcelona",
+      category: "music",
+      date: "avui",
+      initialSize: 10,
+      fallbackData: [createMockEvent("1", "Event 1", "e1")],
+      serverHasMore: true,
+    };
+    const tree = (extra: Partial<UseEventsOptions>) => (
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <EventsHarness {...props} {...extra} />
+      </SWRConfig>
+    );
+    const { rerender } = render(tree({}));
+
+    fireEvent.click(screen.getByText("Load"));
+    await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("3"));
+    fireEvent.click(screen.getByText("Load"));
+    await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("4"));
+
+    // A search filter starts a new list at page 0 with one page.
+    rerender(tree({ search: "jazz" }));
+    await waitFor(() => expect(screen.getByTestId("count").textContent).toBe("2"));
+    expect(screen.getByTestId("hasMore").textContent).toBe("true");
+    expect(screen.getByTestId("loadingMore").textContent).toBe("false");
   });
 
   it("fetches nothing before the first click and never sends category=tots", async () => {
