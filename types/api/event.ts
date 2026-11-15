@@ -42,13 +42,25 @@ export interface LocalizedEventText {
   descriptionTranslated: boolean;
 }
 
+export interface EventSummaryTranslationDTO {
+  title?: string | null;
+}
+
+export interface EventDetailTranslationDTO extends EventSummaryTranslationDTO {
+  description?: string | null;
+}
+
+export type EventTranslationsMap<T = EventSummaryTranslationDTO> = Record<
+  string,
+  T
+>;
+
 export interface EventSummaryResponseDTO {
   id: string; // UUID
   hash: string;
   slug: string;
   title: string;
-  titleEs?: string | null;
-  titleEn?: string | null;
+  translations?: EventTranslationsMap<EventSummaryTranslationDTO>;
   isPromoted: boolean;
   url: string | null;
   description: string;
@@ -112,12 +124,12 @@ export interface PagedResponseDTO<T> {
 export type EventCreatorResponseDTO = OwnerSummaryDTO;
 
 // Detail endpoint always includes location fields
-export interface EventDetailResponseDTO extends EventSummaryResponseDTO {
+export interface EventDetailResponseDTO
+  extends Omit<EventSummaryResponseDTO, "translations"> {
   city: CitySummaryResponseDTO;
   region: RegionSummaryResponseDTO;
   province: ProvinceSummaryResponseDTO;
-  descriptionEs?: string | null;
-  descriptionEn?: string | null;
+  translations?: EventTranslationsMap<EventDetailTranslationDTO>;
   duration?: string;
   videoUrl?: string;
   tags?: string[];

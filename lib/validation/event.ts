@@ -1,8 +1,13 @@
 import { z } from "zod";
 import { withImageCacheKey } from "@utils/image-cache";
+import { canonicalizeLocaleTag } from "@utils/i18n-routing";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "types/i18n";
 import type {
   EventDetailResponseDTO,
+  EventDetailTranslationDTO,
   EventSummaryResponseDTO,
+  EventSummaryTranslationDTO,
+  EventTranslationsMap,
   PagedResponseDTO,
   CategorizedEvents,
 } from "types/api/event";
@@ -50,10 +55,87 @@ const optionalText = z
   .string()
   .nullable()
   .transform((value) => (value === null || isMissingText(value) ? null : value));
-const optionalTranslationText = optionalText.nullish().catch(null);
 const requiredText = z
   .string()
   .transform((value) => (isMissingText(value) ? "" : value));
+
+const MAX_TRANSLATION_LOCALES = 32;
+const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
+
+function cleanTranslationString(value: unknown): string | undefined {
+  if (typeof value !== "string" || isMissingText(value)) return undefined;
+  return value.trim();
+}
+
+/**
+ * Sanitizes `translations` into a plain `{}` map (React Flight RSC rejects
+ * null-prototype objects) using ECMA-402 `canonicalizeLocaleTag`. Prioritizes
+ * `SUPPORTED_LOCALES` before capping key count, strips `description` on summary
+ * items, and returns `undefined` when empty so Catalan-only events carry zero extra keys.
+ */
+function parseEventTranslationsMap(
+  raw: unknown,
+  includeDescription: false,
+): EventTranslationsMap<EventSummaryTranslationDTO> | undefined;
+function parseEventTranslationsMap(
+  raw: unknown,
+  includeDescription: true,
+): EventTranslationsMap<EventDetailTranslationDTO> | undefined;
+function parseEventTranslationsMap(
+  raw: unknown,
+  includeDescription: boolean,
+): EventTranslationsMap<EventDetailTranslationDTO> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+
+  const entries = Object.entries(raw as Record<string, unknown>)
+    .flatMap(([rawKey, val]) => {
+      const parsed = canonicalizeLocaleTag(rawKey);
+      if (!parsed || parsed.canonical === DEFAULT_LOCALE) return [];
+      const isSupported =
+        SUPPORTED_LOCALE_SET.has(parsed.canonical) ||
+        SUPPORTED_LOCALE_SET.has(parsed.language);
+      const isCanonicalCase = rawKey === parsed.canonical;
+      return [{ canonical: parsed.canonical, val, isSupported, isCanonicalCase }];
+    })
+    .sort((a, b) => {
+      if (a.isSupported !== b.isSupported) return a.isSupported ? -1 : 1;
+      if (a.isCanonicalCase !== b.isCanonicalCase) {
+        return a.isCanonicalCase ? -1 : 1;
+      }
+      return 0;
+    });
+
+  const out: EventTranslationsMap<EventDetailTranslationDTO> = {};
+  let count = 0;
+
+  for (const { canonical, val } of entries) {
+    if (Object.hasOwn(out, canonical)) continue;
+    if (count >= MAX_TRANSLATION_LOCALES) break;
+    if (!val || typeof val !== "object" || Array.isArray(val)) continue;
+
+    const record = val as Record<string, unknown>;
+    const title = cleanTranslationString(record.title);
+    const description = includeDescription
+      ? cleanTranslationString(record.description)
+      : undefined;
+    if (!title && !description) continue;
+
+    const entry: EventDetailTranslationDTO = {};
+    if (title) entry.title = title;
+    if (description) entry.description = description;
+    out[canonical] = entry;
+    count += 1;
+  }
+
+  return count > 0 ? out : undefined;
+}
+
+const summaryTranslationsSchema = z
+  .unknown()
+  .transform((val) => parseEventTranslationsMap(val, false));
+const detailTranslationsSchema = z
+  .unknown()
+  .transform((val) => parseEventTranslationsMap(val, true));
 // The backend writes unset objects as null; the DTOs mark them optional.
 const nullAsMissing = <T extends z.ZodTypeAny>(schema: T) =>
   schema.nullish().transform((value) => value ?? undefined);
@@ -72,8 +154,7 @@ const EventSummaryBaseSchema = z
     // Note: title is allowed to be empty string (backend may return empty titles)
     // Frontend code should handle empty titles defensively (see app/e/[eventId]/page.tsx)
     title: z.string(),
-    titleEs: optionalTranslationText,
-    titleEn: optionalTranslationText,
+    translations: summaryTranslationsSchema,
     // Absent on the pre-v2 backend still serving prod; default keeps it parsing.
     isPromoted: z.boolean().default(false),
     url: optionalText,
@@ -120,8 +201,7 @@ const RelatedEventSummarySchema = z
     id: z.string().optional(),
     slug: z.string(),
     title: z.string(),
-    titleEs: optionalTranslationText,
-    titleEn: optionalTranslationText,
+    translations: summaryTranslationsSchema,
     url: optionalText.optional(),
     description: optionalText.optional(),
     imageUrl: optionalText.optional(),
@@ -154,8 +234,7 @@ function sanitizeMetaField(
 }
 
 export const EventDetailResponseDTOSchema = EventDetailBaseSchema.extend({
-  descriptionEs: optionalTranslationText,
-  descriptionEn: optionalTranslationText,
+  translations: detailTranslationsSchema,
   videoUrl: z.string().optional(),
   duration: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -278,20 +357,34 @@ export function parseCategorizedEvents(
 }
 
 /**
- * Cards never render translated descriptions; strip them from passthrough
- * summary items so listing RSC and SWR payloads stay small.
+ * Cards never render translated descriptions; sanitize `translations` to title-only
+ * and delete empty `translations` keys so listing RSC and SWR payloads stay small.
  */
 function enhanceEventSummary<
-  T extends { imageUrl?: string | null; hash?: string | null; updatedAt?: string }
+  T extends {
+    imageUrl?: string | null;
+    hash?: string | null;
+    updatedAt?: string;
+    translations?: unknown;
+  }
 >(event: T): T {
   const enhanced = enhanceEventImage(event);
-  if ("descriptionEs" in enhanced || "descriptionEn" in enhanced) {
-    const rest = { ...(enhanced as Record<string, unknown>) };
-    delete rest.descriptionEs;
-    delete rest.descriptionEn;
-    return rest as T;
+  const sanitizedTranslations = parseEventTranslationsMap(
+    enhanced.translations,
+    false,
+  );
+  if (sanitizedTranslations === undefined) {
+    if ("translations" in enhanced) {
+      const rest = { ...(enhanced as Record<string, unknown>) };
+      delete rest.translations;
+      return rest as T;
+    }
+    return enhanced;
   }
-  return enhanced;
+  return {
+    ...enhanced,
+    translations: sanitizedTranslations,
+  };
 }
 
 function enhanceEventImage<
@@ -320,7 +413,12 @@ function enhanceEventImage<
 function enhanceEventDetail(
   event: EventDetailResponseDTO
 ): EventDetailResponseDTO {
-  const normalizedEvent = enhanceEventImage(event) as EventDetailResponseDTO;
+  let normalizedEvent = enhanceEventImage(event) as EventDetailResponseDTO;
+  if (normalizedEvent.translations === undefined && "translations" in normalizedEvent) {
+    const rest = { ...(normalizedEvent as unknown as Record<string, unknown>) };
+    delete rest.translations;
+    normalizedEvent = rest as unknown as EventDetailResponseDTO;
+  }
   if (!event.relatedEvents || event.relatedEvents.length === 0) {
     return normalizedEvent;
   }

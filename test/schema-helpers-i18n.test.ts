@@ -130,9 +130,13 @@ describe("schema helpers i18n", () => {
       {
         ...baseEvent,
         title: "Festa Major de Vic",
-        titleEs: "Fiesta Mayor de Vic",
         description: "Concerts a la plaça.",
-        descriptionEs: "Conciertos en la plaza.",
+        translations: {
+          es: {
+            title: "Fiesta Mayor de Vic",
+            description: "Conciertos en la plaza.",
+          },
+        },
       },
       "es",
     );

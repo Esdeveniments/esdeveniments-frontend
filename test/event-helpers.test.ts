@@ -4,6 +4,7 @@ import {
   resolveEventLocalizedText,
 } from "@utils/event-helpers";
 import {
+  parseCategorizedEvents,
   parseEventDetail,
   parsePagedEvents,
 } from "@lib/validation/event";
@@ -33,13 +34,13 @@ describe("getEventAnalyticsSlugs", () => {
   });
 });
 
-describe("resolveEventLocalizedText and event translation parsing", () => {
+describe("resolveEventLocalizedText and N-locale translations map", () => {
   const base = {
     title: "Festa Major de Cardedeu",
     description: "Concerts i cercavila al centre.",
   };
 
-  it("returns separate titleTranslated and descriptionTranslated flags across partial fields", () => {
+  it("scales to arbitrary locales (es, en, fr, regional variants) with separate field flags", () => {
     expect(resolveEventLocalizedText(base, "es")).toEqual({
       title: "Festa Major de Cardedeu",
       description: "Concerts i cercavila al centre.",
@@ -49,7 +50,16 @@ describe("resolveEventLocalizedText and event translation parsing", () => {
 
     expect(
       resolveEventLocalizedText(
-        { ...base, titleEs: "Fiesta Mayor de Cardedeu", descriptionEs: null },
+        {
+          ...base,
+          translations: {
+            es: { title: "Fiesta Mayor de Cardedeu", description: null },
+            fr: {
+              title: "Fête Majeure de Cardedeu",
+              description: "Concerts et défilé au centre.",
+            },
+          },
+        },
         "es",
       ),
     ).toEqual({
@@ -63,15 +73,41 @@ describe("resolveEventLocalizedText and event translation parsing", () => {
       resolveEventLocalizedText(
         {
           ...base,
-          titleEn: "  ",
-          descriptionEn: "Concerts and parade in the town centre.",
+          translations: {
+            fr: {
+              title: "Fête Majeure de Cardedeu",
+              description: "Concerts et défilé au centre.",
+            },
+          },
         },
-        "en",
+        "fr",
       ),
     ).toEqual({
-      title: "Festa Major de Cardedeu",
-      description: "Concerts and parade in the town centre.",
-      titleTranslated: false,
+      title: "Fête Majeure de Cardedeu",
+      description: "Concerts et défilé au centre.",
+      titleTranslated: true,
+      descriptionTranslated: true,
+    });
+
+    // Regional tag falls back to base language and can override title independently.
+    expect(
+      resolveEventLocalizedText(
+        {
+          ...base,
+          translations: {
+            en: {
+              title: "Cardedeu Festival",
+              description: "Concerts and parade in the town center.",
+            },
+            "en-gb": { title: "Cardedeu Town Festival" },
+          },
+        },
+        "en-GB",
+      ),
+    ).toEqual({
+      title: "Cardedeu Town Festival",
+      description: "Concerts and parade in the town center.",
+      titleTranslated: true,
       descriptionTranslated: true,
     });
 
@@ -79,8 +115,12 @@ describe("resolveEventLocalizedText and event translation parsing", () => {
       resolveEventLocalizedText(
         {
           ...base,
-          titleEs: "Fiesta Mayor de Cardedeu",
-          descriptionEs: "Conciertos y pasacalles en el centro.",
+          translations: {
+            es: {
+              title: "Fiesta Mayor de Cardedeu",
+              description: "Conciertos y pasacalles.",
+            },
+          },
         },
         "ca",
       ),
@@ -92,17 +132,37 @@ describe("resolveEventLocalizedText and event translation parsing", () => {
     });
   });
 
-  it("tolerates malformed or 'null' optional translations and strips relatedEvents translated descriptions", () => {
+  it("blocks unsafe keys, prioritizes supported locales, keeps plain RSC objects, and strips summary descriptions", () => {
+    const extraLocales = Object.fromEntries(
+      Array.from({ length: 40 }, (_, i) => [
+        `fr-x-${String(i).padStart(2, "0")}`,
+        { title: `Extra ${i}` },
+      ]),
+    );
+    const rawTranslations = JSON.parse(
+      JSON.stringify({
+        ...extraLocales,
+        __proto__: { title: "polluted" },
+        constructor: { title: "bad" },
+        toString: { title: "bad-tostring" },
+        valueOf: { title: "bad-valueof" },
+        ca: { title: "Ignored default locale" },
+        ES: { title: "Uppercase fallback", description: "Texto mayúscula" },
+        es: { title: "Fiesta Mayor de Cardedeu", description: "Descripción en español" },
+        "es-419": { title: "Fiesta Mayor LATAM" },
+        "zh-hans": { title: "卡德德乌节" },
+        en: { title: "null", description: "   " },
+        fr: "malformed-entry",
+      }),
+    );
+
     const detail = parseEventDetail({
       id: "evt-1",
       hash: "h1",
       slug: "festa-major-cardedeu",
       title: "Festa Major de Cardedeu",
-      titleEs: "null",
-      titleEn: 42,
       description: "Descripció en català",
-      descriptionEs: "Descripción en español",
-      descriptionEn: "   ",
+      translations: rawTranslations,
       url: null,
       imageUrl: null,
       startDate: "2099-08-15",
@@ -129,56 +189,87 @@ describe("resolveEventLocalizedText and event translation parsing", () => {
           id: "rel-1",
           slug: "concert-1",
           title: "Concert a la plaça",
-          titleEs: "Concierto en la plaza",
           description: "Text llarg",
-          descriptionEs: "Texto largo en español",
-          descriptionEn: "Long English text",
+          translations: {
+            es: {
+              title: "Concierto en la plaza",
+              description: "Texto largo que no debe viajar en tarjetas",
+            },
+          },
           startDate: "2099-08-16",
         },
       ],
     });
 
     expect(detail).not.toBeNull();
-    expect(detail?.titleEs).toBeNull();
-    expect(detail?.titleEn).toBeNull();
-    expect(detail?.descriptionEs).toBe("Descripción en español");
-    expect(detail?.descriptionEn).toBeNull();
-    expect(detail?.relatedEvents?.[0]?.titleEs).toBe("Concierto en la plaza");
-    expect(detail?.relatedEvents?.[0]?.description).toBe("");
-    expect("descriptionEs" in (detail?.relatedEvents?.[0] ?? {})).toBe(false);
-    expect("descriptionEn" in (detail?.relatedEvents?.[0] ?? {})).toBe(false);
+    // Plain object prototype required by React Flight RSC serialization.
+    expect(Object.getPrototypeOf(detail?.translations)).toBe(Object.prototype);
+    expect(Object.hasOwn(detail?.translations ?? {}, "constructor")).toBe(false);
+    expect(Object.hasOwn(detail?.translations ?? {}, "toString")).toBe(false);
+    expect(Object.hasOwn(detail?.translations ?? {}, "tostring")).toBe(false);
+    expect(Object.hasOwn(detail?.translations ?? {}, "valueOf")).toBe(false);
+    expect(Object.hasOwn(detail?.translations ?? {}, "ca")).toBe(false);
+    expect(Object.hasOwn(detail?.translations ?? {}, "en")).toBe(false);
+    // Supported locales survive even past 32 extra tags, and canonical BCP-47 casing is preserved.
+    expect(detail?.translations?.es).toEqual({
+      title: "Fiesta Mayor de Cardedeu",
+      description: "Descripción en español",
+    });
+    expect(detail?.translations?.["es-419"]).toEqual({
+      title: "Fiesta Mayor LATAM",
+    });
+    expect(detail?.translations?.["zh-Hans"]).toEqual({
+      title: "卡德德乌节",
+    });
+    // Related events keep translated title only, never description.
+    expect(detail?.relatedEvents?.[0]?.translations).toEqual({
+      es: { title: "Concierto en la plaza" },
+    });
+
+    const summaryItem = {
+      id: "sum-1",
+      hash: "hs1",
+      slug: "concert-1",
+      title: "Concert a la plaça",
+      description: "Text en català",
+      translations: {
+        fr: {
+          title: "Concert sur la place",
+          description: "Long texte français inutile sur les cartes",
+        },
+      },
+      url: null,
+      imageUrl: null,
+      startDate: "2099-08-16",
+      startTime: null,
+      endDate: null,
+      endTime: null,
+      location: "Plaça",
+      visits: 1,
+      origin: "SCRAPE",
+      categories: [],
+    };
 
     const paged = parsePagedEvents({
       currentPage: 0,
       pageSize: 10,
-      totalElements: 1,
+      totalElements: 2,
       totalPages: 1,
       last: true,
       content: [
-        {
-          id: "sum-1",
-          hash: "hs1",
-          slug: "concert-1",
-          title: "Concert a la plaça",
-          titleEs: "Concierto en la plaza",
-          description: "Text en català",
-          descriptionEs: "Texto largo en español",
-          descriptionEn: "Long English text",
-          url: null,
-          imageUrl: null,
-          startDate: "2099-08-16",
-          startTime: null,
-          endDate: null,
-          endTime: null,
-          location: "Plaça",
-          visits: 1,
-          origin: "SCRAPE",
-          categories: [],
-        },
+        summaryItem,
+        { ...summaryItem, id: "sum-2", translations: null },
       ],
     });
-    expect(paged?.content[0]?.titleEs).toBe("Concierto en la plaza");
-    expect("descriptionEs" in (paged?.content[0] ?? {})).toBe(false);
-    expect("descriptionEn" in (paged?.content[0] ?? {})).toBe(false);
+    expect(paged?.content[0]?.translations).toEqual({
+      fr: { title: "Concert sur la place" },
+    });
+    // Catalan-only summary omits the `translations` key completely.
+    expect("translations" in (paged?.content[1] ?? {})).toBe(false);
+
+    const categorized = parseCategorizedEvents({ musica: [summaryItem] });
+    expect(categorized?.musica?.[0]?.translations).toEqual({
+      fr: { title: "Concert sur la place" },
+    });
   });
 });

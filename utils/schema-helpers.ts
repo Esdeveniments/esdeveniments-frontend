@@ -126,10 +126,7 @@ const buildOrganizer = (
 
 /** List entries that link to each event page (see SchemaEventListItem). */
 export const buildEventListItems = (
-  events: Pick<
-    EventSummaryResponseDTO,
-    "slug" | "title" | "titleEs" | "titleEn"
-  >[],
+  events: Pick<EventSummaryResponseDTO, "slug" | "title" | "translations">[],
   locale: AppLocale = DEFAULT_LOCALE,
 ): SchemaEventListItem[] =>
   events.map((event, index) => ({

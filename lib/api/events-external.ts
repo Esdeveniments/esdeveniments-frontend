@@ -1,5 +1,9 @@
 import { fetchWithHmac } from "./fetch-wrapper";
-import { parseEventDetail, parsePagedEvents } from "lib/validation/event";
+import {
+  parseCategorizedEvents,
+  parseEventDetail,
+  parsePagedEvents,
+} from "lib/validation/event";
 import { buildEventsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
 import { addDaysYmd, daysBetweenYmd } from "@utils/date-helpers";
 import type {
@@ -134,7 +138,7 @@ export async function fetchCategorizedEventsExternal(
       console.error(`fetchCategorizedEventsExternal: HTTP ${res.status}`);
       return {};
     }
-    return (await res.json()) as CategorizedEvents;
+    return parseCategorizedEvents(await res.json()) ?? {};
   } catch (error) {
     console.error("fetchCategorizedEventsExternal: failed", error);
     return {};

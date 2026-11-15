@@ -217,20 +217,25 @@ Every bet below was checked against `que-fer`, `esdeveniments-backend`, and
   Socrata coverage. Hold scheduled DIBA backfills or exclude/snapshot the 30
   test towns until the December readout finishes.
 
-### Bet 3: Price pass-through now; `VENUE` coordinates and `ES`/`EN` text after schema test
+### Bet 3: Price pass-through now; `VENUE` coordinates and N-locale `translations` map next
 
 - **Already in code:** `que-fer` supports `locationPrecision === "VENUE"`
-  (`utils/event-map.ts`) and free-text `price` + JSON-LD `offers`
-  (`utils/event-price.ts`). `Event.java` and `CreateEventRequestDTO.java` already
-  store `price` (`VARCHAR(500)`).
+  (`utils/event-map.ts`), free-text `price` + JSON-LD `offers`
+  (`utils/event-price.ts`), localized `/es/e/*` and `/en/e/*` metadata and
+  schema fallbacks, and an N-locale `translations` read map
+  (`resolveEventLocalizedText` in `utils/event-helpers.ts`). `Event.java` and
+  `CreateEventRequestDTO.java` already store `price` (`VARCHAR(500)`).
 - **Missing in backend (`esdeveniments-backend`):** `Event.java` has **no**
-  `latitude`, `longitude`, `locationPrecision`, `titleEs`, `titleEn`,
-  `descriptionEs`, or `descriptionEn` columns, and `EventSummaryResponseDTO.java`
-  omits both `price` and coordinates. `BucketStorageServiceImpl` accepts JPEG
-  and PNG only (which is fine for Socrata and DIBA).
-- **80/20 split:** ship normalised `price` pass-through in `cultural-agenda-sync`
-  immediately (0 backend changes). Defer `Event.java` coordinate and translation
-  columns until a small Spanish-translation SEO pilot validates lift.
+  `latitude`, `longitude`, or `locationPrecision` columns yet, and the
+  normalized `event_translation` child table (`Esdeveniments/esdeveniments-backend#117`)
+  is pending implementation; `EventSummaryResponseDTO.java` also omits `price`
+  and coordinates. `BucketStorageServiceImpl` accepts JPEG and PNG only (which
+  is fine for Socrata and DIBA).
+- **80/20 split:** normalised `price` pass-through in `cultural-agenda-sync`
+  and `/es/` + `/en/` metadata localization in `que-fer` are live (0 backend
+  changes). Implement `Esdeveniments/esdeveniments-backend#117` next so
+  reviewed `es`, `en`, and future `fr`+ event translations flow through a
+  single `translations[locale]` map without schema churn.
 
 ### Bet 4: Evergreen URLs for recurring fairs and venues (parked after Bets 1 and 2)
 

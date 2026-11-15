@@ -6,6 +6,7 @@ import { sanitizeHtmlClient } from "@utils/sanitize";
 import { captureException } from "@sentry/nextjs";
 import { translateDescription } from "../actions";
 import { processDescription } from "@utils/text-processing";
+import { isNonDefaultLocale } from "@utils/i18n-routing";
 import type { AppLocale } from "types/i18n";
 import Button from "@components/ui/common/button";
 
@@ -26,18 +27,20 @@ export default function TranslateDescription({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showTranslated, setShowTranslated] = useState(false);
 
-  const targetLang = locale === "es" ? "es" : locale === "en" ? "en" : null;
+  const targetLang = isNonDefaultLocale(locale) ? locale : null;
   const originalHtml = useMemo(() => {
     const processed = processDescription(description || "");
     return sanitizeHtmlClient(processed);
   }, [description]);
 
   if (!targetLang) {
-    // Component only shows for Spanish or English locales (description is in Catalan)
+    // Component only shows on non-default locales when description is in Catalan
     return null;
   }
 
-  const targetLabel = targetLang === "en" ? t("target.en") : t("target.es");
+  const targetLabel = t.has(`target.${targetLang}`)
+    ? t(`target.${targetLang}`)
+    : targetLang.toUpperCase();
 
   const swapHtmlWithFade = (nextHtml: string) => {
     const el = typeof document !== "undefined" ? document.getElementById(targetId) : null;

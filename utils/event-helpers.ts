@@ -7,11 +7,14 @@ import {
 } from "@utils/event-window";
 import { EXPIRED_EVENT_NOINDEX_DAYS, MS_PER_DAY } from "@utils/constants";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
+import { canonicalizeLocaleTag } from "@utils/i18n-routing";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import localeLabels from "../i18n/locale-labels.generated.json";
 import type {
   EventDetailResponseDTO,
+  EventDetailTranslationDTO,
   EventSummaryResponseDTO,
+  EventTranslationsMap,
   ListEvent,
   LocalizedEventText,
 } from "types/api/event";
@@ -108,27 +111,38 @@ export function isValidEventSlug(slug: string): boolean {
  * still Catalan. Keep source `event.title` for classification and series matching.
  */
 export function resolveEventLocalizedText(
-  event: Pick<
-    EventSummaryResponseDTO,
-    "title" | "description" | "titleEs" | "titleEn"
-  > & {
-    descriptionEs?: string | null;
-    descriptionEn?: string | null;
+  event: Pick<EventSummaryResponseDTO, "title" | "description"> & {
+    translations?: EventTranslationsMap<EventDetailTranslationDTO> | null;
   },
-  locale: AppLocale = DEFAULT_LOCALE,
+  locale: string = DEFAULT_LOCALE,
 ): LocalizedEventText {
-  const rawTitle =
-    locale === "es"
-      ? event.titleEs?.trim()
-      : locale === "en"
-        ? event.titleEn?.trim()
-        : undefined;
+  const parsed = canonicalizeLocaleTag(locale);
+  if (!parsed || parsed.canonical === DEFAULT_LOCALE) {
+    return {
+      title: event.title || "",
+      description: event.description || "",
+      titleTranslated: false,
+      descriptionTranslated: false,
+    };
+  }
+
+  const map = event.translations;
+  const lookup = (key: string) => {
+    if (!map) return undefined;
+    if (Object.hasOwn(map, key)) return map[key];
+    const lower = key.toLowerCase();
+    return Object.hasOwn(map, lower) ? map[lower] : undefined;
+  };
+  const exact = lookup(parsed.canonical);
+  const fallbackBase =
+    parsed.language !== parsed.canonical && parsed.language !== DEFAULT_LOCALE
+      ? lookup(parsed.language)
+      : undefined;
+
+  const rawTitle = exact?.title?.trim() || fallbackBase?.title?.trim();
   const rawDescription =
-    locale === "es"
-      ? event.descriptionEs?.trim()
-      : locale === "en"
-        ? event.descriptionEn?.trim()
-        : undefined;
+    exact?.description?.trim() || fallbackBase?.description?.trim();
+
   return {
     title: rawTitle || event.title || "",
     description: rawDescription || event.description || "",

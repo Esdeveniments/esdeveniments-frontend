@@ -297,8 +297,12 @@ describe("meta helpers (black-box)", () => {
       const translatedEn = generateEventMetadata(
         {
           ...longCatalan,
-          titleEn: "6th Castaween Festival",
-          descriptionEn: "Live music, workshops and local food in La Llagosta.",
+          translations: {
+            en: {
+              title: "6th Castaween Festival",
+              description: "Live music, workshops and local food in La Llagosta.",
+            },
+          },
         },
         undefined,
         undefined,

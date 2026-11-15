@@ -2,6 +2,7 @@ import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   type AppLocale,
+  type NonDefaultLocale,
 } from "types/i18n";
 
 export function stripLocalePrefix(pathname: string): {
@@ -34,6 +35,38 @@ export function ensureLocale(locale: string | null | undefined): AppLocale {
     return locale as AppLocale;
   }
   return DEFAULT_LOCALE;
+}
+
+export function isNonDefaultLocale(
+  locale: string | null | undefined,
+): locale is NonDefaultLocale {
+  return Boolean(
+    locale &&
+      locale !== DEFAULT_LOCALE &&
+      SUPPORTED_LOCALES.includes(locale as AppLocale),
+  );
+}
+
+/**
+ * Canonicalizes a BCP-47 locale tag with standard ECMA-402 `Intl.getCanonicalLocales`
+ * and `Intl.Locale` (`"en-gb"` -> `"en-GB"`, `"zh-hans"` -> `"zh-Hans"`).
+ * Restricts the primary language subtag to ISO 639 (2-3 letters), rejecting
+ * prototype words like `"toString"`, `"valueOf"`, or `"constructor"`.
+ */
+export function canonicalizeLocaleTag(
+  raw: string | null | undefined,
+): { canonical: string; language: string } | null {
+  const trimmed = raw?.trim();
+  if (!trimmed || trimmed.length > 35) return null;
+  try {
+    const [canonical] = Intl.getCanonicalLocales(trimmed);
+    if (!canonical) return null;
+    const { language } = new Intl.Locale(canonical);
+    if (!language || language.length < 2 || language.length > 3) return null;
+    return { canonical, language };
+  } catch {
+    return null;
+  }
 }
 
 /**
