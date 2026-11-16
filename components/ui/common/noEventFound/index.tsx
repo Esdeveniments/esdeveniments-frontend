@@ -3,8 +3,7 @@ import type { JSX } from "react";
 import Image from "next/image";
 import eventNotFound from "@public/static/images/error_404_page_not_found.png";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { getLocaleSafely } from "@utils/i18n-seo";
-import { DEFAULT_LOCALE } from "types/i18n";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 
 const NoEventFound = async (): Promise<JSX.Element> => {
   const locale = await getLocaleSafely();
@@ -12,14 +11,7 @@ const NoEventFound = async (): Promise<JSX.Element> => {
     locale,
     namespace: "Components.NoEventFound",
   });
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const withLocale = (path: string) => withLocalePath(path, locale);
   const description = t.rich("description", {
     search: (chunks) => (
       <PressableAnchor

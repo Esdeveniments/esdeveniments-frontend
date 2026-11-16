@@ -63,7 +63,8 @@ async function createStripeCheckoutSession(
   }
 
   // Locale for checkout page (Stripe doesn't support Catalan, use Spanish as fallback)
-  const stripeLocale = ["ca", "es"].includes(locale) ? "es" : "en";
+  const stripeLocale =
+    locale === "fr" ? "fr" : ["ca", "es"].includes(locale) ? "es" : "en";
   params.append("locale", stripeLocale);
 
   // Allow promotion codes (coupon input on checkout page)

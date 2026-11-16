@@ -12,7 +12,7 @@ import { formatPlacePreposition } from "@utils/helpers";
 import { splitNotFoundText } from "@utils/notFoundMessaging";
 import { applyLocaleToCanonical } from "@utils/i18n-seo";
 import { DEFAULT_FILTER_VALUE, getMonthNames } from "@utils/constants";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { DEFAULT_LOCALE, localeToOgLocale, type AppLocale } from "types/i18n";
 import { getDateRangeFromByDate } from "@lib/dates";
 import { formatShortDateRange } from "@utils/date-helpers";
 import type { CategorySeoSlug } from "types/common";
@@ -102,12 +102,7 @@ export async function generatePagesData({
 
   // Used only for parsing numeric month/year parts deterministically.
   // We force Latin digits to keep Number(...) stable across locales.
-  const intlNumberLocale =
-    resolvedLocale === "ca"
-      ? "ca-ES-u-nu-latn"
-      : resolvedLocale === "es"
-      ? "es-ES-u-nu-latn"
-      : "en-GB-u-nu-latn";
+  const intlNumberLocale = `${localeToOgLocale[resolvedLocale]}-u-nu-latn`;
   const effectiveYear =
     currentYear ??
     (() => {

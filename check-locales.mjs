@@ -1,7 +1,9 @@
 import * as cheerio from "cheerio";
 
 const DEFAULT_LOCALE = "ca";
-const locales = ["ca", "es", "en"];
+const locales = ["ca", "es", "en", "fr"];
+const doubleLocalePattern = new RegExp(`\\/(${locales.join("|")})\\/\\1(\\/|$)`);
+const localePrefixPattern = new RegExp(`^\\/(${locales.join("|")})(\\/|$)`);
 
 // Configurable base URL (supports localhost, staging, preview)
 const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
@@ -48,15 +50,14 @@ function extractJsonLdNodes(data) {
 }
 
 function assertNoDoubleLocale(pathname, errors) {
-  // Guard against /es/es/... (or en/en, ca/ca)
-  if (/\/(ca|es|en)\/\1(\/|$)/.test(pathname)) {
+  if (doubleLocalePattern.test(pathname)) {
     errors.push(`double-locale-prefix in URL path: ${pathname}`);
   }
 }
 
 function assertLocalePrefix(pathname, locale, errors) {
   if (locale === DEFAULT_LOCALE) {
-    if (/^\/(es|en)(\/|$)/.test(pathname) || /^\/ca(\/|$)/.test(pathname)) {
+    if (localePrefixPattern.test(pathname)) {
       errors.push(`default locale should not be prefixed: ${pathname}`);
     }
     return;
@@ -124,7 +125,7 @@ async function check() {
           alternates[hreflang] = normalizeUrl(href, url);
         });
 
-        const required = ["ca", "es", "en", "x-default"];
+        const required = [...locales, "x-default"];
         for (const key of required) {
           if (!alternates[key]) {
             errors.push(`missing alternate hreflang=${key}`);
@@ -147,7 +148,7 @@ async function check() {
               // must point to default locale
               assertLocalePrefix(u.pathname, DEFAULT_LOCALE, errors);
             }
-            if (hreflang === "ca" || hreflang === "es" || hreflang === "en") {
+            if (locales.includes(hreflang)) {
               assertLocalePrefix(u.pathname, hreflang, errors);
             }
           } catch {

@@ -8,6 +8,7 @@ import type {
   PressableLinkVariant,
 } from "types/ui";
 import { DEFAULT_LOCALE } from "types/i18n";
+import { ensureLocale, localizePath } from "@utils/i18n-routing";
 import { NO_VIGNETTE_LINK_ATTRS } from "@utils/constants";
 
 const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
@@ -34,19 +35,11 @@ export function LocalizedPressableAnchor({
   disableNavigationSignal = false,
   ...props
 }: LocalizedPressableAnchorProps) {
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const resolvedLocale = ensureLocale(locale);
 
   const normalizeHref = (hrefValue: PressableAnchorProps["href"]) => {
     if (typeof hrefValue === "string") {
-      if (hrefValue.startsWith("http")) return hrefValue;
-      return withLocale(hrefValue);
+      return localizePath(hrefValue, resolvedLocale);
     }
 
     if (
@@ -56,7 +49,7 @@ export function LocalizedPressableAnchor({
     ) {
       return {
         ...hrefValue,
-        pathname: withLocale(hrefValue.pathname),
+        pathname: localizePath(hrefValue.pathname, resolvedLocale),
       };
     }
 

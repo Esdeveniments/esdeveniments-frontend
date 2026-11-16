@@ -11,7 +11,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LOCALES = ["ca", "es", "en"];
+const LOCALES = ["ca", "es", "en", "fr"];
 const UTILS_KEYS = [
   "EventCopy",
   "EventStatus",

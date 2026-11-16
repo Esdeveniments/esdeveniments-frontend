@@ -4,6 +4,7 @@ import format from "icu-minify/format";
 import ca from "../messages/ca.json";
 import es from "../messages/es.json";
 import en from "../messages/en.json";
+import fr from "../messages/fr.json";
 
 // Formats with icu-minify, the precompiler next.config.js uses (precompile: true).
 // The test/mocks next-intl stub doesn't run ICU `select`.
@@ -26,9 +27,11 @@ describe("CardContent.until", () => {
     expect(until(t, "ca", 30, "30 nov.")).toBe("Fins al 30 nov.");
   });
 
-  it("formats es and en", () => {
+  it("formats es, en, and fr", () => {
     expect(until(es.Components.CardContent.until, "es", 1, "1 dic.")).toBe("Hasta el 1 dic.");
     expect(until(es.Components.CardContent.until, "es", 30, "30 nov.")).toBe("Hasta el 30 nov.");
     expect(until(en.Components.CardContent.until, "en", 30, "Nov 30")).toBe("Until Nov 30");
+    expect(until(fr.Components.CardContent.until, "fr", 1, "1er déc.")).toBe("Jusqu’au 1er déc.");
+    expect(until(fr.Components.CardContent.until, "fr", 30, "30 nov.")).toBe("Jusqu’au 30 nov.");
   });
 });

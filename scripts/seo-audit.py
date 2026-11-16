@@ -118,8 +118,8 @@ CWV_THRESHOLDS = {
 }
 
 # i18n locale prefixes for URL parsing
-I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/e/", "ca")]
-LOCALE_PATH_PREFIXES = ["/es/", "/en/"]
+I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/fr/e/", "fr"), ("/e/", "ca")]
+LOCALE_PATH_PREFIXES = ["/es/", "/en/", "/fr/"]
 
 TODAY = datetime.now(timezone.utc)
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")

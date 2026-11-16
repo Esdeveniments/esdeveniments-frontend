@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSiteUrlFromRequest } from "@config/index";
 import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
+import { SUPPORTED_LOCALES } from "types/i18n";
 
 /**
  * Agent mode view — structured, machine-readable homepage for AI agents.
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     type: "api",
     category: "Events & Culture",
     region: "Catalonia, Spain",
-    languages: ["ca", "es", "en"],
+    languages: [...SUPPORTED_LOCALES],
     whenToUse: {
       use: [
         "Find cultural events (concerts, theatre, exhibitions, festivals) happening in Catalonia",

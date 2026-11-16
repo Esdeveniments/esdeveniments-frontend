@@ -10,6 +10,7 @@ describe("buildAlternateLinks", () => {
     expect(alternates["ca"]).toMatch(/\/foo\/bar$/);
     expect(alternates["es"]).toMatch(/\/es\/foo\/bar$/);
     expect(alternates["en"]).toMatch(/\/en\/foo\/bar$/);
+    expect(alternates["fr"]).toMatch(/\/fr\/foo\/bar$/);
     expect(alternates["x-default"]).toBe(alternates["ca"]);
   });
 
@@ -19,16 +20,18 @@ describe("buildAlternateLinks", () => {
     expect(alternates["ca"]).toMatch(/\/baz$/);
     expect(alternates["es"]).toMatch(/\/es\/baz$/);
     expect(alternates["en"]).toMatch(/\/en\/baz$/);
+    expect(alternates["fr"]).toMatch(/\/fr\/baz$/);
   });
 });
 
 describe("localizePath and withLocalePath", () => {
-  it("prefixes town slugs that begin with locale letters (/esparreguera, /encamp)", () => {
+  it("prefixes town slugs that begin with locale letters (/esparreguera, /encamp, /freginals)", () => {
     expect(localizePath("/esparreguera", "es")).toBe("/es/esparreguera");
     expect(withLocalePath("/esplugues-de-llobregat", "es")).toBe(
       "/es/esplugues-de-llobregat",
     );
     expect(localizePath("/encamp", "en")).toBe("/en/encamp");
+    expect(localizePath("/freginals", "fr")).toBe("/fr/freginals");
   });
 
   it("preserves already-localized paths without double-prefixing", () => {

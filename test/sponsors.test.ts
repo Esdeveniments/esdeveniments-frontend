@@ -1058,9 +1058,18 @@ describe("Checkout Helpers", () => {
       );
     });
 
-    test("falls back to Catalan for unknown locale", () => {
+    test("sets correct product name for French locale", () => {
       const params = new URLSearchParams();
       buildLineItemParams(params, "7days", "town", "fr");
+
+      expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
+        "Sponsoring 7 jours",
+      );
+    });
+
+    test("falls back to Catalan for unknown locale", () => {
+      const params = new URLSearchParams();
+      buildLineItemParams(params, "7days", "town", "de");
 
       expect(params.get("line_items[0][price_data][product_data][name]")).toBe(
         "Patrocini 7 dies",
@@ -1300,7 +1309,8 @@ describe("Checkout Helpers", () => {
       expect(message("ca")).toContain("](https://www.esdeveniments.cat/termes-servei)");
       expect(message("es")).toContain("](https://www.esdeveniments.cat/es/termes-servei)");
       expect(message("en")).toContain("](https://www.esdeveniments.cat/en/termes-servei)");
-      expect(message("fr")).toBe(message("ca"));
+      expect(message("fr")).toContain("](https://www.esdeveniments.cat/fr/termes-servei)");
+      expect(message("de")).toBe(message("ca"));
     });
   });
 });

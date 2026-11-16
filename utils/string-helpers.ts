@@ -169,7 +169,7 @@ export function matchSearchToPlace(
  * Catalan grammar helpers
  * ======================================================= */
 
-const VOWEL_OR_H = /^[aeiouàáèéíïòóúüh]/i;
+const VOWEL_OR_H = /^[aeiouàáâèéêëíîïòóôúûüÿœæh]/i;
 // No elision before a semivowel i/u ("de iogurt", "de Huelva", "el iaio").
 const SEMIVOWEL_START = /^h?(?:i[aeouàèéòóú]|u[aeoàèéòó])/i;
 const PLACE_PARTICLES = new Set(
@@ -330,6 +330,7 @@ const PLACE_RELATION_PREPOSITIONS: Record<
 > = {
   es: { in: "en", of: "de", from: "desde" },
   en: { in: "in", of: "of", from: "from" },
+  fr: { in: "à", of: "de", from: "depuis" },
 };
 
 /** "El Masnou" → { article: "el", rest: "Masnou" }; "L'Escala" → { article: "l", rest: "Escala" }. */
@@ -498,10 +499,10 @@ export function contractCatalanPlaceInText(
 
 /**
  * Locale-aware preposition + place, split so UI can style the parts apart.
- * relation "in": ca a/al/a la…, es "en", en "in"
- * relation "of": ca de/del/d'…, es "de", en "of"
- * relation "from": ca des de/des del…, es "desde", en "from"
- * Spanish keeps "El Masnou" uncontracted: the article is part of the official name.
+ * relation "in": ca a/al/a la…, es "en", en "in", fr "à" ("en" for Catalunya)
+ * relation "of": ca de/del/d'…, es "de", en "of", fr "de"/"d'"
+ * relation "from": ca des de/des del…, es "desde", en "from", fr "depuis"
+ * Spanish and French keep "El Masnou" uncontracted: the article is part of the official name.
  */
 export function formatPlacePrepositionParts(
   name: string,
@@ -523,9 +524,22 @@ export function formatPlacePrepositionParts(
   }
 
   const raw = (name || "").trim();
+  const place = lowercase ? raw.toLowerCase() : raw;
+  if (locale === "fr") {
+    if (relation === "in" && raw.toLowerCase() === "catalunya") {
+      return { preposition: "en", place };
+    }
+    if (
+      relation === "of" &&
+      !/^(?:el|els)\s+/i.test(raw) &&
+      startsWithVowelOrH(place)
+    ) {
+      return { preposition: "d'", place };
+    }
+  }
   return {
     preposition: PLACE_RELATION_PREPOSITIONS[locale][relation],
-    place: lowercase ? raw.toLowerCase() : raw,
+    place,
   };
 }
 
@@ -571,6 +585,7 @@ const NAME_PREPOSITIONS: Record<
 > = {
   es: { of: "de", by: "por" },
   en: { of: "of", by: "by" },
+  fr: { of: "de", by: "par" },
 };
 
 /**
@@ -587,6 +602,14 @@ export function formatNamePrepositionParts(
 ): PlacePhraseParts {
   const text = (name || "").trim();
   if (locale !== "ca") {
+    if (
+      locale === "fr" &&
+      relation === "of" &&
+      !/^(?:el|els)\s+/i.test(text) &&
+      startsWithVowelOrH(text)
+    ) {
+      return { preposition: "d'", place: text };
+    }
     return { preposition: NAME_PREPOSITIONS[locale][relation], place: text };
   }
 

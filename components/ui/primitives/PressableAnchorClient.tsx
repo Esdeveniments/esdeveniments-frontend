@@ -6,6 +6,7 @@ import { useLocale } from "next-intl";
 
 import type { PressableAnchorProps, PressableLinkVariant } from "types/ui";
 import { DEFAULT_LOCALE } from "types/i18n";
+import { ensureLocale, localizePath } from "@utils/i18n-routing";
 import { NO_VIGNETTE_LINK_ATTRS } from "@utils/constants";
 
 const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
@@ -23,20 +24,11 @@ export default function PressableAnchorClient({
   disableNavigationSignal = false,
   ...props
 }: PressableAnchorProps) {
-  const locale = useLocale?.() || DEFAULT_LOCALE;
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const resolvedLocale = ensureLocale(useLocale?.() || DEFAULT_LOCALE);
 
   const normalizeHref = (hrefValue: PressableAnchorProps["href"]) => {
     if (typeof hrefValue === "string") {
-      if (hrefValue.startsWith("http")) return hrefValue;
-      return withLocale(hrefValue);
+      return localizePath(hrefValue, resolvedLocale);
     }
 
     if (
@@ -46,7 +38,7 @@ export default function PressableAnchorClient({
     ) {
       return {
         ...hrefValue,
-        pathname: withLocale(hrefValue.pathname),
+        pathname: localizePath(hrefValue.pathname, resolvedLocale),
       };
     }
 

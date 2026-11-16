@@ -618,12 +618,14 @@
       "languages": {
         "ca": "Catalan",
         "es": "Spanish",
-        "en": "English"
+        "en": "English",
+        "fr": "French"
       },
       "languagesShort": {
         "ca": "Cat",
         "es": "Esp",
-        "en": "Eng"
+        "en": "Eng",
+        "fr": "Fra"
       },
       "mobilePublishLabel": "Publish",
       "auth": {
@@ -1153,7 +1155,8 @@
       "translateError": "We couldn't translate right now. Please try again.",
       "target": {
         "en": "English",
-        "es": "Spanish"
+        "es": "Spanish",
+        "fr": "French"
       }
     },
     "HorizontalScroll": {

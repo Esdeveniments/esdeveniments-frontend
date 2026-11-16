@@ -6,6 +6,7 @@ const forSearchTranslations: Record<AppLocale, string> = {
   ca: "per a la cerca",
   es: "para la búsqueda",
   en: "for the search",
+  fr: "pour la recherche",
 };
 
 /**

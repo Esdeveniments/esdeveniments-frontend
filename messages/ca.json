@@ -618,12 +618,14 @@
       "languages": {
         "ca": "Català",
         "es": "Castellà",
-        "en": "Anglès"
+        "en": "Anglès",
+        "fr": "Francès"
       },
       "languagesShort": {
         "ca": "Cat",
         "es": "Esp",
-        "en": "Eng"
+        "en": "Eng",
+        "fr": "Fra"
       },
       "mobilePublishLabel": "Publica",
       "auth": {
@@ -1168,7 +1170,8 @@
       "translateError": "No hem pogut traduir ara mateix. Torna-ho a provar.",
       "target": {
         "en": "anglès",
-        "es": "castellà"
+        "es": "castellà",
+        "fr": "francès"
       }
     },
     "HorizontalScroll": {

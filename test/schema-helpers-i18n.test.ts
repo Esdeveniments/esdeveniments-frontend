@@ -125,5 +125,9 @@ describe("schema helpers i18n", () => {
     const emptyEn = generateJsonData(baseEvent, "en");
     expect(emptyEn.name).toBe("Event in Vic");
     expect(emptyEn.description).toBe("Cultural event in Vic");
+
+    const emptyFr = generateJsonData(baseEvent, "fr");
+    expect(emptyFr.name).toBe("Événement à Vic");
+    expect(emptyFr.description).toBe("Événement culturel à Vic");
   });
 });

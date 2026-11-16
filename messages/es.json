@@ -618,12 +618,14 @@
       "languages": {
         "ca": "Catalán",
         "es": "Castellano",
-        "en": "Inglés"
+        "en": "Inglés",
+        "fr": "Francés"
       },
       "languagesShort": {
         "ca": "Cat",
         "es": "Esp",
-        "en": "Eng"
+        "en": "Eng",
+        "fr": "Fra"
       },
       "mobilePublishLabel": "Publicar",
       "auth": {
@@ -1153,7 +1155,8 @@
       "translateError": "No hemos podido traducir ahora mismo. Inténtalo de nuevo.",
       "target": {
         "en": "inglés",
-        "es": "castellano"
+        "es": "castellano",
+        "fr": "francés"
       }
     },
     "HorizontalScroll": {

@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SUPPORTED_LOCALES = ["ca", "es", "en"];
+const SUPPORTED_LOCALES = ["ca", "es", "en", "fr"];
 const DEFAULT_LOCALE = "ca";
 const MESSAGES_DIR = path.join(__dirname, "..", "messages");
 

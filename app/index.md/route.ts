@@ -52,7 +52,7 @@ GET ${url}/api/events?place=catalunya&term=jazz&pageSize=5
 ## Key Features
 
 - **900+ municipalities** covered across Catalonia
-- **Multilingual**: Catalan, Spanish, English
+- **Multilingual**: Catalan, Spanish, English, French
 - **Free API**: No authentication for read endpoints
 - **Rate limit**: ${PUBLIC_RATE_LIMIT_TEXT}
 - **Categories**: concerts, theatre, exhibitions, festivals, family, workshops, and more

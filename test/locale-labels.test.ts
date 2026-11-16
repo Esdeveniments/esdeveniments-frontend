@@ -12,6 +12,7 @@ import ts from "typescript";
 import ca from "../messages/ca.json";
 import localeLabels from "../i18n/locale-labels.generated.json";
 import localeLists from "../i18n/locale-lists.json";
+import { SUPPORTED_LOCALES } from "../types/i18n";
 
 const STALE = "stale: run `yarn i18n:labels`";
 const SKIP_DIRS = new Set(["node_modules", "test", "e2e", "scripts", "public"]);
@@ -61,7 +62,7 @@ function importsMessagesJson(file: string): boolean {
 
 describe("i18n/locale-labels.generated.json", () => {
   it("matches the constants lists in every locale", () => {
-    for (const locale of ["ca", "es", "en"] as const) {
+    for (const locale of SUPPORTED_LOCALES) {
       expect(localeLabels.constants[locale], STALE).toEqual(
         localeLists.constants[locale],
       );

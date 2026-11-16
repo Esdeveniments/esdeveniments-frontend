@@ -52,7 +52,7 @@ export async function GET(
     const serverCard = {
       name: "esdeveniments-cat",
       description:
-        "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en) event listings by place, date, and category.",
+        "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en/fr) event listings by place, date, and category.",
       version: "1.0.0",
       url: `${url}/mcp`,
       transport: "streamable-http",
@@ -109,7 +109,7 @@ export async function GET(
     const mcpDiscovery = {
       name: "esdeveniments-cat",
       description:
-        "Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (ca/es/en) events platform with public REST API.",
+        "Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (ca/es/en/fr) events platform with public REST API.",
       version: "1.0.0",
       url: `${url}/mcp`,
       transport: "streamable-http",
@@ -166,7 +166,7 @@ export async function GET(
     const agentCard = {
       name: "Esdeveniments.cat",
       description:
-        "Cultural events discovery agent for Catalonia (Spain). Provides event listings, news, and place information in Catalan, Spanish, and English.",
+        "Cultural events discovery agent for Catalonia (Spain). Provides event listings, news, and place information in Catalan, Spanish, English, and French.",
       url: url,
       provider: {
         organization: "Esdeveniments.cat",

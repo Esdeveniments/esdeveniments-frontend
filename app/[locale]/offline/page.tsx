@@ -5,7 +5,8 @@ import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
+import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await rootLocale()) as AppLocale;
@@ -26,16 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function OfflinePage() {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.Offline" });
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
-    path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
+    path.startsWith("http") ? path : toLocalizedUrl(path, locale);
   const offlineSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",

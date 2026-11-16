@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { getCacheControlHeader } from "@utils/cache";
 import { isProductionHost } from "@utils/production-host";
 import { siteUrl } from "@config/index";
+import { SUPPORTED_LOCALES } from "types/i18n";
 
 /**
  * robots.txt route handler with explicit cache control
@@ -69,9 +70,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     "/e2e/",
     "/offline/",
     "/iniciar-sessio",
-    "/ca/iniciar-sessio",
-    "/es/iniciar-sessio",
-    "/en/iniciar-sessio",
+    ...SUPPORTED_LOCALES.map((locale) => `/${locale}/iniciar-sessio`),
   ];
 
   const robotsConfig: MetadataRoute.Robots = {

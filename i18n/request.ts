@@ -20,6 +20,10 @@ const messagesLoaders: Record<AppLocale, () => Promise<AbstractIntlMessages>> = 
     import("../messages/en.json").then(
       (mod) => mod.default as unknown as AbstractIntlMessages
     ),
+  fr: () =>
+    import("../messages/fr.json").then(
+      (mod) => mod.default as unknown as AbstractIntlMessages
+    ),
 };
 
 export default getRequestConfig(async ({ requestLocale }) => {

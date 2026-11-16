@@ -12,12 +12,13 @@ import { prepareCardContentData } from "@components/ui/common/cardContent/prepar
 import CardContentClient from "@components/ui/common/cardContent/CardContentClient";
 import { CATEGORY_CONFIG } from "@config/categories";
 import { renderWithProviders } from "./utils/renderWithProviders";
-import type { AppLocale } from "types/i18n";
+import { SUPPORTED_LOCALES, type AppLocale } from "types/i18n";
 import type { CardContentProps } from "types/props";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import ca from "../messages/ca.json";
 import es from "../messages/es.json";
 import en from "../messages/en.json";
+import fr from "../messages/fr.json";
 
 vi.mock("next/dynamic", () => ({
   default: () => (props: { children?: React.ReactNode }) => (
@@ -60,12 +61,13 @@ const BACKEND_SLUGS = [
   "altres",
 ];
 
-const MESSAGES = { ca, es, en } as const;
+const MESSAGES = { ca, es, en, fr } as const;
 
 const EXPECTED: Record<AppLocale, Record<string, string>> = {
   ca: { musica: "Concerts", dansa: "Dansa i ball", teatre: "Teatre" },
   es: { musica: "Conciertos", dansa: "Danza y baile", teatre: "Teatro" },
   en: { musica: "Concerts", dansa: "Dance", teatre: "Theatre" },
+  fr: { musica: "Concerts", dansa: "Danse", teatre: "Théâtre" },
 };
 const UNKNOWN_SLUG = "nova-categoria";
 const UNKNOWN_NAME = "Nova categoria";
@@ -108,7 +110,7 @@ describe("category labels", () => {
     }
   });
 
-  describe.each(["ca", "es", "en"] as const)("%s", (locale) => {
+  describe.each(SUPPORTED_LOCALES)("%s", (locale) => {
     it.each(["musica", "dansa", "teatre", UNKNOWN_SLUG])(
       "chip, modal and card agree for %s",
       async (slug) => {

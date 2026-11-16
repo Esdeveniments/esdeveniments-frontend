@@ -1,4 +1,4 @@
-export const SUPPORTED_LOCALES = ["ca", "es", "en"] as const;
+export const SUPPORTED_LOCALES = ["ca", "es", "en", "fr"] as const;
 
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 
@@ -13,6 +13,7 @@ export const NON_DEFAULT_LOCALES = SUPPORTED_LOCALES.filter(
 export const DEEPL_TARGET_LANG: Record<NonDefaultLocale, string> = {
   es: "ES",
   en: "EN",
+  fr: "FR",
 };
 
 export const LOCALE_COOKIE = "NEXT_LOCALE";
@@ -25,10 +26,12 @@ export const localeToOgLocale: Record<AppLocale, string> = {
   ca: "ca-ES",
   es: "es-ES",
   en: "en-US",
+  fr: "fr-FR",
 };
 
 export const localeToHrefLang: Record<AppLocale, string> = {
   ca: "ca",
   es: "es",
   en: "en",
+  fr: "fr",
 };

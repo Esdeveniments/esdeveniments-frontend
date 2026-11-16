@@ -45,6 +45,17 @@ describe("translateDescription", () => {
     expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
+  it("maps French targetLang to DeepL FR", async () => {
+    getCachedEventBySlug.mockResolvedValue(eventWith(`Concert FR ${ipCounter}`));
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(deeplOk("Concert traduit"));
+
+    const result = await translateDescription({ slug: SLUG, targetLang: "fr" });
+
+    expect(result).toEqual({ ok: true, translation: "Concert traduit" });
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(JSON.parse(String(init?.body)).target_lang).toBe("FR");
+  });
+
   it("rejects a malformed slug without loading or translating", async () => {
     const fetchMock = vi.spyOn(global, "fetch");
 

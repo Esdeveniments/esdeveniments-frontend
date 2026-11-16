@@ -74,6 +74,7 @@ const CRAWL_DISALLOW = [
   "/ca/iniciar-sessio",
   "/es/iniciar-sessio",
   "/en/iniciar-sessio",
+  "/fr/iniciar-sessio",
 ];
 
 const robotsConfig = {

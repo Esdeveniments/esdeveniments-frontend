@@ -77,6 +77,14 @@ const STATIC_FALLBACK_CONTENT: Record<
     apiNote:
       "Free public API available at /llms.txt and /openapi.json — no authentication required.",
   },
+  fr: {
+    h1: "Que faire en Catalogne",
+    h2: "Agenda culturel en Catalogne avec concerts, expositions, théâtre, activités en famille et sorties pour tous les âges.",
+    description:
+      "Esdeveniments.cat est la plateforme gratuite la plus complète pour découvrir les événements culturels en Catalogne. Consultez l'agenda des concerts, du théâtre, des expositions, des festivals, des activités en famille et bien plus dans plus de 900 communes catalanes. Trouvez que faire aujourd'hui, demain ou ce week-end près de chez vous.",
+    apiNote:
+      "API publique gratuite disponible sur /llms.txt et /openapi.json — aucune authentification requise.",
+  },
 };
 
 function HomeStaticFallback({ locale }: { locale: AppLocale }) {

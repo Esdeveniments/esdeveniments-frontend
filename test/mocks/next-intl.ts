@@ -2,6 +2,7 @@ import React from "react";
 import caMessages from "../../messages/ca.json";
 import enMessages from "../../messages/en.json";
 import esMessages from "../../messages/es.json";
+import frMessages from "../../messages/fr.json";
 
 type Messages = Record<string, any>;
 
@@ -9,6 +10,7 @@ const messagesByLocale: Record<string, Messages> = {
   ca: caMessages,
   en: enMessages,
   es: esMessages,
+  fr: frMessages,
 };
 
 const getMessage = (messages: Messages, path?: string, key?: string) => {

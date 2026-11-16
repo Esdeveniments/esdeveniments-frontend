@@ -28,12 +28,13 @@ export function getPriceInCents(
  * Uses DURATION_DAYS to auto-generate names for all durations
  */
 const PRODUCT_NAME_TEMPLATES: Record<
-  string,
+  AppLocale,
   { prefix: string; suffix: string }
 > = {
   ca: { prefix: "Patrocini", suffix: "dies" },
   es: { prefix: "Patrocinio", suffix: "días" },
   en: { prefix: "Sponsorship", suffix: "days" },
+  fr: { prefix: "Sponsoring", suffix: "jours" },
 };
 
 /**
@@ -55,11 +56,13 @@ function buildProductNames(template: {
 /**
  * Product names by locale (auto-generated from DURATION_DAYS)
  */
-export const PRODUCT_NAMES: Record<string, Record<SponsorDuration, string>> = {
-  ca: buildProductNames(PRODUCT_NAME_TEMPLATES.ca),
-  es: buildProductNames(PRODUCT_NAME_TEMPLATES.es),
-  en: buildProductNames(PRODUCT_NAME_TEMPLATES.en),
-};
+export const PRODUCT_NAMES: Record<string, Record<SponsorDuration, string>> =
+  Object.fromEntries(
+    Object.entries(PRODUCT_NAME_TEMPLATES).map(([loc, template]) => [
+      loc,
+      buildProductNames(template),
+    ])
+  );
 
 /**
  * Custom field labels by locale (max 3 fields in Stripe Checkout)
@@ -68,7 +71,8 @@ export const PRODUCT_NAMES: Record<string, Record<SponsorDuration, string>> = {
 export const CUSTOM_FIELD_LABELS: Record<
   string,
   { businessName: string; targetUrl: string }
-> = {
+> &
+  Record<AppLocale, { businessName: string; targetUrl: string }> = {
   ca: {
     businessName: "Nom del negoci",
     targetUrl: "URL del teu web (opcional)",
@@ -81,15 +85,21 @@ export const CUSTOM_FIELD_LABELS: Record<
     businessName: "Business name",
     targetUrl: "Your website URL (optional)",
   },
+  fr: {
+    businessName: "Nom de l'entreprise",
+    targetUrl: "URL de votre site web (facultatif)",
+  },
 };
 
 /**
  * Product descriptions by locale
  */
-export const PRODUCT_DESCRIPTIONS: Record<string, string> = {
+export const PRODUCT_DESCRIPTIONS: Record<string, string> &
+  Record<AppLocale, string> = {
   ca: "dies de patrocini a Esdeveniments.cat",
   es: "días de patrocinio en Esdeveniments.cat",
   en: "days of sponsorship on Esdeveniments.cat",
+  fr: "jours de sponsoring sur Esdeveniments.cat",
 };
 
 /**
@@ -186,6 +196,8 @@ const TERMS_ACCEPTANCE: Record<AppLocale, (termsUrl: string) => string> = {
     `Acepto las [condiciones de venta](${url}) y pido que el patrocinio empiece al pagar. Si desisto en 14 días, me devolveréis la parte de los días que no se hayan prestado.`,
   en: (url) =>
     `I accept the [terms of sale](${url}) and ask for the sponsorship to start on payment. If I withdraw within 14 days, you will refund the days not yet provided.`,
+  fr: (url) =>
+    `J'accepte les [conditions de vente](${url}) et je demande que le sponsoring commence dès le paiement. Si je me rétracte dans les 14 jours, vous me rembourserez la part des jours non fournis.`,
 };
 
 /**

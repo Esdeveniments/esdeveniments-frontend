@@ -37,7 +37,7 @@ import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsS
 import HeroSectionSkeleton, {
   getHeroSkeletonCopy,
 } from "../hero/HeroSectionSkeleton";
-import { getLocaleSafely } from "@utils/i18n-seo";
+import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
 import { getCategoryLabel } from "@utils/category-helpers";
@@ -159,13 +159,7 @@ async function ServerEventsCategorized({
   });
   const heroSkeletonCopy = await getHeroSkeletonCopy(locale, pageData?.subTitle ?? "");
   const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix;
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
+  const withLocale = (path: string) => withLocalePath(path, locale);
 
   const renderedLinkSections = seoLinkSections.filter(
     (section): section is SeoLinkSection =>

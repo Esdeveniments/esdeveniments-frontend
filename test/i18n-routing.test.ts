@@ -62,11 +62,19 @@ describe("stripLocalePrefix", () => {
     });
   });
 
+  it("strips /fr prefix", () => {
+    const result = stripLocalePrefix("/fr/girona");
+    expect(result).toEqual({
+      locale: "fr",
+      pathnameWithoutLocale: "/girona",
+    });
+  });
+
   it("does not strip unsupported locale prefix", () => {
-    const result = stripLocalePrefix("/fr/barcelona");
+    const result = stripLocalePrefix("/de/barcelona");
     expect(result).toEqual({
       locale: null,
-      pathnameWithoutLocale: "/fr/barcelona",
+      pathnameWithoutLocale: "/de/barcelona",
     });
   });
 
@@ -106,11 +114,12 @@ describe("ensureLocale", () => {
     expect(ensureLocale("ca")).toBe("ca");
     expect(ensureLocale("es")).toBe("es");
     expect(ensureLocale("en")).toBe("en");
+    expect(ensureLocale("fr")).toBe("fr");
   });
 
   it("returns default locale for invalid locale", () => {
-    expect(ensureLocale("fr")).toBe("ca");
     expect(ensureLocale("de")).toBe("ca");
+    expect(ensureLocale("it")).toBe("ca");
   });
 
   it("returns default locale for null", () => {

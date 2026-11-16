@@ -253,8 +253,9 @@ describe("Sponsor Checkout return URLs", () => {
   it.each([
     ["en", "https://www.esdeveniments.cat/en/patrocina"],
     ["es", "https://www.esdeveniments.cat/es/patrocina"],
+    ["fr", "https://www.esdeveniments.cat/fr/patrocina"],
     ["ca", "https://www.esdeveniments.cat/patrocina"],
-    ["fr", "https://www.esdeveniments.cat/patrocina"],
+    ["de", "https://www.esdeveniments.cat/patrocina"],
   ])("returns a %s buyer to %s", async (locale, base) => {
     const { success, cancel } = await returnUrls(locale);
 

@@ -100,6 +100,7 @@ describe("app/robots.txt/route (production-host allowlist)", () => {
       "/ca/iniciar-sessio",
       "/es/iniciar-sessio",
       "/en/iniciar-sessio",
+      "/fr/iniciar-sessio",
     ]) {
       expect(body).toContain(`Disallow: ${path}\n`);
     }
