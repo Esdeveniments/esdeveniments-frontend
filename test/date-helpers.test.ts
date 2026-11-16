@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   formatCardDate,
   formatEventTimeDisplay as baseFormatEventTimeDisplay,
@@ -521,22 +521,28 @@ describe("getFormattedDate", () => {
   });
 
   it("formats French single-day and '1er' multi-day ranges", () => {
-    const singleFirst = getFormattedDate("2027-01-01T12:00:00.000Z", undefined, "fr");
-    expect(singleFirst.formattedStart).toBe("1er janvier 2027");
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date("2026-11-16T12:00:00.000Z"));
+      const singleFirst = getFormattedDate("2027-01-01T12:00:00.000Z", undefined, "fr");
+      expect(singleFirst.formattedStart).toBe("1er janvier 2027");
 
-    const rangeFromFirst = getFormattedDate(
-      "2027-05-01T12:00:00.000Z",
-      "2027-05-03T12:00:00.000Z",
-      "fr"
-    );
-    expect(rangeFromFirst.formattedStart).toBe("1er");
-    expect(rangeFromFirst.formattedEnd).toBe("3 mai 2027");
+      const rangeFromFirst = getFormattedDate(
+        "2027-05-01T12:00:00.000Z",
+        "2027-05-03T12:00:00.000Z",
+        "fr"
+      );
+      expect(rangeFromFirst.formattedStart).toBe("1er");
+      expect(rangeFromFirst.formattedEnd).toBe("3 mai 2027");
 
-    expect(formatCardDate("2027-02-01T12:00:00.000Z", undefined, "fr").cardDate).toBe(
-      "Lun. 1er févr. 2027"
-    );
-    expect(resolveMonthIndexFromSlug("janvier")).toBe(0);
-    expect(resolveMonthIndexFromSlug("fevrier")).toBe(1);
-    expect(resolveMonthIndexFromSlug("aout")).toBe(7);
+      expect(formatCardDate("2027-02-01T12:00:00.000Z", undefined, "fr").cardDate).toBe(
+        "Lun. 1er févr. 2027"
+      );
+      expect(resolveMonthIndexFromSlug("janvier")).toBe(0);
+      expect(resolveMonthIndexFromSlug("fevrier")).toBe(1);
+      expect(resolveMonthIndexFromSlug("aout")).toBe(7);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

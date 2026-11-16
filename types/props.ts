@@ -1148,6 +1148,10 @@ export interface EventActionBarActionsProps {
   calendar: import("./common").CalendarEventData;
 }
 
+export interface WebsiteSchemaProps {
+  locale?: AppLocale;
+}
+
 // Page share button (event, profile): native share sheet on touch, small menu elsewhere
 export interface ShareTarget {
   title: string;

@@ -44,8 +44,8 @@ def classify(url: str) -> str:
         path = url.split("://", 1)[1].split("/", 1)[1]
     except IndexError:
         return "homepage"
-    # strip locale prefix (ca | es | en)
-    if re.match(r"^(ca|es|en)(/|$)", path):
+    # strip locale prefix (ca | es | en | fr)
+    if re.match(r"^(ca|es|en|fr)(/|$)", path):
         path = path.split("/", 1)[1] if "/" in path else ""
     if not path or path == "":
         return "homepage"

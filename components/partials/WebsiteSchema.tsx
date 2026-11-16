@@ -6,6 +6,7 @@ import {
   localeToHrefLang,
   type AppLocale,
 } from "types/i18n";
+import type { WebsiteSchemaProps } from "types/props";
 import JsonLdServer from "./JsonLdServer";
 
 const LOCALIZED_SCHEMA_COPY: Record<
@@ -176,9 +177,7 @@ const LOCALIZED_SCHEMA_COPY: Record<
 
 export default function WebsiteSchema({
   locale = DEFAULT_LOCALE,
-}: {
-  locale?: AppLocale;
-}) {
+}: WebsiteSchemaProps) {
   const inLanguage = localeToHrefLang[locale] ?? locale;
   const localized = LOCALIZED_SCHEMA_COPY[locale] ?? LOCALIZED_SCHEMA_COPY.ca;
 

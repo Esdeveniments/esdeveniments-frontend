@@ -120,6 +120,7 @@ CWV_THRESHOLDS = {
 # i18n locale prefixes for URL parsing
 I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/fr/e/", "fr"), ("/e/", "ca")]
 LOCALE_PATH_PREFIXES = ["/es/", "/en/", "/fr/"]
+NON_DEFAULT_LOCALE_SEGMENTS = {p.strip("/") for p in LOCALE_PATH_PREFIXES}
 
 TODAY = datetime.now(timezone.utc)
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
@@ -203,7 +204,7 @@ def sanitize_md(text):
 def place_of(url):
     """The place slug of a listing page URL, or None for events and other pages."""
     segments = [s for s in urlparse(url).path.split("/") if s]
-    if segments[:1] in (["es"], ["en"]):
+    if segments and segments[0] in NON_DEFAULT_LOCALE_SEGMENTS:
         segments = segments[1:]
     first = segments[0] if segments else None
     if not first or first in NON_PLACE_SEGMENTS or "." in first:
@@ -1370,7 +1371,7 @@ def generate_markdown(data, previous=None):
     if i18n_cannibal:
         lines.append("## 🌐 i18n Cannibalization (Same Event, Multiple Locales)")
         lines.append("")
-        lines.append("Same event slug indexed under multiple locale prefixes (`/e/`, `/es/e/`, `/en/e/`), splitting ranking signals.")
+        lines.append("Same event slug indexed under multiple locale prefixes (`/e/`, `/es/e/`, `/en/e/`, `/fr/e/`), splitting ranking signals.")
         lines.append("")
         for item in i18n_cannibal[:8]:
             slug_short = item["slug"][:60] + "..." if len(item["slug"]) > 60 else item["slug"]
