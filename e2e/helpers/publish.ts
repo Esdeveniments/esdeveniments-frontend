@@ -155,6 +155,20 @@ export async function clickArmedPublish(page: Page) {
   await submit.click();
 }
 
+/**
+ * Close the promote upsell a signed-in owner gets after publishing. Its dialog
+ * makes the rest of the page inert, and the marker that reopens it on the next
+ * visit is cleared only once the modal has mounted. A spec that reloads the
+ * event page right after publishing, then clicks something, must call this first.
+ */
+export async function dismissPromoteUpsell(page: Page) {
+  const modal = page.getByTestId("promote-upsell-modal");
+  // A lazy chunk that `next dev` compiles on first use.
+  await expect(modal).toBeVisible({ timeout: 60_000 });
+  await page.keyboard.press("Escape");
+  await expect(modal).toHaveCount(0);
+}
+
 /** Delete an event through the app API using the page's session cookies. */
 export async function cleanupEvent(page: Page, slug: string) {
   try {

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginViaUI } from "./helpers/login";
-import { cleanupEvent, publishTestEvent } from "./helpers/publish";
+import { cleanupEvent, dismissPromoteUpsell, publishTestEvent } from "./helpers/publish";
 
 /**
  * E2E: the creator deletes their event from the event page.
@@ -43,6 +43,8 @@ test.describe("Creator-only delete (staging)", () => {
     await loginViaUI(page, email!, password!);
     createdEventSlug = await publishTestEvent(page, TEST_EVENT_TITLE);
     const slug = createdEventSlug;
+    // The reload below would reopen the upsell and make the owner bar inert.
+    await dismissPromoteUpsell(page);
 
     await page.goto(`/en/e/${slug}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
     // Delete sits in the owner bar's "More actions" menu.

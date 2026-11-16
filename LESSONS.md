@@ -376,13 +376,47 @@ for local runs. The e2e-integration workflow already does. The sponsor checkout
 refuses a non-https site URL in production, so the payment specs need an https
 value instead.
 
-## Specs that type a password must switch traces off
+## Specs that type a password must hide it from the report and the trace
 
-Playwright traces record `fill()` arguments in plain text, and the staging
-workflows retry and upload `playwright-report/`. The `E2E_STAGING_*` specs call
-`test.use({ trace: "off" })`. Do the same in any new spec that logs in with a
-real credential, or that sends a secret through `request` (the trace keeps API
-request headers, `Authorization` included; `payment.sponsor-flow.spec.ts`).
+Playwright prints every `fill()`, `type()`, `press()` and `keyboard.insertText()`
+value in the step title, and the staging workflows upload `playwright-report/`.
+The repo is public, so the artifact is too. The nightly of 2026-11-16 carried the
+staging password in 41 `Fill` steps (`completeHostedLogin`) with `trace: "off"`
+already set: the trace and the step titles are separate leaks. Fill credentials
+with `fillSecret` (`e2e/helpers/login.ts`). It selects the field, inserts the
+text with the CDP command `Input.insertText`, which Playwright doesn't list as a
+step, and checks the value with a boolean so a mismatch prints nothing either.
+ESLint fails a `fill`, `type`, `pressSequentially` or `insertText` call whose
+argument is named `password`, `secret` or `token`.
+
+Keep `test.use({ trace: "off" })` too. The trace records the CDP arguments and
+API request headers, `Authorization` included (`payment.sponsor-flow.spec.ts`).
+Do both in any new spec that logs in with a real credential or sends a secret
+through `request`. If a report already carried a credential, rotate it: the
+artifact stays downloadable for 7 days.
+
+`console.log` output reaches the report too, as the `stdout` attachment. GitHub
+masks secrets in the job log but not there. `publish-integration.spec.ts` printed
+every `/api/` response body, so `/api/auth/me` put the staging account email in
+the report while the job log showed `***`. It now prints `<hidden>` for
+`/api/auth/*` bodies. A spec that logs responses needs the same filter.
+
+The CI HTML report keeps only failed and flaky tests (`onlyFailures` in
+`playwright.remote.config.ts`), so a green run uploads no step titles. It is a
+second layer: a failing run still publishes its steps, so keep using `fillSecret`.
+
+## A spec that reloads the event page after publishing must dismiss the promote upsell
+
+Publishing stores `esdeveniments:post_publish_upsell:<slug>` in localStorage, and
+every owner visit to `/e/<slug>` reopens the promote modal while that marker
+exists. Only `PromoteUpsellModal` clears it, when its lazy chunk mounts, and
+`publishTestEvent` returns as soon as the URL matches. After #793,
+`event-delete-creator-only.spec.ts` reloaded the page before that: the modal
+opened, everything behind it went `inert` and the owner menu click timed out on
+all 3 attempts. Call `dismissPromoteUpsell(page)` (`e2e/helpers/publish.ts`)
+between publishing and the reload. Only a spec that revisits the event page as
+the owner in the same browser context needs it, because the marker is in
+localStorage.
 
 ## Stripe Checkout can't be driven by a bot, and returns to another origin
 

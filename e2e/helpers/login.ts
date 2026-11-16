@@ -164,12 +164,33 @@ export async function waitForAppReturn(page: Page, appOrigin: string) {
   }
 }
 
+/**
+ * `fill()` for a credential. Playwright writes every `fill()` value into its
+ * step title, and CI publishes that report, so `fill(password)` leaks the
+ * password even with traces off. This does what `fill()` does (select the
+ * text, then `Input.insertText`) through a CDP call whose step shows no value.
+ * Specs still set `trace: "off"`: a trace keeps the command's arguments.
+ */
+export async function fillSecret(field: Locator, value: string) {
+  await expect(field).toBeEditable();
+  await field.selectText();
+  const page = field.page();
+  const cdp = await page.context().newCDPSession(page);
+  try {
+    await cdp.send("Input.insertText", { text: value });
+  } finally {
+    await cdp.detach();
+  }
+  // A boolean, so a mismatch prints neither value.
+  expect((await field.inputValue()) === value, "the field holds the typed secret").toBe(true);
+}
+
 export async function completeHostedLogin(page: Page, email: string, password: string, appOrigin: string) {
   const identifier = page
     .locator('input[name="identifier"], input[type="email"], input[type="text"]')
     .first();
   await identifier.waitFor({ timeout: 30_000 });
-  await identifier.fill(email);
+  await fillSecret(identifier, email);
   await page
     .getByRole("button", { name: /continue|sign in|log in|next|entra/i })
     .first()
@@ -178,7 +199,7 @@ export async function completeHostedLogin(page: Page, email: string, password: s
   // Password may be on a second step or the same form.
   const password_ = page.locator('input[type="password"]').first();
   await password_.waitFor({ timeout: 15_000 });
-  await password_.fill(password);
+  await fillSecret(password_, password);
   await page
     .getByRole("button", { name: /sign in|log in|continue|submit|entra/i })
     .first()
