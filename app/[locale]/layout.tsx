@@ -147,6 +147,9 @@ export default async function LocaleLayout({
     // before React hydrates (this element's attributes only).
     <html lang={locale} suppressHydrationWarning>
       <head>
+        {!isE2ETestBuild && FUNDING_CHOICES_SRC && (
+          <link rel="preconnect" href="https://fundingchoicesmessages.google.com" />
+        )}
         {/* Google Fonts: preconnect to both CSS origin and font files origin */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
