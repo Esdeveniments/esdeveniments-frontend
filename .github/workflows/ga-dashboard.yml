@@ -72,7 +72,7 @@ jobs:
 
       - name: Create GitHub Issue
         id: create-issue
-        uses: peter-evans/create-issue-from-file@v6
+        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
         with:
           title: "📊 Weekly GA4 Dashboard — ${{ github.event.inputs.days || '7' }}d"
           content-filepath: /tmp/dashboard-output.md

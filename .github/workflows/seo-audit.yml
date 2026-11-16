@@ -130,7 +130,7 @@ jobs:
 
       - name: Create GitHub Issue
         if: ${{ github.event.inputs.skip_issue != 'true' }}
-        uses: peter-evans/create-issue-from-file@v6
+        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
         with:
           title: "📊 SEO Audit — ${{ steps.audit.outputs.run_date }}"
           content-filepath: data/seo-audits/${{ steps.audit.outputs.run_date }}.md
