@@ -17,6 +17,13 @@ const lowContrastTextRules = [
   { selector: `TemplateElement[value.raw=${LOW_CONTRAST_TEXT}]`, message: LOW_CONTRAST_MESSAGE },
 ];
 
+// An argument named like a credential: `password`, `creds.password`,
+// `password!`, `process.env.E2E_STAGING_PASSWORD as string`.
+const CREDENTIAL_NAME = String.raw`/password|secret|token/i`;
+const CREDENTIAL_ARGUMENT = ["name", "property.name", "expression.name", "expression.property.name"]
+  .map((path) => `[${path}=${CREDENTIAL_NAME}]`)
+  .join(", ");
+
 export default [
   {
     ignores: [
@@ -247,6 +254,23 @@ export default [
             "Property[key.name='next'] > ObjectExpression > Property[key.name='revalidate']",
           message:
             "⚠️ COST ALERT: Do NOT use `next: { revalidate }` in external wrappers! This enables unbounded fetch cache (146K entries per build, $300+ cost spike on Jan 20, 2026). External wrappers must use default no-store. Handle caching via Cache-Control headers in internal API routes instead.",
+        },
+      ],
+    },
+  },
+  // CRITICAL: Playwright prints every fill()/type() value in the HTML report's
+  // step titles, and CI uploads that report where anyone can download it. The
+  // nightly e2e leaked the staging password that way (Nov 2026), even with
+  // traces off. Credentials go through fillSecret (e2e/helpers/login.ts).
+  {
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: `CallExpression[callee.property.name=/^(fill|type|pressSequentially|insertText)$/] > .arguments:matches(${CREDENTIAL_ARGUMENT})`,
+          message:
+            "Playwright prints this value in the report's step title, and CI publishes the report. Use fillSecret (e2e/helpers/login.ts) for credentials.",
         },
       ],
     },
