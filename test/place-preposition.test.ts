@@ -143,6 +143,8 @@ describe("place phrases with an article in the name", () => {
     expect(formatPlacePreposition("El Masnou", "town", "en", false, "of")).toBe("of El Masnou");
     expect(formatPlacePreposition("Girona", "town", "fr", false)).toBe("à Girona");
     expect(formatPlacePreposition("Catalunya", "general", "fr", false)).toBe("en Catalunya");
+    expect(formatPlacePreposition("Osona", "region", "fr", false)).toBe("en Osona");
+    expect(formatPlacePreposition("Alt Empordà", "region", "fr", false)).toBe("en Alt Empordà");
     expect(formatPlacePreposition("Osona", "region", "fr", false, "of")).toBe("d'Osona");
     expect(formatPlacePreposition("Alt Empordà", "region", "fr", false, "of")).toBe("d'Alt Empordà");
     expect(formatPlacePreposition("El Masnou", "town", "fr", false, "of")).toBe("de El Masnou");

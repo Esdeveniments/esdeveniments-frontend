@@ -54,25 +54,33 @@ function buildProductNames(template: {
 }
 
 /**
+ * Stripe Checkout UI locale per app locale (Stripe doesn't support Catalan)
+ */
+export const STRIPE_CHECKOUT_LOCALE: Record<AppLocale, "es" | "en" | "fr"> = {
+  ca: "es",
+  es: "es",
+  en: "en",
+  fr: "fr",
+};
+
+/**
  * Product names by locale (auto-generated from DURATION_DAYS)
  */
-export const PRODUCT_NAMES: Record<string, Record<SponsorDuration, string>> =
-  Object.fromEntries(
-    Object.entries(PRODUCT_NAME_TEMPLATES).map(([loc, template]) => [
-      loc,
-      buildProductNames(template),
-    ])
-  );
+export const PRODUCT_NAMES = Object.fromEntries(
+  Object.entries(PRODUCT_NAME_TEMPLATES).map(([loc, template]) => [
+    loc,
+    buildProductNames(template),
+  ])
+) as Record<AppLocale, Record<SponsorDuration, string>>;
 
 /**
  * Custom field labels by locale (max 3 fields in Stripe Checkout)
  * Place is pre-selected on our site, so we only need business name and target URL
  */
 export const CUSTOM_FIELD_LABELS: Record<
-  string,
+  AppLocale,
   { businessName: string; targetUrl: string }
-> &
-  Record<AppLocale, { businessName: string; targetUrl: string }> = {
+> = {
   ca: {
     businessName: "Nom del negoci",
     targetUrl: "URL del teu web (opcional)",
@@ -94,8 +102,7 @@ export const CUSTOM_FIELD_LABELS: Record<
 /**
  * Product descriptions by locale
  */
-export const PRODUCT_DESCRIPTIONS: Record<string, string> &
-  Record<AppLocale, string> = {
+export const PRODUCT_DESCRIPTIONS: Record<AppLocale, string> = {
   ca: "dies de patrocini a Esdeveniments.cat",
   es: "días de patrocinio en Esdeveniments.cat",
   en: "days of sponsorship on Esdeveniments.cat",
@@ -111,9 +118,9 @@ export function buildLineItemParams(
   geoScope: GeoScope,
   locale: string
 ): void {
-  const productNames = PRODUCT_NAMES[locale] || PRODUCT_NAMES.ca;
-  const descriptionSuffix =
-    PRODUCT_DESCRIPTIONS[locale] || PRODUCT_DESCRIPTIONS.ca;
+  const appLocale = ensureLocale(locale);
+  const productNames = PRODUCT_NAMES[appLocale];
+  const descriptionSuffix = PRODUCT_DESCRIPTIONS[appLocale];
 
   params.append("line_items[0][price_data][currency]", "eur");
   params.append(
@@ -139,7 +146,7 @@ export function buildCustomFieldParams(
   params: URLSearchParams,
   locale: string
 ): void {
-  const labels = CUSTOM_FIELD_LABELS[locale] || CUSTOM_FIELD_LABELS.ca;
+  const labels = CUSTOM_FIELD_LABELS[ensureLocale(locale)];
 
   // Field 1: Business name (text) - required
   params.append("custom_fields[0][key]", "business_name");

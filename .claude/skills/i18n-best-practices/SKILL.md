@@ -29,18 +29,19 @@ Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/ro
 
 ## Adding a locale
 
-1. `SUPPORTED_LOCALES` in `types/i18n.ts` (`AppLocale` derives from it), plus `localeToOgLocale` and `localeToHrefLang` there. `i18n/routing.ts` reads these.
-2. `messages/<locale>.json` with every key, and the loader in `i18n/request.ts`.
-3. The locale's entry in `i18n/locale-lists.json`; add it to `LOCALES` in `scripts/generate-locale-labels.mjs` and run `yarn i18n:labels`.
-4. Search the whole repo for other hardcoded lists, including root scripts like `check-locales.mjs` and tests: `git grep -nE "['\"]ca['\"], ?['\"]es['\"], ?['\"]en['\"]"`.
+1. Add the locale code and English name to `config/locales.json` (`SUPPORTED_LOCALES`, `AppLocale`, `NON_DEFAULT_LOCALES`, `LOCALE_NAMES` and `localeToHrefLang` in `types/i18n.ts` derive from it, as do the Node/Python scripts, `robots.txt` and AI discovery routes; if `defaultLocale` ever changes, update `DEFAULT_LOCALE` in `types/i18n.ts` to match).
+2. Add the new entry to the exhaustive `Record<AppLocale, ...>` / `Record<NonDefaultLocale, ...>` maps flagged by `yarn typecheck`: `localeToOgLocale` and `DEEPL_TARGET_LANG` (`types/i18n.ts`), `messagesLoaders` (`i18n/request.ts`), `LOCALE_MAP` (`components/ui/common/form/DateRangeCalendar.tsx`), and the Stripe Checkout maps (`lib/stripe/checkout-helpers.ts`), plus `test/mocks/next-intl.ts`.
+3. Add `messages/<locale>.json` with every key (plus the language label under `Components.Navbar.languages`, `languagesShort`, and `Components.Description.target` in all locale files), and the locale's entries in `i18n/locale-lists.json` (`constants` and `websiteSchema`); run `yarn i18n:labels`.
+4. Add language-specific grammar/date formatting if needed (`utils/string-helpers.ts`, `utils/date-helpers.ts`) and verify with `yarn i18n:check && yarn i18n:validate && yarn typecheck && yarn test --run`.
 
 ## Key files
 
 | File | Role |
 | --- | --- |
+| `config/locales.json` | Single source of truth for `defaultLocale` and supported `locales` |
 | `i18n/routing.ts` | Routing config and navigation exports |
 | `i18n/request.ts` | Loads messages per locale |
-| `types/i18n.ts` | `SUPPORTED_LOCALES`, `AppLocale`, OG/hreflang maps |
+| `types/i18n.ts` | `SUPPORTED_LOCALES`, `AppLocale`, OG/hreflang/DeepL maps |
 | `next.config.js` | next-intl plugin with `precompile: true` |
 | `i18n/locale-lists.json` | Non-string lists per locale |
 | `i18n/locale-labels.generated.json` | Generated labels for shared utils |

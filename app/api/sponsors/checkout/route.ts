@@ -3,6 +3,7 @@ import { captureException } from "@sentry/nextjs";
 import { getSiteUrlFromRequest } from "@config/index";
 import { stripeRequest } from "@lib/stripe/api";
 import {
+  STRIPE_CHECKOUT_LOCALE,
   buildLineItemParams,
   buildCustomFieldParams,
   buildMetadataParams,
@@ -41,8 +42,9 @@ async function createStripeCheckoutSession(
   baseUrl: string,
 ): Promise<StripeCheckoutSessionResponse> {
   const params = new URLSearchParams();
+  const appLocale = ensureLocale(locale);
   // Return the buyer to the pages in the language they bought in.
-  const returnBase = `${baseUrl}${withLocalePath("/patrocina", ensureLocale(locale))}`;
+  const returnBase = `${baseUrl}${withLocalePath("/patrocina", appLocale)}`;
 
   // Mode and URLs
   params.append("mode", "payment");
@@ -63,9 +65,7 @@ async function createStripeCheckoutSession(
   }
 
   // Locale for checkout page (Stripe doesn't support Catalan, use Spanish as fallback)
-  const stripeLocale =
-    locale === "fr" ? "fr" : ["ca", "es"].includes(locale) ? "es" : "en";
-  params.append("locale", stripeLocale);
+  params.append("locale", STRIPE_CHECKOUT_LOCALE[appLocale]);
 
   // Allow promotion codes (coupon input on checkout page)
   params.append("allow_promotion_codes", "true");

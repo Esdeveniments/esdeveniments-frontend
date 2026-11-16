@@ -267,6 +267,20 @@
       "defaultCulturalEvent": "Événement culturel"
     }
   },
+  "searchQuery": {
+    "ca": {
+      "forSearch": "per a la cerca"
+    },
+    "es": {
+      "forSearch": "para la búsqueda"
+    },
+    "en": {
+      "forSearch": "for the search"
+    },
+    "fr": {
+      "forSearch": "pour la recherche"
+    }
+  },
   "utils": {
     "EventCopy": {
       "sentence": {

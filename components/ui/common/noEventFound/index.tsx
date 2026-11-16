@@ -3,7 +3,7 @@ import type { JSX } from "react";
 import Image from "next/image";
 import eventNotFound from "@public/static/images/error_404_page_not_found.png";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 
 const NoEventFound = async (): Promise<JSX.Element> => {
   const locale = await getLocaleSafely();
@@ -11,11 +11,10 @@ const NoEventFound = async (): Promise<JSX.Element> => {
     locale,
     namespace: "Components.NoEventFound",
   });
-  const withLocale = (path: string) => withLocalePath(path, locale);
   const description = t.rich("description", {
     search: (chunks) => (
       <PressableAnchor
-        href={withLocale("/catalunya")}
+        href="/catalunya"
         prefetch={false}
         className="font-bold text-black hover:underline"
         variant="inline"
@@ -25,7 +24,7 @@ const NoEventFound = async (): Promise<JSX.Element> => {
     ),
     today: (chunks) => (
       <PressableAnchor
-        href={withLocale("/")}
+        href="/"
         prefetch={false}
         className="font-bold text-black hover:underline"
         variant="inline"
@@ -35,7 +34,7 @@ const NoEventFound = async (): Promise<JSX.Element> => {
     ),
     publish: (chunks) => (
       <PressableAnchor
-        href={withLocale("/publica")}
+        href="/publica"
         prefetch={false}
         className="font-bold text-black hover:underline"
         variant="inline"

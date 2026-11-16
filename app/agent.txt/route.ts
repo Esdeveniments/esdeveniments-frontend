@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
 import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_NAMES,
+  NON_DEFAULT_LOCALES,
+} from "types/i18n";
+
+const englishConjunction = new Intl.ListFormat("en", { type: "conjunction" });
 
 /**
  * /agent.txt — Explicit agent instruction file with when-to-use guidance.
@@ -69,8 +76,8 @@ export async function GET(request: NextRequest) {
     `- Agent mode view: ${siteUrl}/?mode=agent`,
     "",
     "## Languages",
-    "Default: Catalan (ca). Also: Spanish (es), English (en), French (fr).",
-    "Locale prefixes: /es/..., /en/..., and /fr/... for non-default locales.",
+    `Default: ${LOCALE_NAMES[DEFAULT_LOCALE]} (${DEFAULT_LOCALE}). Also: ${NON_DEFAULT_LOCALES.map((locale) => `${LOCALE_NAMES[locale]} (${locale})`).join(", ")}.`,
+    `Locale prefixes: ${englishConjunction.format(NON_DEFAULT_LOCALES.map((locale) => `/${locale}/...`))} for non-default locales.`,
     "",
     "## Contact",
     "Email: info@esdeveniments.cat",

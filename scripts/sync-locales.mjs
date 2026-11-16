@@ -4,9 +4,12 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const localesConfig = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "..", "config", "locales.json"), "utf8"),
+);
 
-const SUPPORTED_LOCALES = ["ca", "es", "en", "fr"];
-const DEFAULT_LOCALE = "ca";
+const SUPPORTED_LOCALES = Object.keys(localesConfig.locales);
+const DEFAULT_LOCALE = localesConfig.defaultLocale;
 const MESSAGES_DIR = path.join(__dirname, "..", "messages");
 
 /**

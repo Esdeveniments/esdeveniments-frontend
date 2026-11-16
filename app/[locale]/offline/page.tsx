@@ -5,7 +5,7 @@ import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
-import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { AppLocale } from "types/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,7 +27,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function OfflinePage() {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.Offline" });
-  const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : toLocalizedUrl(path, locale);
   const offlineSchema = {
@@ -55,7 +54,7 @@ export default async function OfflinePage() {
           </h1>
           <p className="text-lg text-foreground/80 mb-8">{t("description")}</p>
           <PressableAnchor
-            href={withLocale("/")}
+            href="/"
             className="btn-primary"
             data-testid="offline-home-link"
             variant="inline"
@@ -64,14 +63,14 @@ export default async function OfflinePage() {
           </PressableAnchor>
           <br />
           <PressableAnchor
-            href={withLocale("/barcelona")}
+            href="/barcelona"
             className="btn-neutral mt-4 mr-2"
             variant="inline"
           >
             {t("barcelona")}
           </PressableAnchor>
           <PressableAnchor
-            href={withLocale("/catalunya")}
+            href="/catalunya"
             className="btn-neutral mt-4"
             variant="inline"
           >

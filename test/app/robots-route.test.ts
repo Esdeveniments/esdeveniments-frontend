@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { execFileSync } from "node:child_process";
+import { readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { NextRequest } from "next/server";
+import { SUPPORTED_LOCALES } from "../../types/i18n";
 
 // Mock @config/index so siteUrl is deterministic.
 vi.mock("../../config/index", async () => {
@@ -97,10 +102,7 @@ describe("app/robots.txt/route (production-host allowlist)", () => {
     // The sign-in entry is linked from every page with its own ?redirect=
     for (const path of [
       "/iniciar-sessio",
-      "/ca/iniciar-sessio",
-      "/es/iniciar-sessio",
-      "/en/iniciar-sessio",
-      "/fr/iniciar-sessio",
+      ...SUPPORTED_LOCALES.map((locale) => `/${locale}/iniciar-sessio`),
     ]) {
       expect(body).toContain(`Disallow: ${path}\n`);
     }
@@ -126,5 +128,34 @@ describe("app/robots.txt/route (production-host allowlist)", () => {
     const body = await response.text();
     expect(body).toMatch(/Allow: \//);
     expect(body).toContain("Sitemap:");
+  });
+
+  it("keeps scripts/generate-robots.mjs directives identical to the route handler", async () => {
+    const { GET } = await import("../../app/robots.txt/route");
+    const routeBody = await (await GET(buildRequest("www.esdeveniments.cat"))).text();
+
+    const tempRobots = join(tmpdir(), `robots-${Date.now()}-${Math.random()}.txt`);
+    try {
+      execFileSync(process.execPath, [join(process.cwd(), "scripts/generate-robots.mjs")], {
+        env: {
+          ...process.env,
+          NEXT_PUBLIC_SITE_URL: "https://www.esdeveniments.cat",
+          ROBOTS_OUTPUT_PATH: tempRobots,
+        },
+        stdio: "ignore",
+      });
+      const staticBody = readFileSync(tempRobots, "utf8");
+
+      const stripComments = (txt: string) =>
+        txt
+          .split("\n")
+          .filter((line) => !line.startsWith("#"))
+          .join("\n")
+          .trim();
+
+      expect(stripComments(staticBody)).toBe(stripComments(routeBody));
+    } finally {
+      rmSync(tempRobots, { force: true });
+    }
   });
 });

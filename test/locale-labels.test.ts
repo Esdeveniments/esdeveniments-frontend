@@ -10,9 +10,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import ts from "typescript";
 import ca from "../messages/ca.json";
+import es from "../messages/es.json";
+import en from "../messages/en.json";
+import fr from "../messages/fr.json";
 import localeLabels from "../i18n/locale-labels.generated.json";
 import localeLists from "../i18n/locale-lists.json";
-import { SUPPORTED_LOCALES } from "../types/i18n";
+import { SUPPORTED_LOCALES, type AppLocale } from "../types/i18n";
+
+const MESSAGES: Record<AppLocale, typeof ca> = { ca, es, en, fr };
 
 const STALE = "stale: run `yarn i18n:labels`";
 const SKIP_DIRS = new Set(["node_modules", "test", "e2e", "scripts", "public"]);
@@ -61,11 +66,31 @@ function importsMessagesJson(file: string): boolean {
 }
 
 describe("i18n/locale-labels.generated.json", () => {
-  it("matches the constants lists in every locale", () => {
+  it("matches the constants lists, fallbacks, search query and WebsiteSchema lists in every locale", () => {
     for (const locale of SUPPORTED_LOCALES) {
       expect(localeLabels.constants[locale], STALE).toEqual(
         localeLists.constants[locale],
       );
+      expect(localeLabels.eventFallbacks[locale], STALE).toEqual(
+        MESSAGES[locale].Utils.EventFallbacks,
+      );
+      expect(localeLabels.searchQuery[locale], STALE).toEqual(
+        MESSAGES[locale].Utils.SearchQuery,
+      );
+      expect(localeLists.websiteSchema[locale]?.knowsAbout.length).toBeGreaterThan(0);
+      const featureText = localeLists.websiteSchema[locale]?.featureList
+        .join(" ")
+        .toLocaleLowerCase(locale);
+      const developersIntro =
+        MESSAGES[locale].App.Developers.intro.toLocaleLowerCase(locale);
+      for (const code of SUPPORTED_LOCALES) {
+        const langName =
+          MESSAGES[locale].Components.Navbar.languages[code].toLocaleLowerCase(
+            locale,
+          );
+        expect(featureText).toContain(langName);
+        expect(developersIntro).toContain(langName);
+      }
     }
   });
 

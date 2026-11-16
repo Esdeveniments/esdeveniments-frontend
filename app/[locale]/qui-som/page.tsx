@@ -7,7 +7,7 @@ import type { NextPage } from "next";
 import type { TeamMember as TeamMemberType } from "types/common";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import { toLocalizedUrl, withLocalePath } from "@utils/i18n-seo";
+import { toLocalizedUrl } from "@utils/i18n-seo";
 import { SUPPORTED_LOCALES, type AppLocale } from "types/i18n";
 
 export async function generateMetadata() {
@@ -48,7 +48,6 @@ const teamMembers: TeamMemberType[] = [
 const QuiSom: NextPage = async () => {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.About" });
-  const withLocale = (path: string) => withLocalePath(path, locale);
   const absolute = (path: string) =>
     path.startsWith("http") ? path : toLocalizedUrl(path, locale);
   const organizationSchema = {
@@ -105,7 +104,7 @@ const QuiSom: NextPage = async () => {
               {t.rich("paragraph2", {
                 publish: (chunks) => (
                   <PressableAnchor
-                    href={withLocale("/publica")}
+                    href="/publica"
                     prefetch={false}
                     className="text-primary hover:underline underline-offset-2 font-medium"
                     variant="inline"

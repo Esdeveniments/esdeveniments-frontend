@@ -5,6 +5,7 @@ import {
   MARKDOWN_CONTENT_TYPE,
   NEGOTIATED_MARKDOWN_HEADERS,
 } from "@utils/proxy-agent";
+import { LOCALE_NAMES } from "types/i18n";
 
 /**
  * /index.md — Markdown version of the homepage for AI agents.
@@ -52,7 +53,7 @@ GET ${url}/api/events?place=catalunya&term=jazz&pageSize=5
 ## Key Features
 
 - **900+ municipalities** covered across Catalonia
-- **Multilingual**: Catalan, Spanish, English, French
+- **Multilingual**: ${Object.values(LOCALE_NAMES).join(", ")}
 - **Free API**: No authentication for read endpoints
 - **Rate limit**: ${PUBLIC_RATE_LIMIT_TEXT}
 - **Categories**: concerts, theatre, exhibitions, festivals, family, workshops, and more

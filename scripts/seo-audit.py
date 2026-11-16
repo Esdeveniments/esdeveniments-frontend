@@ -117,10 +117,20 @@ CWV_THRESHOLDS = {
     "FCP": (1800, 3000, "ms"), "TTFB": (800, 1800, "ms"),
 }
 
-# i18n locale prefixes for URL parsing
-I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/fr/e/", "fr"), ("/e/", "ca")]
-LOCALE_PATH_PREFIXES = ["/es/", "/en/", "/fr/"]
-NON_DEFAULT_LOCALE_SEGMENTS = {p.strip("/") for p in LOCALE_PATH_PREFIXES}
+# i18n locale prefixes for URL parsing (single source: config/locales.json)
+with open(
+    os.path.join(os.path.dirname(__file__), "..", "config", "locales.json"),
+    encoding="utf-8",
+) as _locales_file:
+    _LOCALES_CFG = json.load(_locales_file)
+DEFAULT_LOCALE = _LOCALES_CFG["defaultLocale"]
+SUPPORTED_LOCALES = list(_LOCALES_CFG["locales"].keys())
+NON_DEFAULT_LOCALES = [loc for loc in SUPPORTED_LOCALES if loc != DEFAULT_LOCALE]
+I18N_EVENT_PREFIXES = [(f"/{loc}/e/", loc) for loc in NON_DEFAULT_LOCALES] + [
+    ("/e/", DEFAULT_LOCALE)
+]
+LOCALE_PATH_PREFIXES = [f"/{loc}/" for loc in NON_DEFAULT_LOCALES]
+NON_DEFAULT_LOCALE_SEGMENTS = set(NON_DEFAULT_LOCALES)
 
 TODAY = datetime.now(timezone.utc)
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
@@ -1371,7 +1381,12 @@ def generate_markdown(data, previous=None):
     if i18n_cannibal:
         lines.append("## 🌐 i18n Cannibalization (Same Event, Multiple Locales)")
         lines.append("")
-        lines.append("Same event slug indexed under multiple locale prefixes (`/e/`, `/es/e/`, `/en/e/`, `/fr/e/`), splitting ranking signals.")
+        cannibal_prefixes = ", ".join(
+            ["`/e/`"] + [f"`/{loc}/e/`" for loc in NON_DEFAULT_LOCALES]
+        )
+        lines.append(
+            f"Same event slug indexed under multiple locale prefixes ({cannibal_prefixes}), splitting ranking signals."
+        )
         lines.append("")
         for item in i18n_cannibal[:8]:
             slug_short = item["slug"][:60] + "..." if len(item["slug"]) > 60 else item["slug"]

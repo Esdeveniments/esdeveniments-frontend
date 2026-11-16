@@ -1,7 +1,11 @@
+import { readFileSync } from "node:fs";
 import * as cheerio from "cheerio";
 
-const DEFAULT_LOCALE = "ca";
-const locales = ["ca", "es", "en", "fr"];
+const localesConfig = JSON.parse(
+  readFileSync(new URL("./config/locales.json", import.meta.url), "utf8"),
+);
+const DEFAULT_LOCALE = localesConfig.defaultLocale;
+const locales = Object.keys(localesConfig.locales);
 const doubleLocalePattern = new RegExp(`\\/(${locales.join("|")})\\/\\1(\\/|$)`);
 const localePrefixPattern = new RegExp(`^\\/(${locales.join("|")})(\\/|$)`);
 
@@ -156,9 +160,9 @@ async function check() {
           }
         }
 
-        if (alternates["ca"] && alternates["x-default"]) {
-          if (alternates["x-default"] !== alternates["ca"]) {
-            errors.push("x-default must match ca alternate");
+        if (alternates[DEFAULT_LOCALE] && alternates["x-default"]) {
+          if (alternates["x-default"] !== alternates[DEFAULT_LOCALE]) {
+            errors.push(`x-default must match ${DEFAULT_LOCALE} alternate`);
           }
         }
         

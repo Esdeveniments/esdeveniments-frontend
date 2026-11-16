@@ -1,4 +1,6 @@
 import React from "react";
+import type { AppLocale } from "../../types/i18n";
+import { ensureLocale } from "../../utils/i18n-routing";
 import caMessages from "../../messages/ca.json";
 import enMessages from "../../messages/en.json";
 import esMessages from "../../messages/es.json";
@@ -6,7 +8,7 @@ import frMessages from "../../messages/fr.json";
 
 type Messages = Record<string, any>;
 
-const messagesByLocale: Record<string, Messages> = {
+const messagesByLocale: Record<AppLocale, Messages> = {
   ca: caMessages,
   en: enMessages,
   es: esMessages,
@@ -114,8 +116,8 @@ export const getTranslations = async (
   arg?: string | { locale?: string; namespace?: string }
 ) => {
   const locale =
-    typeof arg === "object" && arg && arg.locale ? String(arg.locale) : "ca";
-  const messages = messagesByLocale[locale] ?? caMessages;
+    typeof arg === "object" && arg ? ensureLocale(arg.locale) : "ca";
+  const messages = messagesByLocale[locale];
   const namespace =
     typeof arg === "string"
       ? arg

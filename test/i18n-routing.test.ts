@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import localesConfig from "../config/locales.json";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "../types/i18n";
 import {
   stripLocalePrefix,
   normalizePathname,
@@ -132,5 +134,10 @@ describe("ensureLocale", () => {
 
   it("returns default locale for empty string", () => {
     expect(ensureLocale("")).toBe("ca");
+  });
+
+  it("matches config/locales.json single source of truth", () => {
+    expect(DEFAULT_LOCALE).toBe(localesConfig.defaultLocale);
+    expect(SUPPORTED_LOCALES).toEqual(Object.keys(localesConfig.locales));
   });
 });

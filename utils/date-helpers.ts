@@ -77,6 +77,9 @@ export function formatShortDateRange(
     : formatter.format(startDate);
 }
 
+const formatDayForLocale = (day: number, locale: AppLocale): string =>
+  locale === "fr" && day === 1 ? "1er" : String(day);
+
 const formatDateForLocale = (
   locale: AppLocale,
   day: number,
@@ -94,7 +97,7 @@ const formatDateForLocale = (
         ? `${monthName} ${day}, ${year}`
         : `${monthName} ${day}`;
     case "fr": {
-      const dayLabel = day === 1 ? "1er" : String(day);
+      const dayLabel = formatDayForLocale(day, locale);
       return includeYear
         ? `${dayLabel} ${monthName} ${year}`
         : `${dayLabel} ${monthName}`;
@@ -176,9 +179,7 @@ export const getFormattedDate = (
   const shouldShortenStartForSameMonthRange =
     localeToUse !== "en" && isMultipleDays && isSameMonth;
   const formattedStart = shouldShortenStartForSameMonthRange
-    ? localeToUse === "fr" && startDay === 1
-      ? "1er"
-      : `${startDay}`
+    ? formatDayForLocale(startDay, localeToUse)
     : formatDateForLocale(
         localeToUse,
         startDay,
@@ -528,9 +529,8 @@ export const formatCardDate = (
       const prefix = dayName ? `${dayName}, ` : "";
       return `${prefix}${month} ${day}${yearSuffix}`;
     }
-    const dayLabel = locale === "fr" && day === 1 ? "1er" : `${day}`;
     const prefix = dayName ? `${dayName} ` : "";
-    return `${prefix}${dayLabel} ${month}${yearSuffix}`;
+    return `${prefix}${formatDayForLocale(day, locale)} ${month}${yearSuffix}`;
   };
 
   if (!isMultiDay) {

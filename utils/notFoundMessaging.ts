@@ -1,13 +1,6 @@
+import localeLabels from "../i18n/locale-labels.generated.json";
 import { escapeXml } from "@utils/xml-escape";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
-
-// Translation map for "for the search" text
-const forSearchTranslations: Record<AppLocale, string> = {
-  ca: "per a la cerca",
-  es: "para la búsqueda",
-  en: "for the search",
-  fr: "pour la recherche",
-};
 
 /**
  * Appends a search query to base text, properly escaping HTML entities
@@ -37,7 +30,8 @@ export function appendSearchQuery(
   const searchWithSingleQuotes = normalizedSearch.replace(/"/g, "'");
   const escapedSearch = escapeXml(searchWithSingleQuotes);
   const forSearchText =
-    forSearchTranslations[locale] || forSearchTranslations[DEFAULT_LOCALE];
+    localeLabels.searchQuery[locale]?.forSearch ||
+    localeLabels.searchQuery[DEFAULT_LOCALE].forSearch;
   const snippet = ` ${forSearchText} "${escapedSearch}"`;
 
   if (normalizedBase.includes(snippet)) {

@@ -7,6 +7,9 @@ import {
   SKILL_PATH,
 } from "@utils/agent-discovery";
 import { MARKDOWN_CONTENT_TYPE } from "@utils/proxy-agent";
+import { LOCALE_NAMES, SUPPORTED_LOCALES } from "types/i18n";
+
+const englishConjunction = new Intl.ListFormat("en", { type: "conjunction" });
 
 const PUBLIC_CACHE_HEADERS = {
   "Cache-Control": "public, max-age=86400, stale-while-revalidate=86400",
@@ -23,6 +26,8 @@ export async function GET(
   const { slug } = await params;
   const path = slug.join("/");
   const url = getSiteUrlFromRequest({ headers: request.headers });
+  const localeCodes = SUPPORTED_LOCALES.join("/");
+  const languageNames = englishConjunction.format(Object.values(LOCALE_NAMES));
 
   // Agent Skills discovery index (v0.2.0); the digest is over the served SKILL.md.
   if (path === "agent-skills/index.json") {
@@ -51,8 +56,7 @@ export async function GET(
   if (path === "mcp/server-card.json") {
     const serverCard = {
       name: "esdeveniments-cat",
-      description:
-        "Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (ca/es/en/fr) event listings by place, date, and category.",
+      description: `Esdeveniments.cat — Cultural events discovery for Catalonia (Spain). Multilingual (${localeCodes}) event listings by place, date, and category.`,
       version: "1.0.0",
       url: `${url}/mcp`,
       transport: "streamable-http",
@@ -108,8 +112,7 @@ export async function GET(
   if (path === "mcp.json") {
     const mcpDiscovery = {
       name: "esdeveniments-cat",
-      description:
-        "Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (ca/es/en/fr) events platform with public REST API.",
+      description: `Esdeveniments.cat — Cultural events discovery API for Catalonia. Free multilingual (${localeCodes}) events platform with public REST API.`,
       version: "1.0.0",
       url: `${url}/mcp`,
       transport: "streamable-http",
@@ -165,8 +168,7 @@ export async function GET(
   if (path === "agent-card.json") {
     const agentCard = {
       name: "Esdeveniments.cat",
-      description:
-        "Cultural events discovery agent for Catalonia (Spain). Provides event listings, news, and place information in Catalan, Spanish, English, and French.",
+      description: `Cultural events discovery agent for Catalonia (Spain). Provides event listings, news, and place information in ${languageNames}.`,
       url: url,
       provider: {
         organization: "Esdeveniments.cat",

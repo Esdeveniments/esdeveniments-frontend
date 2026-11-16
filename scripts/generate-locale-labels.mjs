@@ -11,7 +11,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const LOCALES = ["ca", "es", "en", "fr"];
+const localesConfig = JSON.parse(
+  fs.readFileSync(path.join(root, "config", "locales.json"), "utf8"),
+);
+const LOCALES = Object.keys(localesConfig.locales);
+const DEFAULT_LOCALE = localesConfig.defaultLocale;
 const UTILS_KEYS = [
   "EventCopy",
   "EventStatus",
@@ -42,8 +46,17 @@ const labels = {
       pick(messages[l].Utils?.EventFallbacks, `${l}.Utils.EventFallbacks`),
     ]),
   ),
+  searchQuery: Object.fromEntries(
+    LOCALES.map((l) => [
+      l,
+      pick(messages[l].Utils?.SearchQuery, `${l}.Utils.SearchQuery`),
+    ]),
+  ),
   utils: Object.fromEntries(
-    UTILS_KEYS.map((k) => [k, pick(messages.ca.Utils?.[k], `ca.Utils.${k}`)]),
+    UTILS_KEYS.map((k) => [
+      k,
+      pick(messages[DEFAULT_LOCALE].Utils?.[k], `${DEFAULT_LOCALE}.Utils.${k}`),
+    ]),
   ),
 };
 

@@ -497,9 +497,15 @@ export function contractCatalanPlaceInText(
   });
 }
 
+function elideFrenchDe(text: string): "d'" | "de" {
+  return !/^(?:el|els)\s+/i.test(text) && startsWithVowelOrH(text)
+    ? "d'"
+    : "de";
+}
+
 /**
  * Locale-aware preposition + place, split so UI can style the parts apart.
- * relation "in": ca a/al/a la…, es "en", en "in", fr "à" ("en" for Catalunya)
+ * relation "in": ca a/al/a la…, es "en", en "in", fr "à" ("en" for regions and Catalunya)
  * relation "of": ca de/del/d'…, es "de", en "of", fr "de"/"d'"
  * relation "from": ca des de/des del…, es "desde", en "from", fr "depuis"
  * Spanish and French keep "El Masnou" uncontracted: the article is part of the official name.
@@ -526,15 +532,14 @@ export function formatPlacePrepositionParts(
   const raw = (name || "").trim();
   const place = lowercase ? raw.toLowerCase() : raw;
   if (locale === "fr") {
-    if (relation === "in" && raw.toLowerCase() === "catalunya") {
+    if (
+      relation === "in" &&
+      (type === "region" || raw.toLowerCase() === "catalunya")
+    ) {
       return { preposition: "en", place };
     }
-    if (
-      relation === "of" &&
-      !/^(?:el|els)\s+/i.test(raw) &&
-      startsWithVowelOrH(place)
-    ) {
-      return { preposition: "d'", place };
+    if (relation === "of") {
+      return { preposition: elideFrenchDe(place), place };
     }
   }
   return {
@@ -602,13 +607,8 @@ export function formatNamePrepositionParts(
 ): PlacePhraseParts {
   const text = (name || "").trim();
   if (locale !== "ca") {
-    if (
-      locale === "fr" &&
-      relation === "of" &&
-      !/^(?:el|els)\s+/i.test(text) &&
-      startsWithVowelOrH(text)
-    ) {
-      return { preposition: "d'", place: text };
+    if (locale === "fr" && relation === "of") {
+      return { preposition: elideFrenchDe(text), place: text };
     }
     return { preposition: NAME_PREPOSITIONS[locale][relation], place: text };
   }

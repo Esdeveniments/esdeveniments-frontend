@@ -37,7 +37,7 @@ import PromotedEventsSection from "@components/ui/promotedEvents/PromotedEventsS
 import HeroSectionSkeleton, {
   getHeroSkeletonCopy,
 } from "../hero/HeroSectionSkeleton";
-import { getLocaleSafely, withLocalePath } from "@utils/i18n-seo";
+import { getLocaleSafely } from "@utils/i18n-seo";
 import { DEFAULT_LOCALE } from "types/i18n";
 import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
 import { getCategoryLabel } from "@utils/category-helpers";
@@ -158,8 +158,6 @@ async function ServerEventsCategorized({
     namespace: "Components.ServerEventsCategorized",
   });
   const heroSkeletonCopy = await getHeroSkeletonCopy(locale, pageData?.subTitle ?? "");
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => withLocalePath(path, locale);
 
   const renderedLinkSections = seoLinkSections.filter(
     (section): section is SeoLinkSection =>
@@ -170,7 +168,7 @@ async function ServerEventsCategorized({
   const quickCategoryLinks = Object.entries(CATEGORY_ICONS).map(
     ([slug, Icon]) => ({
       label: getCategoryLabel(slug, slug, tCategories),
-      url: withLocale(`/catalunya/${slug}`),
+      url: `/catalunya/${slug}`,
       categorySlug: slug,
       Icon,
     })
@@ -211,7 +209,7 @@ async function ServerEventsCategorized({
                   <LocalizedPressableAnchor
                     locale={locale}
                     key={`${section.id}-${link.href}`}
-                    href={withLocale(link.href)}
+                    href={link.href}
                     prefetch={false}
                     variant="plain"
                     className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
@@ -270,7 +268,6 @@ async function ServerEventsCategorized({
       {/* 4. STREAMED CONTENT: HEAVY FETCHING */}
       <Suspense fallback={<HomeEventsSkeleton />}>
         <ServerEventsCategorizedContent
-          localePrefix={prefix}
           localAgendasSection={localAgendasSection}
           {...contentProps}
         />
@@ -283,9 +280,8 @@ export async function ServerEventsCategorizedContent({
   categorizedEventsPromise,
   categoriesPromise,
   featuredPlaces,
-  localePrefix = "",
   localAgendasSection,
-}: ServerEventsCategorizedContentProps & { localePrefix?: string; localAgendasSection?: SeoLinkSection }) {
+}: ServerEventsCategorizedContentProps) {
   const locale = await getLocaleSafely();
   // 1. Prepare Safe Promises
   const safeCategoriesPromise = (
@@ -476,13 +472,6 @@ export async function ServerEventsCategorizedContent({
     namespace: "Components.DateFilterBadges",
   });
   const badgeLabels = createDateFilterBadgeLabels(tDateFilters, locale);
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!localePrefix) return path;
-    if (path === "/") return localePrefix;
-    if (path.startsWith(localePrefix)) return path;
-    return `${localePrefix}${path}`;
-  };
 
   // Ad Logic
   const adPositions = new Set<number>();
@@ -581,7 +570,7 @@ export async function ServerEventsCategorizedContent({
                 <LocalizedPressableAnchor
                   locale={locale}
                   key={`local-agendas-${link.href}`}
-                  href={withLocale(link.href)}
+                  href={link.href}
                   prefetch={false}
                   variant="plain"
                   className="px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted hover:border-border text-sm text-foreground/80 hover:text-foreground transition-colors shadow-sm"
@@ -603,7 +592,7 @@ export async function ServerEventsCategorizedContent({
         </p>
         <LocalizedPressableAnchor
           locale={locale}
-          href={withLocale("/catalunya")}
+          href="/catalunya"
           prefetch={false}
           variant="plain"
           className="btn-primary w-full sm:w-auto"

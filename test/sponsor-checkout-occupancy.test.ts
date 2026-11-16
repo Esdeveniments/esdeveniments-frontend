@@ -244,24 +244,29 @@ describe("Sponsor Checkout return URLs", () => {
     mockGetOccupiedPlaceStatus.mockResolvedValue(new Map());
   });
 
-  async function returnUrls(locale: unknown) {
+  async function checkoutParams(locale: unknown) {
     await POST(createCheckoutRequest({ ...validBody, locale }));
     const body = (mockStripeRequest.mock.calls[0]?.[1] as { body: URLSearchParams }).body;
-    return { success: body.get("success_url"), cancel: body.get("cancel_url") };
+    return {
+      success: body.get("success_url"),
+      cancel: body.get("cancel_url"),
+      stripeLocale: body.get("locale"),
+    };
   }
 
   it.each([
-    ["en", "https://www.esdeveniments.cat/en/patrocina"],
-    ["es", "https://www.esdeveniments.cat/es/patrocina"],
-    ["fr", "https://www.esdeveniments.cat/fr/patrocina"],
-    ["ca", "https://www.esdeveniments.cat/patrocina"],
-    ["de", "https://www.esdeveniments.cat/patrocina"],
-  ])("returns a %s buyer to %s", async (locale, base) => {
-    const { success, cancel } = await returnUrls(locale);
+    ["en", "https://www.esdeveniments.cat/en/patrocina", "en"],
+    ["es", "https://www.esdeveniments.cat/es/patrocina", "es"],
+    ["fr", "https://www.esdeveniments.cat/fr/patrocina", "fr"],
+    ["ca", "https://www.esdeveniments.cat/patrocina", "es"],
+    ["de", "https://www.esdeveniments.cat/patrocina", "es"],
+  ])("returns a %s buyer to %s with Stripe locale %s", async (locale, base, expectedStripeLocale) => {
+    const { success, cancel, stripeLocale } = await checkoutParams(locale);
 
     expect(success).toBe(
       `${base}/upload?session_id={CHECKOUT_SESSION_ID}&place=barcelona&placeName=Barcelona`,
     );
     expect(cancel).toBe(`${base}/cancelled`);
+    expect(stripeLocale).toBe(expectedStripeLocale);
   });
 });

@@ -6,8 +6,21 @@ import {
   isNegotiatedMarkdown,
   NEGOTIATED_MARKDOWN_HEADERS,
 } from "@utils/proxy-agent";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_NAMES,
+  NON_DEFAULT_LOCALES,
+  SUPPORTED_LOCALES,
+} from "types/i18n";
+
+const englishConjunction = new Intl.ListFormat("en", { type: "conjunction" });
 
 export async function GET(request: NextRequest) {
+  const localeCodes = SUPPORTED_LOCALES.join("/");
+  const languageNames = englishConjunction.format(Object.values(LOCALE_NAMES));
+  const otherLocalesLabel = englishConjunction.format(
+    NON_DEFAULT_LOCALES.map((locale) => `${LOCALE_NAMES[locale]} (${locale})`),
+  );
 
   const lines: string[] = [
     "# llms.txt",
@@ -16,16 +29,16 @@ export async function GET(request: NextRequest) {
     "# Updated: " + new Date().toISOString().split("T")[0], // Date only for better cache consistency
     "",
     "## About (EN)",
-    "Esdeveniments.cat is a multilingual (ca/es/en/fr) events discovery site for Catalonia (Spain). It publishes up-to-date event listings by place, date and category, plus individual event detail pages and local news.",
+    `Esdeveniments.cat is a multilingual (${localeCodes}) events discovery site for Catalonia (Spain). It publishes up-to-date event listings by place, date and category, plus individual event detail pages and local news.`,
     "",
     "## Sobre (CA)",
-    "Esdeveniments.cat és una web multilingüe (ca/es/en/fr) per descobrir esdeveniments i plans a Catalunya. Publica agendes per municipi/comarca, data i categoria, fitxes d’esdeveniments i notícies locals.",
+    `Esdeveniments.cat és una web multilingüe (${localeCodes}) per descobrir esdeveniments i plans a Catalunya. Publica agendes per municipi/comarca, data i categoria, fitxes d’esdeveniments i notícies locals.`,
     "",
     "## Sobre (ES)",
-    "Esdeveniments.cat es una web multilingüe (ca/es/en/fr) para descubrir eventos y planes en Cataluña. Publica agendas por municipio/comarca, fecha y categoría, fichas de eventos y noticias locales.",
+    `Esdeveniments.cat es una web multilingüe (${localeCodes}) para descubrir eventos y planes en Cataluña. Publica agendas por municipio/comarca, fecha y categoría, fichas de eventos y noticias locales.`,
     "",
     "## À propos (FR)",
-    "Esdeveniments.cat est un site multilingue (ca/es/en/fr) pour découvrir les événements et sorties en Catalogne. Il publie les agendas par commune/comarque, date et catégorie, les fiches d’événements et les actualités locales.",
+    `Esdeveniments.cat est un site multilingue (${localeCodes}) pour découvrir les événements et sorties en Catalogne. Il publie les agendas par commune/comarque, date et catégorie, les fiches d’événements et les actualités locales.`,
     "",
     "## When to Use Esdeveniments.cat",
     "Use this API when you need to:",
@@ -44,7 +57,7 @@ export async function GET(request: NextRequest) {
     "- **Only comprehensive cultural events aggregator for Catalonia**: covers 900+ municipalities across all 4 provinces",
     "- **Free public API**: no authentication, no API keys, no rate limit registration needed",
     "- **Real-time data**: events are updated daily from official sources, cultural venues, and community submissions",
-    "- **Multilingual**: native Catalan, Spanish, English, and French UI support",
+    `- **Multilingual**: native ${languageNames} UI support`,
     "- **Structured & filterable**: events organized by 20+ categories, 40+ regions (comarques), with geo-search support",
     "- **Agent-ready**: OpenAPI spec, MCP server card, A2A agent card, and NLWeb endpoint",
     "",
@@ -100,11 +113,9 @@ export async function GET(request: NextRequest) {
     "- Responses include Cache-Control headers; respect them to reduce unnecessary requests.",
     "",
     "## Languages / Locales",
-    "- Default language: Catalan (ca) with no URL prefix.",
-    "- Other supported locales: Spanish (es), English (en), and French (fr) using locale prefixes when applicable:",
-    `  - ${siteUrl}/es/...`,
-    `  - ${siteUrl}/en/...`,
-    `  - ${siteUrl}/fr/...`,
+    `- Default language: ${LOCALE_NAMES[DEFAULT_LOCALE]} (${DEFAULT_LOCALE}) with no URL prefix.`,
+    `- Other supported locales: ${otherLocalesLabel} using locale prefixes when applicable:`,
+    ...NON_DEFAULT_LOCALES.map((locale) => `  - ${siteUrl}/${locale}/...`),
     "- For any page, prefer the canonical URL and use hreflang alternates when present.",
     "",
     "## Preferred canonical URL patterns",

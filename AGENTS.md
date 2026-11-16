@@ -49,7 +49,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 | `yarn dev` | Copies the MapLibre worker, then `next dev` (Turbopack). Run `yarn prebuild` first if you need the service worker |
 | `yarn build` | Copies the MapLibre worker, then `next build`. `build:development\|staging\|production` also run `prebuild` with that env file |
 | `yarn start` | `next start`: serves the built app. `start:development\|staging\|production` load that env file |
-| `yarn prebuild` | Generates `public/sw.js`, `public/robots.txt` and `public/static/maplibre-v*/` (build output, never edit them; `app/robots.txt/route.ts` is the fallback, keep both in sync) |
+| `yarn prebuild` | Generates `public/sw.js`, `public/robots.txt` and `public/static/maplibre-v*/` (build output, never edit them; `app/robots.txt/route.ts` is the fallback and shares `config/robots-policy.json` with `scripts/generate-robots.mjs`) |
 | `yarn lint` / `yarn typecheck` | 0 errors expected; old warnings are acceptable |
 | `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. CI runs Node 26 (`NODE_VERSION` in the workflows; keep it in sync with `engines.node`, `.nvmrc` and the Dockerfile base image) |
 | `yarn test:e2e` | Playwright in `e2e/`. Needs a running app and API credentials. Remote: `playwright.remote.config.ts` + `PLAYWRIGHT_TEST_BASE_URL` |
@@ -138,7 +138,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 ## i18n
 
-- Locales in `i18n/routing.ts` (`as-needed` prefix). Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/routing`, never `next/link` (ESLint warns).
+- Locales in `config/locales.json` (`types/i18n.ts` and `i18n/routing.ts`, `as-needed` prefix). Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/routing`, never `next/link` (ESLint warns).
 - Server: `getTranslations` (`next-intl/server`); client: `useTranslations`/`useLocale`. Never pass messages down manually. Text lives in `messages/{ca,es,en,fr}.json`; reuse keys.
 - `proxy.ts` sets `x-next-intl-locale`; don't write your own locale detection. Vitest aliases `next-intl` to `test/mocks/next-intl*.ts`.
 

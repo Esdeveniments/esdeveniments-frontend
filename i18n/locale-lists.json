@@ -353,5 +353,82 @@
       "universitat": "la",
       "unió": "la"
     }
+  },
+  "websiteSchema": {
+    "ca": {
+      "knowsAbout": [
+        "Agenda cultural",
+        "Festes majors",
+        "Esdeveniments culturals",
+        "Concerts",
+        "Teatre",
+        "Exposicions",
+        "Festivals",
+        "Catalunya"
+      ],
+      "featureList": [
+        "Descobriment d'esdeveniments culturals",
+        "Cerca per ubicació",
+        "Filtratge per categoria",
+        "API pública REST",
+        "Multilingüe (català, castellà, anglès, francès)"
+      ]
+    },
+    "es": {
+      "knowsAbout": [
+        "Agenda cultural",
+        "Fiestas mayores",
+        "Eventos culturales",
+        "Conciertos",
+        "Teatro",
+        "Exposiciones",
+        "Festivales",
+        "Cataluña"
+      ],
+      "featureList": [
+        "Descubrimiento de eventos culturales",
+        "Búsqueda por ubicación",
+        "Filtrado por categoría",
+        "API pública REST",
+        "Multilingüe (catalán, castellano, inglés, francés)"
+      ]
+    },
+    "en": {
+      "knowsAbout": [
+        "Cultural agenda",
+        "Festivals",
+        "Cultural events",
+        "Concerts",
+        "Theatre",
+        "Exhibitions",
+        "Catalonia"
+      ],
+      "featureList": [
+        "Cultural events discovery",
+        "Location-based search",
+        "Category filtering",
+        "Public REST API",
+        "Multilingual (Catalan, Spanish, English, French)"
+      ]
+    },
+    "fr": {
+      "knowsAbout": [
+        "Agenda culturel",
+        "Fêtes locales",
+        "Événements culturels",
+        "Concerts",
+        "Théâtre",
+        "Expositions",
+        "Festivals",
+        "Catalogne"
+      ],
+      "featureList": [
+        "Découverte d'événements culturels",
+        "Recherche par lieu",
+        "Filtrage par catégorie",
+        "API publique REST",
+        "Multilingue (catalan, espagnol, anglais, français)"
+      ]
+    }
   }
 }

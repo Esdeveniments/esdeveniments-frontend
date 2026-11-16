@@ -8,21 +8,15 @@ import {
   isPlainLeftClick,
   startNavigationFeedback,
 } from "@lib/navigation-feedback";
-import type {
-  PressableLinkProps,
-  PressableLinkVariant,
-} from "types/ui";
+import type { PressableLinkProps } from "types/ui";
 import { useLocale } from "next-intl";
-import type { AppLocale } from "types/i18n";
-import { localizePath } from "@utils/i18n-routing";
+import { DEFAULT_LOCALE } from "types/i18n";
+import { ensureLocale } from "@utils/i18n-routing";
 import { NO_VIGNETTE_LINK_ATTRS } from "@utils/constants";
-
-const VARIANT_CLASSES: Record<PressableLinkVariant, string> = {
-  inline: "pressable-inline",
-  card: "pressable-card transition-card",
-  chip: "pressable-chip transition-interactive",
-  plain: "",
-};
+import {
+  PRESSABLE_LINK_VARIANT_CLASSES,
+  normalizeLocalizedHref,
+} from "./LocalizedPressableAnchor";
 
 export default function PressableLink({
   className = "",
@@ -35,32 +29,18 @@ export default function PressableLink({
   ...props
 }: PressableLinkProps & { children: ReactNode }) {
   const { handlers, isPressed } = usePressFeedback();
-  const isTestEnv = process.env.NODE_ENV === "test";
-  const resolvedPrefetch = isTestEnv ? undefined : prefetch;
-  const locale = useLocale() as AppLocale;
-  const withLocale = (path: string) => localizePath(path, locale);
-  const normalizeHref = (hrefValue: PressableLinkProps["href"]) => {
-    if (typeof hrefValue === "string") {
-      if (hrefValue.startsWith("http")) return hrefValue;
-      return withLocale(hrefValue);
-    }
-    if (
-      hrefValue &&
-      typeof hrefValue === "object" &&
-      typeof hrefValue.pathname === "string"
-    ) {
-      return {
-        ...hrefValue,
-        pathname: withLocale(hrefValue.pathname),
-      };
-    }
-    return hrefValue;
-  };
-  const localizedHref = normalizeHref(props.href);
+  const resolvedPrefetch =
+    process.env.NODE_ENV === "test" ? undefined : prefetch;
+  const locale = ensureLocale(useLocale?.() || DEFAULT_LOCALE);
+  const localizedHref = normalizeLocalizedHref(props.href, locale);
   const isInternalHref =
     typeof localizedHref !== "string" || !localizedHref.startsWith("http");
 
-  const classes = clsx("cursor-pointer", className, VARIANT_CLASSES[variant]);
+  const classes = clsx(
+    "cursor-pointer",
+    className,
+    PRESSABLE_LINK_VARIANT_CLASSES[variant],
+  );
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
@@ -75,7 +55,7 @@ export default function PressableLink({
     <Link
       {...(isInternalHref ? NO_VIGNETTE_LINK_ATTRS : {})}
       {...props}
-      href={localizedHref as any}
+      href={localizedHref}
       prefetch={resolvedPrefetch}
       className={classes}
       onClick={handleClick}
