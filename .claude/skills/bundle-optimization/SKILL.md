@@ -52,7 +52,7 @@ const lcp = buildResponsivePictureSourceUrls(
 />
 ```
 
-Real code: `components/partials/PlacePageShell.tsx` (listings), `app/[locale]/e/[eventId]/page.tsx` (event hero); both still omit `href`, add it when you touch them. The home hero is a static AVIF/WebP set in `config/hero-image.ts`, with one preload per `<picture>` source.
+Real code: `components/ui/common/image/CardImagePreload.tsx` (listings), `app/[locale]/e/[eventId]/page.tsx` (event hero). The home hero is a static AVIF/WebP set in `config/hero-image.ts`, with one preload per `<picture>` source.
 
 ## Repeated icons
 
