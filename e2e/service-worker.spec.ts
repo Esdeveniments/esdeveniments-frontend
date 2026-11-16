@@ -5,45 +5,43 @@ import { test, expect } from "@playwright/test";
 // and RSC navigation bypass against a real browser service worker.
 test.use({ serviceWorkers: "allow" });
 
-test("service worker activates, skips caching /api/auth/me, and keeps client navigation working", async ({
+test("service worker controls the page, precaches the offline shell, and lets client RSC navigation through", async ({
   page,
 }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (err) => pageErrors.push(err.message));
+
   await page.goto("/", { waitUntil: "domcontentloaded", timeout: 60_000 });
 
   await expect
     .poll(
-      () =>
-        page.evaluate(async () => {
-          if (!("serviceWorker" in navigator)) return "unsupported";
-          const reg = await navigator.serviceWorker.getRegistration("/");
-          return (
-            navigator.serviceWorker.controller?.state ??
-            reg?.active?.state ??
-            "pending"
-          );
-        }),
+      () => page.evaluate(() => navigator.serviceWorker.controller?.state ?? "uncontrolled"),
       { timeout: 30_000 },
     )
     .toBe("activated");
 
-  const authCached = await page.evaluate(async () => {
-    const res = await fetch("/api/auth/me", { credentials: "include" });
-    await res.body?.cancel().catch(() => {});
-    const cacheNames = await caches.keys();
-    for (const name of cacheNames) {
-      const cache = await caches.open(name);
-      const match = await cache.match("/api/auth/me");
-      if (match) return true;
-    }
-    return false;
+  const offlinePrecached = await page.evaluate(async () => {
+    const match = await caches.match("/offline", { ignoreSearch: true });
+    return match?.status === 200;
   });
-  expect(authCached).toBe(false);
+  expect(offlinePrecached).toBe(true);
 
-  await page.goto("/catalunya", {
-    waitUntil: "domcontentloaded",
-    timeout: 60_000,
+  await page.evaluate(() => {
+    (window as unknown as Record<string, number>).__swClientNavMarker = 1;
   });
+
+  const rscLink = page.locator('a[href="/catalunya/cap-de-setmana"]').first();
+  await expect(rscLink).toBeVisible({ timeout: 30_000 });
+  await rscLink.click();
+  await page.waitForURL("**/catalunya/cap-de-setmana", { timeout: 30_000 });
+
   await expect(
     page.getByTestId("search-input").filter({ visible: true }),
   ).toBeVisible({ timeout: 30_000 });
+
+  const markerSurvived = await page.evaluate(
+    () => (window as unknown as Record<string, number>).__swClientNavMarker === 1,
+  );
+  expect(markerSurvived).toBe(true);
+  expect(pageErrors).toEqual([]);
 });
