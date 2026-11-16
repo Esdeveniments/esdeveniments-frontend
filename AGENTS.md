@@ -135,6 +135,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - CSP lives in `utils/proxy-csp.ts` (applied to pages by `proxy.ts`): host allowlist with `'unsafe-inline'` (keeps pages cacheable for ISR/PPR); no nonces. Add new script/connect hosts there. The other security headers are in `next.config.js` `headers()`.
 - JSON-LD is rendered server-side by `components/partials/JsonLdServer.tsx`, which escapes `<`. Use `toLocalizedUrl(path, locale)` (`utils/i18n-seo.ts`) for its URLs and `generateBreadcrumbList()` (`components/partials/seo-meta.ts`) for breadcrumbs.
 - Errors: pass the original error to `captureException(error)`. Wrap `new URL()` in try/catch inside error handlers.
+- Workflow actions: pin third-party actions (anything outside `actions/*` and the `albertolive/ai-gateway` reusable workflows) to a full commit SHA with a `# vX.Y.Z` comment, copied from the action's own repo. A moving tag can be repointed by whoever owns it, and these steps handle deploy and mail secrets. The weekly Dependabot `actions-all` group bumps the SHA and the comment together.
 
 ## i18n
 
