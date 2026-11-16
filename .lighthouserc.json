@@ -15,13 +15,22 @@
     },
     "assert": {
       "assertions": {
-        "categories:performance": ["error", { "minScore": 0.45 }],
-        "largest-contentful-paint": ["error", { "maxNumericValue": 5000 }],
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.25 }],
+        "categories:performance": ["error", { "minScore": 0.85 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 200 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
 
-        "categories:accessibility": ["warn", { "minScore": 0.8 }],
-        "categories:best-practices": ["warn", { "minScore": 0.8 }],
-        "categories:seo": ["warn", { "minScore": 0.8 }]
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:best-practices": ["error", { "minScore": 0.9 }],
+        "document-title": "error",
+        "http-status-code": "error",
+        "link-text": "error",
+        "crawlable-anchors": "error",
+        "image-alt": "error",
+        "hreflang": "error",
+        "is-crawlable": "off",
+        "robots-txt": "off",
+        "meta-description": "off"
       }
     },
     "upload": {

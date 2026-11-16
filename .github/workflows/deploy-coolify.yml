@@ -200,6 +200,7 @@ jobs:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
           # publica_to_event.flow.spec.ts runs only when this process sees it.
           E2E_TEST_MODE: "1"
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
 
       - name: Stop Next.js server
         if: always()

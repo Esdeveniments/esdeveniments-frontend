@@ -559,9 +559,10 @@ list longer paths. Every route's `serverBytes` grows a few KB, and
 `bundle-size-baseline.json` from the `bundle-sizes` artifact of a green develop
 CI run (`gh run download <id> -n bundle-sizes`), never from a local build.
 The artifact lists `routes` as an array; the baseline keys them by route and
-keeps its own `version` and `thresholds`. Copy the artifact's
-`client.totalBytes` into the top-level `clientTotalBytes` too: the gate reads
-that field, and without it the client check is skipped. Key the artifact's
+keeps its own `version` and `thresholds`. `compare-bundle-sizes.mjs` reads
+`client.totalBytes` directly (falling back to legacy `clientTotalBytes`) and
+fails loud if either `client.totalBytes` or any prerendered HTML entry in
+`pages` is missing. Key the artifact's
 `pages` array by `page` the same way (`{ "/ca": { "jsGzipBytes": … } }`).
 Without `pages`, the per-page JS check is skipped, and that check is the one
 that sees a shared chunk grow on the home and listing pages: zod 4 added

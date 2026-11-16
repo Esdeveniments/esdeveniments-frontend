@@ -113,11 +113,36 @@ async function main() {
     });
   }
 
-  check('client.totalBytes', baselineJson.clientTotalBytes, currentJson?.client?.totalBytes ?? 0, globalThresholds);
+  const baselineClientBytes =
+    baselineJson.client?.totalBytes ?? baselineJson.clientTotalBytes;
+  if (!Number.isFinite(baselineClientBytes) || baselineClientBytes <= 0) {
+    issues.push({
+      level: 'error',
+      key: 'client.totalBytes',
+      message: 'Missing client.totalBytes in baseline JSON.',
+    });
+  } else {
+    check('client.totalBytes', baselineClientBytes, currentJson?.client?.totalBytes ?? 0, globalThresholds);
+  }
 
+  const baselinePages = Object.entries(baselineJson.pages ?? {});
+  if (baselinePages.length === 0) {
+    issues.push({
+      level: 'error',
+      key: 'pages',
+      message: 'Missing key landing pages in baseline JSON.',
+    });
+  }
   const currentPages = new Map((currentJson?.pages ?? []).map((entry) => [entry.page, entry]));
-  for (const [page, pageConfig] of Object.entries(baselineJson.pages ?? {})) {
-    if (!currentPages.has(page)) console.warn(`⚠️  ${page}: no prerendered HTML in this build, page JS not checked.`);
+  for (const [page, pageConfig] of baselinePages) {
+    if (!currentPages.has(page)) {
+      issues.push({
+        level: 'error',
+        key: `page ${page} (JS gzip)`,
+        message: 'No prerendered HTML in this build (accidental dynamic bailout?).',
+      });
+      continue;
+    }
     check(`page ${page} (JS gzip)`, pageConfig?.jsGzipBytes, currentPages.get(page)?.jsGzipBytes ?? 0, pageThresholds);
   }
 
@@ -137,6 +162,10 @@ async function main() {
   console.log('📦 Bundle size regressions detected:\n');
 
   for (const issue of issues) {
+    if (issue.message) {
+      console.log(`${issue.level.toUpperCase()} ${issue.key}: ${issue.message}`);
+      continue;
+    }
     const thresholdText = `threshold: ${formatPercent(issue.threshold.ratio)} or ${formatBytes(issue.threshold.bytes)}`;
     console.log(
       `${issue.level.toUpperCase()} ${issue.key}: ` +

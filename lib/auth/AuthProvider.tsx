@@ -71,11 +71,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
             // 503 = transient Logto outage (cookies preserved server-side).
             if (res.status === 503 && attempt === 0) {
+              await res.body?.cancel().catch(() => {});
               if (await waitBeforeRetry()) continue;
               next(null);
               return;
             }
-            const data = res.ok ? await res.json() : null;
+            if (!res.ok) {
+              // Cancel unconsumed error bodies (e.g. 401 on anonymous visits) so
+              // Chromium marks the HTTP stream finished instead of holding
+              // Network.loadingFinished open until GC (45s Lighthouse timeout).
+              await res.body?.cancel().catch(() => {});
+              next(null);
+              return;
+            }
+            const data = await res.json();
             next((data?.user as AuthUser | null) ?? null);
             return;
           } catch {

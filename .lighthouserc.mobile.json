@@ -14,15 +14,19 @@
     },
     "assert": {
       "assertions": {
-        "categories:performance": ["warn", { "minScore": 0.75 }],
-        "largest-contentful-paint": ["warn", { "maxNumericValue": 5500 }],
-        "total-blocking-time": ["warn", { "maxNumericValue": 300 }],
-        "cumulative-layout-shift": ["warn", { "maxNumericValue": 0.1 }]
+        "categories:performance": ["error", { "minScore": 0.7 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 5500 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 300 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:best-practices": ["error", { "minScore": 0.9 }],
+        "is-crawlable": "off",
+        "robots-txt": "off",
+        "meta-description": "off"
       }
     },
     "upload": {
-      "target": "temporary-public-storage",
-      "githubStatusContextSuffix": "-mobile"
+      "target": "temporary-public-storage"
     }
   }
 }
