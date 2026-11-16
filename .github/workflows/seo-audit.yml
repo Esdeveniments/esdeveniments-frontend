@@ -129,6 +129,7 @@ jobs:
           retention-days: 90
 
       - name: Create GitHub Issue
+        id: create-issue
         if: ${{ github.event.inputs.skip_issue != 'true' }}
         uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
         with:
@@ -136,6 +137,19 @@ jobs:
           content-filepath: data/seo-audits/${{ steps.audit.outputs.run_date }}.md
           labels: seo,automated-audit
           assignees: albertolive
+
+      - name: Close previous audits
+        if: ${{ github.event.inputs.skip_issue != 'true' && steps.create-issue.outputs.issue-number != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW_ISSUE: ${{ steps.create-issue.outputs.issue-number }}
+        run: |
+          gh issue list --repo "$GITHUB_REPOSITORY" --label automated-audit --state open --limit 100 --json number,title,labels \
+            -q '.[] | select((.title | startswith("📊 SEO Audit")) and ([.labels[].name] | index("regression") | not)) | .number' |
+            while read -r n; do
+              [[ "$n" == "$NEW_ISSUE" ]] && continue
+              gh issue close "$n" --repo "$GITHUB_REPOSITORY" --reason "not planned" --comment "Superseded by #$NEW_ISSUE."
+            done
 
       - name: Cleanup credentials
         if: always()

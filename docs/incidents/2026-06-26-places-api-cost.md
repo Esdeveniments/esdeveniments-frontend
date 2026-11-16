@@ -97,6 +97,13 @@ restaurants" (`restaurant_load_click`), for everyone; no login gate. A login gat
 rejected: ~€17/month max saving, and GA had no auth events yet. Staging returns
 `notConfigured`, so it no longer calls Google.
 
+## Follow-up (Nov 7, 2026): login gate
+
+Logto sign-in shipped with GA4 auth events. `#696` then gated `restaurant_load_click`
+behind `isAuthenticated` in `RestaurantPromotionSection.tsx`, so signed-in visitors load
+nearby restaurants on click while guests get a sign-in CTA (`restaurants_login`) and
+bot or anonymous clicks never reach Google Places.
+
 ## Prevention
 
 1. **Coordinate-snapped, deploy-independent cache** — the structural fix: cost is now a

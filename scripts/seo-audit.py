@@ -23,14 +23,18 @@ from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from urllib.parse import urlparse
 
-import google.auth
-import requests
-from googleapiclient.discovery import build
-from google.analytics.data_v1beta import BetaAnalyticsDataClient
-from google.analytics.data_v1beta.types import (
-    RunReportRequest, DateRange, Dimension, Metric, OrderBy,
-    FilterExpression, FilterExpressionList, Filter,
-)
+try:
+    import google.auth
+    import requests
+    from googleapiclient.discovery import build
+    from google.analytics.data_v1beta import BetaAnalyticsDataClient
+    from google.analytics.data_v1beta.types import (
+        RunReportRequest, DateRange, Dimension, Metric, OrderBy,
+        FilterExpression, FilterExpressionList, Filter,
+    )
+except ImportError:
+    google = None
+    requests = None
 
 # ─── CONFIGURATION ───
 SITE = os.environ.get("GSC_SITE_URL", "https://www.esdeveniments.cat/")
@@ -55,6 +59,15 @@ HIGH_BOUNCE_MIN_SESSIONS = 20
 HIGH_BOUNCE_THRESHOLD = 0.7
 BOUNCE_DIVERGENCE_THRESHOLD = 0.15
 LOW_USAGE_THRESHOLD = 50
+# KPIs compare two overlapping 90-day windows spaced ~14 days apart, so a 30%
+# two-week drop moves the 90-day sum by ~4.7%: 2% filters rounding/jitter, 2-10%
+# surfaces as P2, and >=10% fires P1.
+KPI_NOISE_THRESHOLD = 0.02
+KPI_SEVERE_DROP_THRESHOLD = 0.10
+POSITION_NOISE_DELTA = 0.5
+POSITION_SEVERE_DELTA = 2.0
+BOUNCE_NOISE_DELTA = 0.02
+BOUNCE_SEVERE_DELTA = 0.05
 
 # Custom GA4 events to track
 TRACKED_CUSTOM_EVENTS = [
@@ -129,19 +142,28 @@ END_PREV = (TODAY - timedelta(days=34)).strftime("%Y-%m-%d")
 START_PREV = (TODAY - timedelta(days=63)).strftime("%Y-%m-%d")
 
 # ─── AUTH ───
-try:
-    credentials, project = google.auth.default(
-        scopes=[
-            "https://www.googleapis.com/auth/webmasters.readonly",
-            "https://www.googleapis.com/auth/analytics.readonly",
-        ]
-    )
-    gsc = build("searchconsole", "v1", credentials=credentials)
-    ga = BetaAnalyticsDataClient(credentials=credentials)
-except Exception as e:
-    print(f"❌ Authentication failed: {e}")
-    print("Set GOOGLE_APPLICATION_CREDENTIALS or configure ADC.")
-    raise SystemExit(1)
+gsc = None
+ga = None
+
+
+def init_clients():
+    global gsc, ga
+    if google is None:
+        print("❌ Missing google-api-python-client / google-analytics-data dependencies.")
+        raise SystemExit(1)
+    try:
+        credentials, _project = google.auth.default(
+            scopes=[
+                "https://www.googleapis.com/auth/webmasters.readonly",
+                "https://www.googleapis.com/auth/analytics.readonly",
+            ]
+        )
+        gsc = build("searchconsole", "v1", credentials=credentials)
+        ga = BetaAnalyticsDataClient(credentials=credentials)
+    except Exception as e:
+        print(f"❌ Authentication failed: {e}")
+        print("Set GOOGLE_APPLICATION_CREDENTIALS or configure ADC.")
+        raise SystemExit(1)
 
 # Country filter for GA4 (set via --country arg, applied to all GA reports)
 GA_COUNTRY_FILTER = None  # set in main()
@@ -1097,16 +1119,21 @@ def compare_kpis(current, previous):
             pct = f"{((cur - prev) / prev) * 100:+.1f}%"
 
         emoji = ""
+        severity = None
         if prev > 0:
             delta = cur - prev
+            rel_delta = delta / max(abs(prev), 0.0001)
             # For position, lower is better
             if name == "GSC Avg Position":
-                emoji = "🟢" if delta < -0.5 else ("🔴" if delta > 0.5 else "⚪")
+                emoji = "🟢" if delta < -POSITION_NOISE_DELTA else ("🔴" if delta > POSITION_NOISE_DELTA else "⚪")
+                severity = "P1" if delta > POSITION_SEVERE_DELTA else ("P2" if delta > POSITION_NOISE_DELTA else None)
             # For bounce rate, lower is better
             elif name == "GA4 Bounce Rate":
-                emoji = "🟢" if delta < -0.02 else ("🔴" if delta > 0.02 else "⚪")
+                emoji = "🟢" if delta < -BOUNCE_NOISE_DELTA else ("🔴" if delta > BOUNCE_NOISE_DELTA else "⚪")
+                severity = "P1" if delta > BOUNCE_SEVERE_DELTA else ("P2" if delta > BOUNCE_NOISE_DELTA else None)
             else:
-                emoji = "🟢" if delta > 0 else ("🔴" if delta < 0 else "⚪")
+                emoji = "🟢" if rel_delta >= KPI_NOISE_THRESHOLD else ("🔴" if rel_delta <= -KPI_NOISE_THRESHOLD else "⚪")
+                severity = "P1" if rel_delta <= -KPI_SEVERE_DROP_THRESHOLD else ("P2" if rel_delta <= -KPI_NOISE_THRESHOLD else None)
 
         changes.append({
             "name": name,
@@ -1114,6 +1141,7 @@ def compare_kpis(current, previous):
             "previous": prev,
             "change": pct,
             "emoji": emoji,
+            "severity": severity,
         })
 
     return changes
@@ -1360,7 +1388,7 @@ def generate_markdown(data, previous=None):
             lines.append(f"| {sa['type']} | {sa['clicks']:,} | {sa['impressions']:,} | {sa['ctr']:.1%} |")
         if not has_event:
             lines.append("")
-            lines.append("⚠️ **No Event rich results** despite having Event JSON-LD. Only non-Event types appearing.")
+            lines.append("ℹ️ Event rich results don't show up in Search Analytics `searchAppearance`; check URL Inspection.")
     else:
         lines.append("ℹ️ No search appearance types reported. Event rich results don't show up here; check URL Inspection.")
     lines.append("")
@@ -1382,9 +1410,9 @@ def generate_markdown(data, previous=None):
     # ── 3-Segment URLs Indexed ──
     three_seg = data["gsc"].get("three_segment_indexed", [])
     if three_seg:
-        lines.append("## 🚫 3-Segment URLs Indexed (Should Be Noindexed)")
+        lines.append("## 🚫 3-Segment URLs in 90d GSC Window")
         lines.append("")
-        lines.append("URLs with pattern `/place/date/category` appearing in GSC. These create thin/duplicate content.")
+        lines.append("URLs with pattern `/place/date/category` seen in GSC over 90 days. `proxy.ts` sends `X-Robots-Tag: noindex, follow` (and 301s `/tots/`), so rows are lingering impressions unless a sampled URL lacks the header.")
         lines.append("")
         lines.append("| Page | Impressions | Clicks | Position |")
         lines.append("|------|-------------|--------|----------|")
@@ -1731,14 +1759,13 @@ def generate_actions(data, previous=None):
             "description": "Expected with hreflang (each locale has a self-canonical). Act only if hreflang/canonical tags are wrong or one locale ranks for queries in another language.",
         })
 
-    # 3-segment URLs indexed
     three_seg = data["gsc"].get("three_segment_indexed", [])
     if three_seg:
         total_impr = sum(r["impressions"] for r in three_seg)
         actions.append({
-            "priority": "P1",
-            "title": f"3-segment URLs indexed: {len(three_seg)} pages ({total_impr:,} impressions)",
-            "description": "URLs like /place/date/category are indexed but create thin/duplicate content. Add noindex in proxy.ts and remove from sitemaps.",
+            "priority": "INFO",
+            "title": f"3-segment URLs in 90d GSC window: {len(three_seg)} pages ({total_impr:,} impressions)",
+            "description": "proxy.ts sends X-Robots-Tag: noindex, follow (and 301s /tots/). Spot-check the top URL with URL Inspection if impressions persist.",
         })
 
     # Dead pages
@@ -1749,16 +1776,6 @@ def generate_actions(data, previous=None):
             "priority": "P2",
             "title": f"Dead pages: {len(dead)} pages with {total_impr:,} impressions and 0 clicks",
             "description": "Pages visible in search but never clicked waste crawl budget. Consider improving meta or noindexing low-value pages.",
-        })
-
-    # Rich results gap (has search appearances but no Event rich results specifically)
-    sa_types = [s["type"].upper() for s in data["gsc"].get("search_appearance", [])]
-    has_event_rich = any(t in ("EVENT", "EVENT_LISTING") for t in sa_types)
-    if sa_types and not has_event_rich:
-        actions.append({
-            "priority": "P1",
-            "title": "No Event rich results despite JSON-LD schema",
-            "description": "Site has Event structured data but Google shows no Event rich results. Test with Rich Results Test, check for schema errors (missing fields, price issues).",
         })
 
     # Mobile vs desktop bounce divergence
@@ -1921,16 +1938,15 @@ def generate_actions(data, previous=None):
                 "description": "Both share and add-to-calendar have <0.3% adoption. Make these CTAs more visible on event pages — consider sticky bottom bar or inline placement.",
             })
 
-    # Trend-based actions
     if previous:
         changes = compare_kpis(data, previous)
-        # Metrics where higher is worse (bounce rate, position)
         inverse_metrics = {"GA4 Bounce Rate", "GSC Avg Position"}
         for c in changes:
-            if c["emoji"] == "🔴" and c["previous"] > 0:
+            severity = c.get("severity")
+            if severity and c["previous"] > 0:
                 verb = "rose" if c["name"] in inverse_metrics else "dropped"
                 actions.append({
-                    "priority": "P1",
+                    "priority": severity,
                     "title": f"Declining: {c['name']} ({c['change']})",
                     "description": f"{c['name']} {verb} from {format_kpi_value(c['name'], c['previous'])} to {format_kpi_value(c['name'], c['current'])}. Investigate potential causes.",
                 })
@@ -1955,6 +1971,8 @@ def main():
     parser.add_argument("--previous", help="Path to previous audit JSON for trend comparison")
     parser.add_argument("--country", help="Filter GA4 data to a specific country (e.g. Spain)")
     args = parser.parse_args()
+
+    init_clients()
 
     if args.country:
         GA_COUNTRY_FILTER = FilterExpression(

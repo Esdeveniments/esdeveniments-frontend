@@ -1120,6 +1120,7 @@
       "error": "Please try again later.",
       "resultsCount": "{count, plural, =0 {No events} one {# event} other {# events}}",
       "retry": "Try again",
+      "didYouMean": "Did you mean?",
       "recoveryTitle": "Broaden your search",
       "recoveryPlace": "“{search}” across Catalonia",
       "recoveryDate": "“{search}” on any date",
