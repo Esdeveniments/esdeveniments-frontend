@@ -85,9 +85,8 @@ function HybridEventsListClientContent({
 
   // Check if client-side filters are active
   const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
-  const { isLoading: isPlacesLoading } = useGetRegionsWithCities(
-    Boolean(search) && !profileSlug,
-  );
+  const { isLoading: isPlacesLoading, isError: isPlacesError } =
+    useGetRegionsWithCities(Boolean(search) && !profileSlug);
 
   const { events, totalEvents, hasMore, loadMore, retry, isLoading, isLoadingMore, error } =
     useEvents({
@@ -243,7 +242,12 @@ function HybridEventsListClientContent({
           ? t("resultsCount", { count: totalEvents })
           : ""}
       </p>
-      {isLoading || (showNoEventsFound && Boolean(search) && !profileSlug && isPlacesLoading) ? (
+      {isLoading ||
+      (showNoEventsFound &&
+        Boolean(search) &&
+        !profileSlug &&
+        isPlacesLoading &&
+        !isPlacesError) ? (
         // Keep skeleton until place options settle on zero-result searches so
         // SearchRecoveryLinks never shifts NoEventsFound or fallback cards down.
         <EventsGridSkeleton />

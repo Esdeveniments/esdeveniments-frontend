@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 
 describe("scripts/seo-audit.py action rules", () => {
-  it("ignores <5% KPI noise, non-EVENT searchAppearance, and 3-segment lingering impressions as P1", () => {
+  it("ignores <2% KPI noise, non-EVENT searchAppearance, and 3-segment lingering impressions as P1", () => {
     const scriptPath = join(process.cwd(), "scripts", "seo-audit.py");
     const output = execFileSync(
       "python3",
