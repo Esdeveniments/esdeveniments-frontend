@@ -395,6 +395,12 @@ Do both in any new spec that logs in with a real credential or sends a secret
 through `request`. If a report already carried a credential, rotate it: the
 artifact stays downloadable for 7 days.
 
+`console.log` output reaches the report too, as the `stdout` attachment. GitHub
+masks secrets in the job log but not there. `publish-integration.spec.ts` printed
+every `/api/` response body, so `/api/auth/me` put the staging account email in
+the report while the job log showed `***`. It now prints `<hidden>` for
+`/api/auth/*` bodies. A spec that logs responses needs the same filter.
+
 ## A spec that reloads the event page after publishing must dismiss the promote upsell
 
 Publishing stores `esdeveniments:post_publish_upsell:<slug>` in localStorage, and

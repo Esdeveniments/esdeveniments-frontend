@@ -62,7 +62,10 @@ test.describe("Publish integration (staging)", () => {
     // Log all API responses for debugging
     page.on("response", async (response) => {
       if (response.url().includes("/api/")) {
-        const body = await response.text().catch(() => "<no body>");
+        // The report is public and /api/auth/me returns the account email.
+        const body = response.url().includes("/api/auth/")
+          ? "<hidden>"
+          : await response.text().catch(() => "<no body>");
         console.log(`[API] ${response.status()} ${response.url().replace(/http:\/\/localhost:3000/, "")}: ${body.substring(0, 300)}`);
       }
     });
