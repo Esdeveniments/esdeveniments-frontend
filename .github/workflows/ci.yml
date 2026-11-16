@@ -15,10 +15,11 @@ permissions:
 
 env:
   NODE_VERSION: "26"
-  # Production API for the quality and Lighthouse builds. The E2E job overrides
-  # it with preproduction (the `staging` environment's variable, else its
-  # fallback). Keep NEXT_PUBLIC_API_URL out of repository variables: one would
-  # replace that fallback wherever the environment variable isn't visible.
+  # Default API for quality and Lighthouse when secrets are unavailable (fork
+  # PRs). Steps that pass BACKEND_SERVICE_SECRET override this with
+  # secrets.NEXT_PUBLIC_API_URL so Dependabot PRs pair their preproduction
+  # secret with the preproduction API. Keep NEXT_PUBLIC_API_URL out of
+  # repository variables so E2E's staging environment fallback stays intact.
   NEXT_PUBLIC_API_URL: https://api.esdeveniments.cat/api
 
 jobs:
@@ -77,11 +78,13 @@ jobs:
       - name: Generate service worker (prebuild)
         env:
           BUILD_VERSION: ${{ github.sha }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || env.NEXT_PUBLIC_API_URL }}
         run: yarn prebuild
 
       - name: Build application
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || env.NEXT_PUBLIC_API_URL }}
           HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
           BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
         run: yarn build
@@ -106,9 +109,6 @@ jobs:
     needs: quality
     timeout-minutes: 25
 
-    env:
-      LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -130,30 +130,52 @@ jobs:
         run: |
           yarn config set enableImmutableInstalls false
 
+      - name: Cache Next.js build cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
+
       - name: Install dependencies
         run: yarn install --immutable
 
       - name: Generate service worker (prebuild)
         env:
           BUILD_VERSION: ${{ github.sha }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
         run: yarn prebuild
 
       - name: Build application
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
         run: yarn build
 
-      - name: Run Lighthouse CI
+      - name: Run Lighthouse CI (desktop)
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          INTERNAL_SITE_URL: http://localhost:3000
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
         run: yarn lighthouse:ci
 
-      # Warn only: thresholds sit just below a local mobile run (perf 78-82,
-      # LCP 4.8-5.4 s). The move keeps desktop asserts off the mobile reports.
-      - name: Run Lighthouse CI (mobile, warn only)
-        continue-on-error: true
+      - name: Run Lighthouse CI (mobile)
         env:
           NODE_ENV: production
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_SITE_URL: https://www.esdeveniments.cat
+          INTERNAL_SITE_URL: http://localhost:3000
+          HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+          BACKEND_SERVICE_SECRET: ${{ secrets.BACKEND_SERVICE_SECRET }}
         run: mv .lighthouseci .lighthouseci-desktop && yarn lighthouse:ci:mobile
 
       - name: Upload Lighthouse reports

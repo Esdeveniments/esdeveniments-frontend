@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createInbox, type Inbox } from "./helpers/inbox";
 import { deleteLogtoUsers, isLogtoAdminConfigured } from "./helpers/logto-admin";
-import { completeHostedLogin, loginViaUI, openHostedSignIn, waitForAppReturn } from "./helpers/login";
+import { completeHostedLogin, fillSecret, loginViaUI, openHostedSignIn, waitForAppReturn } from "./helpers/login";
 import { cleanupEvent, clickArmedPublish, prepareTestEvent } from "./helpers/publish";
 
 /**
@@ -127,7 +127,7 @@ test.describe("Sign-up and onboarding (staging)", () => {
 
     const passwordField = page.locator('input[type="password"]');
     await expect(passwordField).toBeVisible({ timeout: 30_000 });
-    await passwordField.fill(password);
+    await fillSecret(passwordField, password);
     await page.getByRole("button", { name: "Save password" }).click();
     await waitForAppReturn(page, appOrigin);
 

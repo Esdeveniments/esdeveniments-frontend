@@ -19,10 +19,19 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
+  // CI reports are public artifacts: keep only failed and flaky tests, so a
+  // green run publishes no step titles.
   reporter: process.env.CI
     ? [
         ["blob"],
-        ["html", { open: "never", outputFolder: "playwright-report" }],
+        [
+          "html",
+          {
+            open: "never",
+            outputFolder: "playwright-report",
+            onlyFailures: true,
+          },
+        ],
       ]
     : [["list"], ["html", { open: "never" }]],
   use: {

@@ -140,4 +140,22 @@ describe("AuthProvider.refetchUser", () => {
     );
     expect(seen.size).toBe(1);
   });
+
+  it("cancels the response body on 401 so Chromium does not hold the stream open", async () => {
+    const cancel = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 401,
+      body: { cancel } as unknown as ReadableStream<Uint8Array>,
+    } as Response);
+
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(cancel).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId("username")).toHaveTextContent("none");
+  });
 });

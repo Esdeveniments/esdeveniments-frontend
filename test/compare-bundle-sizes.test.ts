@@ -34,9 +34,32 @@ describe("compare-bundle-sizes page JS gate", () => {
     expect(compare(324_000 + 1024).status).toBe(0);
   });
 
-  it("warns when the page is missing from the build", () => {
+  it("fails when a key prerendered page is missing from the build", () => {
     const result = compare(null);
-    expect(result.status).toBe(0);
-    expect(result.stderr).toContain("/ca: no prerendered HTML");
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("ERROR page /ca (JS gzip)");
+    expect(result.stdout).toContain("No prerendered HTML in this build");
+  });
+
+  it("reads nested client.totalBytes when top-level clientTotalBytes is absent", () => {
+    const nestedBaseline = join(dir, "baseline-nested.json");
+    const bloatedCurrent = join(dir, "current-bloated-client.json");
+    writeFileSync(nestedBaseline, JSON.stringify({
+      client: { totalBytes: 2_000_000 },
+      pages: { "/ca": { jsGzipBytes: 324_000 } },
+      routes: {},
+    }));
+    writeFileSync(bloatedCurrent, JSON.stringify({
+      client: { totalBytes: 2_300_000 },
+      pages: [{ page: "/ca", jsGzipBytes: 324_000 }],
+      routes: [],
+    }));
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/compare-bundle-sizes.mjs", "--baseline", nestedBaseline, "--current", bloatedCurrent],
+      { encoding: "utf8" },
+    );
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("ERROR client.totalBytes");
   });
 });

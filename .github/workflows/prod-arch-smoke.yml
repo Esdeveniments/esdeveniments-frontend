@@ -98,13 +98,19 @@ jobs:
           curl -fsS -o /dev/null http://localhost:3000/api/health \
             || fail "/api/health did not return 2xx"
 
-          # 2) Server-rendered metadata in the RAW homepage HTML. A stale-cache
-          #    resume fallback returns 200 with an empty <head>, so check the
-          #    actual tags, not the status code.
-          html="$(curl -fsSL http://localhost:3000/)" || fail "homepage fetch failed"
-          echo "$html" | grep -qi '<title[^>]*>[^<]\+</title>' || fail "homepage has no <title> (resume fallback / metadata loss)"
-          echo "$html" | grep -qi 'name="description"' || fail "homepage has no meta description"
-          echo "$html" | grep -qi 'rel="canonical"' || fail "homepage has no canonical link"
+          # 2) Server-rendered metadata in RAW HTML on home and listing pages.
+          #    A stale-cache resume fallback returns 200 with an empty <head>,
+          #    so check the actual tags in the file (avoids echo|grep SIGPIPE).
+          for route_path in "/" "/catalunya"; do
+            curl -fsSL "http://localhost:3000${route_path}" -o /tmp/ssr-page.html \
+              || fail "${route_path} fetch failed"
+            grep -qi '<title[^>]*>[^<]\+</title>' /tmp/ssr-page.html \
+              || fail "${route_path} has no <title> (resume fallback / metadata loss)"
+            grep -qi 'name="description"' /tmp/ssr-page.html \
+              || fail "${route_path} has no meta description"
+            grep -qi 'rel="canonical"' /tmp/ssr-page.html \
+              || fail "${route_path} has no canonical link"
+          done
 
           # 3) Image proxy: exercises Sharp + the pinned-DNS dispatcher in a
           #    production runtime. Proxy a first-party static asset.
