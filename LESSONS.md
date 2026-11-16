@@ -401,6 +401,10 @@ every `/api/` response body, so `/api/auth/me` put the staging account email in
 the report while the job log showed `***`. It now prints `<hidden>` for
 `/api/auth/*` bodies. A spec that logs responses needs the same filter.
 
+The CI HTML report keeps only failed and flaky tests (`onlyFailures` in
+`playwright.remote.config.ts`), so a green run uploads no step titles. It is a
+second layer: a failing run still publishes its steps, so keep using `fillSecret`.
+
 ## A spec that reloads the event page after publishing must dismiss the promote upsell
 
 Publishing stores `esdeveniments:post_publish_upsell:<slug>` in localStorage, and
