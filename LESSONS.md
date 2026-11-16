@@ -411,7 +411,8 @@ exists. Only `PromoteUpsellModal` clears it, when its lazy chunk mounts, and
 opened, everything behind it went `inert` and the owner menu click timed out on
 all 3 attempts. Call `dismissPromoteUpsell(page)` (`e2e/helpers/publish.ts`)
 between publishing and the reload. Only a spec that revisits the event page as
-the owner needs it.
+the owner in the same browser context needs it, because the marker is in
+localStorage.
 
 ## Stripe Checkout can't be driven by a bot, and returns to another origin
 
