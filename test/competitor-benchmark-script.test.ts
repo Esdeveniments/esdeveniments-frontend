@@ -535,15 +535,15 @@ print(json.dumps({"catalogue": result["catalogue"], "event_paths": sorted(e["pat
     expect(out.event_paths).toEqual(["/e/1", "/e/2", "/e/3", "/e/4"]);
   }, 30_000);
 
-  it("counts a page as an event when any sitemap file that lists it is an event sitemap, whichever file comes first", () => {
+  it("merges a page listed in two sitemap files the same way in either order: an event if any file says so, dated by its latest lastmod", () => {
     const out = runPython<Record<string, { catalogue: Record<string, unknown>; event_paths: string[] }>>(String.raw`
 def crawl(order):
     base, routes, log = serve()
     routes["/robots.txt"] = OPEN
     routes["/"] = ok(page("Home", "<p>hi</p>"))
     files = {
-        "/pages.xml": urlset([(base + "/p/1", None), (base + "/p/2", None), (base + "/about", None)]),
-        "/events-1.xml": urlset([(base + "/p/1", "2026-11-10"), (base + "/p/3", "2026-11-10")]),
+        "/pages.xml": urlset([(base + "/p/1", None), (base + "/p/2", None), (base + "/about", None), (base + "/p/3", "2026-01-01")]),
+        "/events-1.xml": urlset([(base + "/p/1", "2026-11-10"), (base + "/p/3", "2026-11-12")]),
     }
     routes["/sitemap.xml"] = ok(index([base + path for path in order]), "application/xml")
     for path, body in files.items():
@@ -559,10 +559,11 @@ print(json.dumps({
 }))
 `);
 
-    // /p/1 is in both files: 4 pages, 2 of them events (/p/1 and /p/3), each read once;
-    // /p/2 is only in the other file, so it is not an event and is never sampled
+    // /p/1 and /p/3 are in both files: 4 pages, 2 of them events, each read once; /p/2 is only
+    // in the other file, so it is not an event and is never sampled. An undated listing never
+    // hides a dated one and the later date wins, so both orders give the same freshness.
     for (const crawl of [out.page_file_first, out.event_file_first]) {
-      expect(crawl.catalogue).toMatchObject({ urls: 4, event_urls: 2 });
+      expect(crawl.catalogue).toMatchObject({ urls: 4, event_urls: 2, with_lastmod: 0.5, fresh_30: 1 });
       expect(crawl.event_paths).toEqual(["/p/1", "/p/3"]);
     }
   }, 30_000);

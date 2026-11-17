@@ -580,7 +580,7 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
     fresh_since = (today - timedelta(days=FRESH_DAYS)).isoformat()
     queue, seen, skipped = deque([site.sitemap]), {site.sitemap}, set()
     fetched, unread = 0, []
-    days, events = {}, set()  # page URL -> day of its first lastmod; the pages that are events
+    days, events = {}, set()  # page URL -> its latest lastmod day; the pages that are events
     while queue:
         sitemap = queue.popleft()
         try:
@@ -608,7 +608,8 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
             continue
         all_events = bool(event_map and event_map.search(sitemap))
         for loc, lastmod in entries:
-            days.setdefault(loc, _day(lastmod))  # listed in two files: counted once, with its first lastmod
+            # a page listed in two files counts once, with its latest lastmod, whichever file comes first
+            days[loc] = max(filter(None, (days.get(loc), _day(lastmod))), default=None)
             if all_events or (event_path and event_path.search(urlparse(loc).path)):
                 events.add(loc)  # an event page if any file it is listed in says so
     notes.extend(unread[:NOTED_SITEMAPS])
