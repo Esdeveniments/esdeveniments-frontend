@@ -213,11 +213,11 @@ export default async function proxy(request: NextRequest) {
 // matched app/[locale] with that text as the locale: requireLocale 404s it, but
 // Next then stores that 404 in the page cache for a year, one entry per URL.
 // Let Proxy answer them. Add a new machine-readable route here, anchored.
-// `server-…-sitemap.xml` is one pattern for the app/server-*-sitemap.xml
-// routes, and the IndexNow key is spelled out because a matcher can't import
-// INDEXNOW_KEY; test/proxy-matcher.test.ts checks both against the real files.
+// The IndexNow key is spelled out because a matcher can't import INDEXNOW_KEY;
+// test/proxy-matcher.test.ts checks it, and every app/server-*.xml folder,
+// against the matcher.
 export const config = {
   matcher: [
-    "/((?!_next/|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|sitemap-(?:events|places)/|server-(?:[a-z-]+-)?sitemap\\.xml$|rss\\.xml$|llms\\.txt$|agent\\.txt$|pricing\\.md$|ads\\.txt$|f47260be292a3281b5da5b89815e6ed4\\.txt$|static/|\\.well-known/|manifest\\.webmanifest$|mcp$|agent-view$|monitoring$|ask$|openapi(?:\\.json)?$|index\\.md$|docs/llms\\.txt$|webmcp\\.js$).*)",
+    "/((?!_next/|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|sitemap-(?:events|places)/|server-(?:festa-major-|google-news-|news-|place-|profile-|static-)?sitemap\\.xml$|rss\\.xml$|llms\\.txt$|agent\\.txt$|pricing\\.md$|ads\\.txt$|f47260be292a3281b5da5b89815e6ed4\\.txt$|static/|\\.well-known/|manifest\\.webmanifest$|mcp$|agent-view$|monitoring$|ask$|openapi(?:\\.json)?$|index\\.md$|docs/llms\\.txt$|webmcp\\.js$).*)",
   ],
 };

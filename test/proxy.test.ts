@@ -871,6 +871,25 @@ describe("proxy", () => {
       expect(NextResponse.rewrite).not.toHaveBeenCalled();
     });
 
+    it("301s a dotted look-alike URL to its slug before negotiating markdown", async () => {
+      // The matcher lets /sitemap-index.xml and its kind reach Proxy; the
+      // redirect comes first, so the agent never gets the llms.txt guide.
+      const request = {
+        nextUrl: mockNextUrl({ pathname: "/sitemap-index.xml" }),
+        url: "https://example.com/sitemap-index.xml",
+        headers: new Headers({ accept: "text/markdown" }),
+        method: "GET",
+      } as unknown as NextRequest;
+
+      await proxy(request);
+
+      expect(NextResponse.redirect).toHaveBeenCalledWith(
+        new URL("/sitemap-indexxml", "https://example.com/sitemap-index.xml"),
+        301,
+      );
+      expect(NextResponse.rewrite).not.toHaveBeenCalled();
+    });
+
     it("answers a path no route can match with a markdown 404", async () => {
       const result = await proxy(mdRequest("/a/b/c/d"));
 

@@ -74,6 +74,7 @@ describe("proxy matcher", () => {
     "/sitemap.xml.gz",
     "/server-foo.xml",
     "/server-sitemap-index.xml",
+    "/server-foo-sitemap.xml",
     "/rss.xmlx",
     "/ads.txt.bak",
     "/pricing.mdx",

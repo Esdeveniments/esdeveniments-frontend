@@ -143,7 +143,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - Locales in `i18n/routing.ts` (`as-needed` prefix). Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/routing`, never `next/link` (ESLint warns).
 - Server: `getTranslations` (`next-intl/server`); client: `useTranslations`/`useLocale`. Never pass messages down manually. Text lives in `messages/{ca,es,en}.json`; reuse keys.
 - `proxy.ts` sets `x-next-intl-locale`; don't write your own locale detection. Vitest aliases `next-intl` to `test/mocks/next-intl*.ts`.
-- A page that looks something up by locale starts with `requireLocale(await rootLocale())` (`lib/i18n/require-locale.ts`). Proxy skips some paths, and an unrouted one such as `/sitemap_index.xml` reaches `app/[locale]` as the locale, so the page answers 404 instead of throwing.
+- A page that looks something up by locale starts with `requireLocale(await rootLocale())` (`lib/i18n/require-locale.ts`). A path Proxy skips and nothing routes reaches `app/[locale]` with its first segment as the locale (`/static/css` has `static`), so the page answers 404 instead of throwing.
 
 ## Types
 

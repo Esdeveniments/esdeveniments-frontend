@@ -1189,8 +1189,8 @@ Fixing only the page leaves a cost. Next caches the 404 of a new `[locale]` valu
 walking `/sitemap-1.xml`, `/sitemap-2.xml` and so on would fill the page cache.
 The matcher's entries are now anchored (`$` or a trailing `/`), and Proxy answers
 those paths like any unknown place. `requireLocale` (`lib/i18n/require-locale.ts`)
-stays as the net for names that still match, such as `/server-foo-sitemap.xml`:
-the layout and the home page start with it. `dynamicParams = false` is not
+stays as the net for a path that slips through: the layout and the home page
+start with it. `dynamicParams = false` is not
 available with `cacheComponents`, and its docs say to call `notFound()` in the
 page. `test/proxy-matcher.test.ts` lists the real routes that must skip Proxy and
 the look-alikes that must not.
