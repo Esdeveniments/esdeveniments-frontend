@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import {
   CLIENT_APP_KEYS,
   CLIENT_COMPONENT_KEYS,
@@ -315,6 +315,25 @@ const ROUTE_SCOPES: Record<
     layouts: ["app/[locale]/perfil/edita/layout.tsx"],
     files: ["app/[locale]/perfil/edita/"],
   },
+  event: {
+    layouts: ["app/[locale]/e/[eventId]/layout.tsx"],
+    files: [
+      "app/[locale]/e/[eventId]/",
+      "components/ui/editModal/",
+      "components/ui/restaurantPromotion/",
+    ],
+  },
+  listing: {
+    layouts: ["app/[locale]/[place]/layout.tsx"],
+    files: [
+      "components/hooks/useGeolocation.ts",
+      "components/ui/clientInteractiveLayer/",
+      "components/ui/eventsMap/",
+      "components/ui/filters/",
+      "components/ui/filtersModal/",
+      "components/ui/hybridEventsList/",
+    ],
+  },
   profile: {
     layouts: ["app/[locale]/perfil/[username]/layout.tsx"],
     files: [
@@ -335,6 +354,19 @@ const ROUTE_SCOPES: Record<
   },
 };
 
+// Scopes whose layout sits above all of this scope's layouts (event wraps
+// eventEdit and eventPromote): their messages reach this scope's files too.
+function parentScopes(scope: RouteMessagesScope): RouteMessagesScope[] {
+  const dirs = ROUTE_SCOPES[scope].layouts.map((l) => dirname(l));
+  return (Object.keys(ROUTE_SCOPES) as RouteMessagesScope[]).filter(
+    (other) =>
+      other !== scope &&
+      ROUTE_SCOPES[other].layouts.some((l) =>
+        dirs.every((d) => d.startsWith(`${dirname(l)}/`)),
+      ),
+  );
+}
+
 // True when every route scope the file renders under ships what this call
 // reads (the root provider's partial paths count too).
 function isRouteScoped(cs: Callsite): boolean {
@@ -344,8 +376,16 @@ function isRouteScoped(cs: Callsite): boolean {
     (scope) => ROUTE_SCOPES[scope].files.some((prefix) => file.startsWith(prefix)),
   );
   if (scopes.length === 0) return false;
-  return scopes.every((scope) => {
-    const paths = [...ROUTE_CLIENT_PATHS[scope], ...CLIENT_PARTIAL_PATHS];
+  // A file under nested scopes is checked against the innermost one, which
+  // also gets its parents' paths.
+  const innermost = scopes.filter(
+    (scope) => !scopes.some((other) => parentScopes(other).includes(scope)),
+  );
+  return innermost.every((scope) => {
+    const paths = [
+      ...[scope, ...parentScopes(scope)].flatMap((s) => ROUTE_CLIENT_PATHS[s]),
+      ...CLIENT_PARTIAL_PATHS,
+    ];
     if (isShippedPath(cs.namespace!, paths)) return true;
     const keys = readKeys(readFileSync(cs.file, "utf8"), cs.namespace!);
     return (

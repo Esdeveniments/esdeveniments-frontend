@@ -41,6 +41,8 @@ export type RouteMessagesScope =
   | "eventEdit"
   | "eventPromote"
   | "editProfile"
+  | "event"
+  | "listing"
   | "profile"
   | "sponsorship";
 

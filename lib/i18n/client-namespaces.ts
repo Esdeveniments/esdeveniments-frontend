@@ -20,19 +20,11 @@ export const CLIENT_COMPONENT_KEYS = [
   "CardContent",
   "DatePicker",
   "DateRangeCalendar",
-  "Description",
-  "EditModal",
-  "EventLocation",
-  "EventPage",
-  "EventsMap",
   "FavoriteButton",
   "FavoritesLoginNudge",
-  "Filters",
-  "FiltersModal",
   "HeroCTA",
   "HeroFilters",
   "HeroSearch",
-  "HybridEventsListClient",
   "ImageUploader",
   "LoadMoreButton",
   "Modal",
@@ -41,14 +33,11 @@ export const CLIENT_COMPONENT_KEYS = [
   "NoEventsFound",
   "Notification",
   "PwaBackButton",
-  "PromotionInfoModal",
-  "RestaurantPromotionForm",
   "SearchBar",
   "Select",
   "ShareKit",
   "SocialFollowPopup",
   "TextArea",
-  "WhereToEatSection",
 ] as const;
 
 export const CLIENT_UTILS_KEYS = [
@@ -70,6 +59,8 @@ export const CLIENT_PARTIAL_PATHS = [
   "App.EventPromote.benefit2",
   "App.EventPromote.benefit3",
   "App.Publish.promoteUpsell",
+  // AdCard (every listing) reads one EventPage key.
+  "Components.EventPage.sponsored",
   // VerifiedBadge, on event pages and in search suggestions.
   "Components.Profile.verified",
   "Components.Profile.verifiedOrganizer",
@@ -77,13 +68,28 @@ export const CLIENT_PARTIAL_PATHS = [
 
 // Paths only one route's client components read. Its layout mounts
 // <RouteClientMessages scope="..."> to add them on top of the root messages,
-// so every other page (event, listing, home) doesn't carry them in its RSC
-// payload. The guard test checks which files may read each scope.
+// so other pages don't carry them in their RSC payload. A nested route gets
+// its parents' scopes too. The guard test checks which files may read each.
 export const ROUTE_CLIENT_PATHS: Record<RouteMessagesScope, readonly string[]> = {
   publish: ["App.Publish", "Components.EventForm"],
   eventEdit: ["App.EventEdit", "Components.EventForm"],
   eventPromote: ["App.EventPromote"],
   editProfile: ["App.EditProfile"],
+  event: [
+    "Components.Description",
+    "Components.EditModal",
+    "Components.EventLocation",
+    "Components.EventPage",
+    "Components.PromotionInfoModal",
+    "Components.RestaurantPromotionForm",
+    "Components.WhereToEatSection",
+  ],
+  listing: [
+    "Components.EventsMap",
+    "Components.Filters",
+    "Components.FiltersModal",
+    "Components.HybridEventsListClient",
+  ],
   profile: ["Components.Profile"],
   sponsorship: [
     "Sponsorship.checkout",
