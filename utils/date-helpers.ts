@@ -168,7 +168,7 @@ export const getFormattedDate = (
   );
 
   const shouldShortenStartForSameMonthRange =
-    localeToUse !== "en" && isMultipleDays && isSameMonth;
+    localeToUse !== "en" && isMultipleDays && isSameMonth && isSameYear;
   const formattedStart = shouldShortenStartForSameMonthRange
     ? `${startDay}`
     : formatDateForLocale(

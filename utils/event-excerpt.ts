@@ -5,9 +5,14 @@ import { NEWS_EVENT_EXCERPT_MAX_LENGTH } from "./constants";
 // A leading block longer than this is body text, even if it names the event.
 const TITLE_ECHO_MAX_LENGTH = 160;
 
+// Letters, marks and numbers of any script, so a word in another alphabet still
+// counts. Not `foldForSearch`: it keeps only a-z0-9 to match the backend.
+const wordsOf = (text: string): string =>
+  normalizeForSearch(text).replace(/[^\p{L}\p{M}\p{N}]+/gu, " ").trim();
+
+// Words of 3+ characters: short ones ("de", "la") are noise when matching a heading to the title.
 const tokenize = (text: string): string[] =>
-  normalizeForSearch(text)
-    .replace(/[^a-z0-9]+/g, " ")
+  wordsOf(text)
     .split(" ")
     .filter((token) => token.length >= 3);
 
@@ -17,6 +22,12 @@ function stripMarkdown(text: string): string {
     .replace(/^\s{0,3}#{1,6}\s+/gm, "")
     .replace(/^\s*[-*•]\s+/gm, "")
     .replace(/\*+|__/g, "");
+}
+
+/** The same words in the same order, ignoring case, accents and punctuation. Short words and numbers count. */
+function sameWords(a: string, b: string): boolean {
+  const words = wordsOf(a);
+  return words !== "" && words === wordsOf(b);
 }
 
 /** True when `segment` is a short heading that repeats the event title. */
@@ -73,16 +84,17 @@ export function descriptionToPlainText(description: string): string {
 /**
  * An event description as one line of plain text, for snippets: no HTML or
  * markdown, no leading heading line that repeats the title, whitespace
- * collapsed. Not truncated.
+ * collapsed, and "" when only the title is left. Not truncated.
  */
 export function descriptionToPlainLine(
   description: string | null | undefined,
   title: string,
 ): string {
   if (!description) return "";
-  return dropTitleEcho(descriptionToPlainText(description), title)
+  const line = dropTitleEcho(descriptionToPlainText(description), title)
     .replace(/\s+/g, " ")
     .trim();
+  return sameWords(line, title) ? "" : line;
 }
 
 /**

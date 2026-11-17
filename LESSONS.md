@@ -46,6 +46,35 @@ event many times as "missing organizer". Lists use `buildEventListItems`
 Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
 values stay plain dates.
 
+## Event meta descriptions: clean the text, cut it once, keep the facts in front
+
+`generateEventMetadata` pasted the backend description, which often holds
+Markdown and line breaks, straight after the title, cut it with
+`smartTruncate`, and then appended the date and place. On the 4,242 current
+and upcoming events in the public API on 2026-11-17, 2,285 (54%) of the
+Catalan descriptions had a defect such as Markdown, line breaks or a doubled
+"...", and only 34% still showed the date. Google cuts a snippet to the
+device width, so the end is what a phone loses
+([Search Central: snippets](https://developers.google.com/search/docs/appearance/snippet)).
+The description is now title, date and place, then the text from
+`descriptionToPlainLine` (the helper the news rows use), cut once with
+`truncateAtWord`. That leaves 37 defects (0.9%), all typed by organizers in a
+title or place, and the date shows in at least 99.7% in all three locales. The
+13 Catalan descriptions without it have a title of 120 characters or more.
+Catalan has 54 identical descriptions instead of 215. Never put raw description
+text in a meta tag, and never move the date and place behind it.
+`test/meta-helpers.test.ts` covers both.
+
+The date is the whole range, not `formattedStart`. For a same-month range
+`getFormattedDate` returns a bare day ("21") in ca and es, because it is made
+to sit next to `formattedEnd`; the old Spanish description used it alone on 391
+events (9%). It also ignored the year, so a range from December 2024 to
+December 2026 read as 9 to 31 December 2026 (21 events). One-day unit tests
+missed both; a production build against real events found them.
+`test/date-helpers.test.ts` and the multi-day rows in `test/meta-helpers.test.ts`
+pin the range. Still open: `isMultipleDays` compares only the day of the month,
+so 6 December to 6 January shows as one date (49 events, 1.2%).
+
 ## Event start and end come from one place, in Madrid time
 
 The "Finalitzat" bug fixed in #761 came from a rule written for one combination of
