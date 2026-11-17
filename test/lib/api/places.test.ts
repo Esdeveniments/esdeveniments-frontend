@@ -61,12 +61,18 @@ describe("lib/api/places", () => {
     expect(result).toBeNull();
   });
 
-  it("fetchPlaces returns empty array when the backend fails", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("fetch failed")));
+  it.each([
+    ["rejects", () => vi.fn().mockRejectedValue(new TypeError("fetch failed"))],
+    ["answers 500", () => vi.fn().mockResolvedValue({ ok: false, status: 500 })],
+  ])("fetchPlaces returns an empty array when the backend %s", async (_label, makeFetch) => {
+    const fetchMock = makeFetch();
+    vi.stubGlobal("fetch", fetchMock);
 
     const { fetchPlaces } = await import("lib/api/places");
-    const result = await fetchPlaces();
-    expect(result).toEqual([]);
+    expect(await fetchPlaces()).toEqual([]);
+    // fetchPlaces returns on the first failure while the other request is
+    // still being signed; wait for it to reach this stub, not the next test's.
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
   it("fetchPlaces merges regions and cities from the backend", async () => {
@@ -126,18 +132,6 @@ describe("lib/api/places", () => {
     expect(await fetchPlaceBySlug("poble-que-no-existeix")).toBeNull();
     expect(await fetchPlaceBySlug("wp-admin.php")).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("fetchPlaces returns empty array on fetch error", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { fetchPlaces } = await import("lib/api/places");
-    const result = await fetchPlaces();
-    expect(result).toEqual([]);
-    // fetchPlaces returns on the first failure while the other request is
-    // still being signed; wait for it to reach this stub, not the next test's.
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
   it("clearPlacesCaches runs without error", async () => {
