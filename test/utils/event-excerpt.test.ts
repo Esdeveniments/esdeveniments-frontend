@@ -140,6 +140,15 @@ describe("descriptionToPlainLine", () => {
       "Correllengua 2026 a Vic",
     );
   });
+
+  it("keeps a description that adds a short word or number to the title", () => {
+    expect(descriptionToPlainLine("Concert a 5 €.", "Concert")).toBe("Concert a 5 €.");
+  });
+
+  it("is empty when it repeats a title made of short words", () => {
+    expect(descriptionToPlainLine("U2.", "U2")).toBe("");
+    expect(descriptionToPlainLine("AC/DC", "AC/DC")).toBe("");
+  });
 });
 
 describe("descriptionToPlainText", () => {

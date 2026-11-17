@@ -5,9 +5,12 @@ import { NEWS_EVENT_EXCERPT_MAX_LENGTH } from "./constants";
 // A leading block longer than this is body text, even if it names the event.
 const TITLE_ECHO_MAX_LENGTH = 160;
 
+const wordsOf = (text: string): string =>
+  normalizeForSearch(text).replace(/[^a-z0-9]+/g, " ").trim();
+
+// Words of 3+ characters: short ones ("de", "la") are noise when matching a heading to the title.
 const tokenize = (text: string): string[] =>
-  normalizeForSearch(text)
-    .replace(/[^a-z0-9]+/g, " ")
+  wordsOf(text)
     .split(" ")
     .filter((token) => token.length >= 3);
 
@@ -19,10 +22,10 @@ function stripMarkdown(text: string): string {
     .replace(/\*+|__/g, "");
 }
 
-/** The same words in the same order, ignoring case, accents and punctuation. */
+/** The same words in the same order, ignoring case, accents and punctuation. Short words and numbers count. */
 function sameWords(a: string, b: string): boolean {
-  const words = tokenize(a).join(" ");
-  return words !== "" && words === tokenize(b).join(" ");
+  const words = wordsOf(a);
+  return words !== "" && words === wordsOf(b);
 }
 
 /** True when `segment` is a short heading that repeats the event title. */
