@@ -1,0 +1,48 @@
+name: Daily Competitor Benchmark
+
+on:
+  schedule:
+    - cron: "17 5 * * *" # daily at 05:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: competitor-benchmark
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  benchmark:
+    name: Benchmark competitor sites
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # Standard library only. It reads public pages and prints one line per site.
+      # CRUX_API_KEY is optional and only goes to Google's Chrome UX Report API
+      # (real-user speed); without it that part is skipped.
+      - name: Run benchmark
+        env:
+          CRUX_API_KEY: ${{ secrets.CRUX_API_KEY }}
+        run: python3 scripts/competitor-benchmark.py --output competitor-benchmark.json
+
+      # Unzipped, named after the file, for the admin dashboard.
+      - name: Upload benchmark JSON
+        uses: actions/upload-artifact@v7
+        with:
+          path: competitor-benchmark.json
+          archive: false
+          retention-days: 90
+          if-no-files-found: error

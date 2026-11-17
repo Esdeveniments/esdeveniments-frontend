@@ -72,8 +72,11 @@ events (9%). It also ignored the year, so a range from December 2024 to
 December 2026 read as 9 to 31 December 2026 (21 events). One-day unit tests
 missed both; a production build against real events found them.
 `test/date-helpers.test.ts` and the multi-day rows in `test/meta-helpers.test.ts`
-pin the range. Still open: `isMultipleDays` compares only the day of the month,
-so 6 December to 6 January shows as one date (49 events, 1.2%).
+pin the range. A third defect sat in the same function: `isMultipleDays`
+compared only the day of the month, so 6 December to 6 January, or the same day
+a year later, read as one date (50 of 4,488 events, 1.1%). It now compares the
+whole date. When you test a range check, give the end the same day number as the
+start.
 
 ## Event start and end come from one place, in Madrid time
 
