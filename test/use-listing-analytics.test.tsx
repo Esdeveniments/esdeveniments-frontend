@@ -355,9 +355,9 @@ describe("CardCarouselAnalytics", () => {
 
     const { container, unmount } = render(
       <div>
-        {catRow("fires-i-mercats", ["f1", "f2"])}
+        {catRow("fires-i-mercats", ["shared-1", "f2"])}
         {catRow("exposicions", ["e1"])}
-        {catRow("musica", ["m1"])}
+        {catRow("musica", ["shared-1"])}
       </div>,
     );
     const lists = [...container.querySelectorAll("[data-card-carousel]")];
@@ -366,6 +366,8 @@ describe("CardCarouselAnalytics", () => {
     const [m1] = [...lists[2].children];
 
     // Quick 400ms scroll past fires-i-mercats and exposicions, then 4s stop on musica.
+    // Note: "shared-1" appears in two distinct category rows and must emit
+    // `view_item_list` in BOTH rows (CodeRabbit Round 1).
     callbacks[0]([
       { isIntersecting: true, intersectionRatio: 0.8, target: f1 },
       { isIntersecting: true, intersectionRatio: 0.8, target: f2 },
@@ -382,8 +384,25 @@ describe("CardCarouselAnalytics", () => {
 
     callbacks[2]([{ isIntersecting: true, intersectionRatio: 0.8, target: m1 }]);
     nowMs += 4000;
+    // Simulate Next App Router calling history.pushState in useInsertionEffect
+    // BEFORE unmounting the departing page's carousels (Pullfrog Round 1).
+    window.history.pushState({}, "", "/e/clicked-concert");
     unmount();
 
+    expect(sendGoogleEvent).toHaveBeenCalledWith(
+      "view_item_list",
+      expect.objectContaining({
+        item_list_name: "home_category",
+        category_slug: "fires-i-mercats",
+      }),
+    );
+    expect(sendGoogleEvent).toHaveBeenCalledWith(
+      "view_item_list",
+      expect.objectContaining({
+        item_list_name: "home_category",
+        category_slug: "musica",
+      }),
+    );
     expect(sendGoogleEvent).toHaveBeenCalledWith("card_stop_batch", {
       item_list_name: "home_category",
       visible_cards: 1,
@@ -392,7 +411,7 @@ describe("CardCarouselAnalytics", () => {
       category_slug: "musica",
       items: [
         {
-          item_id: "m1",
+          item_id: "shared-1",
           item_category: "musica",
           item_category2: "barcelona",
           index: 1,
@@ -400,6 +419,20 @@ describe("CardCarouselAnalytics", () => {
         },
       ],
     });
+
+    // Next page starts with an empty pool and fresh seen set.
+    vi.mocked(sendGoogleEvent).mockClear();
+    const next = render(catRow("musica", ["m1"]));
+    const [nextCard] = [...next.container.querySelector("[data-card-carousel]")!.children];
+    callbacks[3]([{ isIntersecting: true, intersectionRatio: 0.8, target: nextCard }]);
+    nowMs += 3000;
+    next.unmount();
+    expect(sendGoogleEvent).toHaveBeenCalledWith(
+      "view_item_list",
+      expect.objectContaining({ item_list_name: "home_category" }),
+    );
+    expect(sendGoogleEvent).not.toHaveBeenCalledWith("card_stop_batch", expect.anything());
+    window.history.pushState({}, "", "/");
   });
 });
 

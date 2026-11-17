@@ -67,7 +67,14 @@ function ClientInteractiveLayerContent({
               <div className="w-full h-12 bg-background animate-pulse rounded-full" />
             }
           >
-            <Search />
+            <Search
+              placeSlug={
+                isHomePage ? "catalunya" : parsed.segments.place || undefined
+              }
+              categorySlug={
+                isHomePage ? undefined : parsed.segments.category || undefined
+              }
+            />
           </Suspense>
           {!isHomePage && ( // Conditionally render FiltersClient
             <FiltersClient

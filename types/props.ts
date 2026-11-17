@@ -294,6 +294,11 @@ export interface ListingAnalyticsTrackerProps {
   date?: string;
 }
 
+export interface SearchProps {
+  placeSlug?: string;
+  categorySlug?: string;
+}
+
 export interface CompactCardProps {
   event: EventSummaryResponseDTO;
   locale: AppLocale;

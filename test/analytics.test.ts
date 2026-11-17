@@ -175,7 +175,7 @@ describe("text search outcome", () => {
   it("attaches place_slug and category_slug to search_outcome when known", () => {
     markTextSearchSubmitted("search", "jazz");
     sendTextSearchOutcomeGA("jazz", 0, "arenys-de-mar", "musica");
-    markSuggestionsShown("hero_search", "girona");
+    markSuggestionsShown("hero_search", "girona", "teatre");
     flushAbandonedSearch();
     expect(outcomes()).toEqual([
       {
@@ -190,6 +190,7 @@ describe("text search outcome", () => {
         outcome: "abandoned",
         place: "girona",
         place_slug: "girona",
+        category_slug: "teatre",
       },
     ]);
   });

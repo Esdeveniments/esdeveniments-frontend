@@ -104,6 +104,14 @@ export interface ObservedCardController {
   disconnect: () => void;
 }
 
+/** Per-URL state for carousel impressions and pooled card stops. */
+export interface CarouselPageBucket {
+  seenItemIdsByList: Map<string, Set<string>>;
+  dwellPoolByKey: Map<string, CarouselDwellEntry>;
+  reportedStopKeys: Set<string>;
+  activePauseHandlers: Set<(now: number) => void>;
+}
+
 /** Amount Stripe actually charged, in currency units (after promotion codes). */
 export interface CheckoutAmount {
   value: number;

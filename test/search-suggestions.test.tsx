@@ -203,7 +203,7 @@ describe("search suggestions (profiles off)", () => {
   it("marks the shown list and checks for abandoned only when the user leaves", () => {
     const { type, key, unmount } = setup();
     type("Castell");
-    expect(h.markShown).toHaveBeenCalledWith("search", "catalunya");
+    expect(h.markShown).toHaveBeenCalledWith("search", "catalunya", undefined);
     key("Escape");
     fireEvent.pointerDown(document.body);
     expect(h.flushAbandoned).not.toHaveBeenCalled();
@@ -278,6 +278,7 @@ describe("search suggestions (profiles on)", () => {
     expect(h.push).toHaveBeenCalledWith("/perfil/begudes");
     expect(h.outcomeGA).toHaveBeenCalledWith("search", "profile", {
       placeSlug: "catalunya",
+      categorySlug: undefined,
     });
   });
 

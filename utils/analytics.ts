@@ -158,13 +158,18 @@ export const sendSearchOutcomeGA = (
 // the list isn't giving up (Esc then Enter still searches), so `abandoned` is
 // sent only when the user leaves. Any outcome or submit clears it, from any
 // component (the hero CTA submits outside the search box).
-let pendingAbandon: { context: SearchContext; placeSlug?: string } | null = null;
+let pendingAbandon: {
+  context: SearchContext;
+  placeSlug?: string;
+  categorySlug?: string;
+} | null = null;
 
 export const markSuggestionsShown = (
   context: SearchContext,
   placeSlug?: string,
+  categorySlug?: string,
 ): void => {
-  pendingAbandon = { context, placeSlug };
+  pendingAbandon = { context, placeSlug, categorySlug };
 };
 
 /** Sends `abandoned` if a shown list got no search; call when the user leaves. */
@@ -172,6 +177,7 @@ export const flushAbandonedSearch = (): void => {
   if (pendingAbandon) {
     sendSearchOutcomeGA(pendingAbandon.context, "abandoned", {
       placeSlug: pendingAbandon.placeSlug,
+      categorySlug: pendingAbandon.categorySlug,
     });
   }
 };
