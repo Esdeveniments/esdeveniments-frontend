@@ -579,8 +579,8 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
     event_map = re.compile(site.event_sitemap) if site.event_sitemap else None
     fresh_since = (today - timedelta(days=FRESH_DAYS)).isoformat()
     queue, seen, skipped = deque([site.sitemap]), {site.sitemap}, set()
-    fetched = events = dated = fresh = 0
-    candidates, unread, pages = [], [], set()  # `pages`: every page URL read so far
+    fetched, unread = 0, []
+    days, events = {}, set()  # page URL -> day of its first lastmod; the pages that are events
     while queue:
         sitemap = queue.popleft()
         try:
@@ -608,16 +608,9 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
             continue
         all_events = bool(event_map and event_map.search(sitemap))
         for loc, lastmod in entries:
-            if loc in pages:
-                continue  # listed in two files: counted once, with its first lastmod
-            pages.add(loc)
-            day = _day(lastmod)
-            if day:
-                dated += 1
-                fresh += day >= fresh_since
+            days.setdefault(loc, _day(lastmod))  # listed in two files: counted once, with its first lastmod
             if all_events or (event_path and event_path.search(urlparse(loc).path)):
-                events += 1
-                candidates.append((loc, day))
+                events.add(loc)  # an event page if any file it is listed in says so
     notes.extend(unread[:NOTED_SITEMAPS])
     if len(unread) > NOTED_SITEMAPS:
         notes.append(f"sitemaps unreadable: {len(unread) - NOTED_SITEMAPS} more")
@@ -626,16 +619,17 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
     if not fetched:
         return None, []
     listed = len(seen) + len(skipped)
+    dated = [day for day in days.values() if day]
     catalogue = {
-        "urls": len(pages),
-        "event_urls": events if (event_path or event_map) else None,
+        "urls": len(days),
+        "event_urls": len(events) if (event_path or event_map) else None,
         "sitemaps": listed,
         "fetched": fetched,
         "complete": fetched == listed,
-        "with_lastmod": ratio(dated, len(pages)),
-        "fresh_30": ratio(fresh, dated),
+        "with_lastmod": ratio(len(dated), len(days)),
+        "fresh_30": ratio(sum(day >= fresh_since for day in dated), len(dated)),
     }
-    return catalogue, pick_sample(candidates, sample_size, today)
+    return catalogue, pick_sample([(loc, days[loc]) for loc in events], sample_size, today)
 
 
 # ─── REAL-USER SPEED (CHROME UX REPORT) ───

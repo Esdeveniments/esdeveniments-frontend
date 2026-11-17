@@ -535,6 +535,38 @@ print(json.dumps({"catalogue": result["catalogue"], "event_paths": sorted(e["pat
     expect(out.event_paths).toEqual(["/e/1", "/e/2", "/e/3", "/e/4"]);
   }, 30_000);
 
+  it("counts a page as an event when any sitemap file that lists it is an event sitemap, whichever file comes first", () => {
+    const out = runPython<Record<string, { catalogue: Record<string, unknown>; event_paths: string[] }>>(String.raw`
+def crawl(order):
+    base, routes, log = serve()
+    routes["/robots.txt"] = OPEN
+    routes["/"] = ok(page("Home", "<p>hi</p>"))
+    files = {
+        "/pages.xml": urlset([(base + "/p/1", None), (base + "/p/2", None), (base + "/about", None)]),
+        "/events-1.xml": urlset([(base + "/p/1", "2026-11-10"), (base + "/p/3", "2026-11-10")]),
+    }
+    routes["/sitemap.xml"] = ok(index([base + path for path in order]), "application/xml")
+    for path, body in files.items():
+        routes[path] = ok(body, "application/xml")
+    for i in (1, 2, 3):
+        routes["/p/%d" % i] = ok(page("Page %d" % i, "<p>x</p>"))
+    result = bench.collect_site(site_at(base, event_sitemap=r"/events-"), TODAY, delay=0)
+    return {"catalogue": result["catalogue"], "event_paths": sorted(e["path"] for e in log if e["path"].startswith("/p/"))}
+
+print(json.dumps({
+    "page_file_first": crawl(["/pages.xml", "/events-1.xml"]),
+    "event_file_first": crawl(["/events-1.xml", "/pages.xml"]),
+}))
+`);
+
+    // /p/1 is in both files: 4 pages, 2 of them events (/p/1 and /p/3), each read once;
+    // /p/2 is only in the other file, so it is not an event and is never sampled
+    for (const crawl of [out.page_file_first, out.event_file_first]) {
+      expect(crawl.catalogue).toMatchObject({ urls: 4, event_urls: 2 });
+      expect(crawl.event_paths).toEqual(["/p/1", "/p/3"]);
+    }
+  }, 30_000);
+
   it("reports an incomplete catalogue or an unmatched pattern instead of a wrong number", () => {
     const out = runPython<Record<string, Record<string, unknown>>>(String.raw`
 def crawl(prepare, **kwargs):
