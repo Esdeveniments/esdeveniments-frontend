@@ -92,3 +92,9 @@ export interface SearchRecoveryLink {
   action: SearchRecoveryAction;
   href: string;
 }
+
+export interface SuggestedPlaceLink {
+  label: string;
+  slug: string;
+  href: string;
+}

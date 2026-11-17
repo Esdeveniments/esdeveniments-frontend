@@ -9,6 +9,7 @@ import SearchRecoveryLinks from "./SearchRecoveryLinks";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
+import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
@@ -84,6 +85,8 @@ function HybridEventsListClientContent({
 
   // Check if client-side filters are active
   const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
+  const { isLoading: isPlacesLoading, isError: isPlacesError } =
+    useGetRegionsWithCities(Boolean(search) && !profileSlug);
 
   const { events, totalEvents, hasMore, loadMore, retry, isLoading, isLoadingMore, error } =
     useEvents({
@@ -239,8 +242,14 @@ function HybridEventsListClientContent({
           ? t("resultsCount", { count: totalEvents })
           : ""}
       </p>
-      {isLoading ? (
-        // Show skeleton immediately while fetching filtered events
+      {isLoading ||
+      (showNoEventsFound &&
+        Boolean(search) &&
+        !profileSlug &&
+        isPlacesLoading &&
+        !isPlacesError) ? (
+        // Keep skeleton until place options settle on zero-result searches so
+        // SearchRecoveryLinks never shifts NoEventsFound or fallback cards down.
         <EventsGridSkeleton />
       ) : showNoEventsFound ? (
         // Show no events found message when filters return no results
