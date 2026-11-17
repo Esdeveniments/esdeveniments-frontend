@@ -7,7 +7,7 @@ const scriptPath = join(process.cwd(), "scripts", "competitor-benchmark.py");
 // Loads the script as `bench` and gives each scenario a local site to crawl:
 // `serve()` returns (base URL, routes to fill, request log). Nothing leaves the machine.
 const PRELUDE = String.raw`
-import gzip, importlib.util, json, sys, threading
+import gzip, importlib.util, json, sys, threading, time
 from datetime import date
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -20,7 +20,7 @@ def serve():
     routes, log = {}, []
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
-            log.append({"path": self.path, "host": self.headers.get("Host"), "agent": self.headers.get("User-Agent")})
+            log.append({"path": self.path, "host": self.headers.get("Host"), "agent": self.headers.get("User-Agent"), "at": time.monotonic()})
             status, headers, body = routes.get(self.path, (404, {}, b""))
             self.send_response(status)
             for key, value in headers.items():
@@ -94,12 +94,20 @@ Disallow: /only-us/
 Crawl-delay: 3
 """)
 merged = bench.Robots("User-agent: esdevenimentsbenchmark\nDisallow: /a\nUser-agent: esdevenimentsbenchmark\nDisallow: /b\n")
+encoded = bench.Robots("""
+User-agent: *
+Disallow: /private
+Disallow: /%61bc
+Disallow: /caf\u00e9
+Disallow: /a%2Fb
+""")
 print(json.dumps({
     "rules": {p: rules.allowed(p) for p in ["/private/secret", "/private", "/private/open/x", "/x/file.pdf", "/x/file.pdf?v=1", "/x/file.pdfx", "/tie", "/free"]},
     "rules_delay": rules.crawl_delay,
     "ours": {p: ours.allowed(p) for p in ["/", "/only-us/x", "/e/1"]},
     "ours_delay": ours.crawl_delay,
     "merged": {p: merged.allowed(p) for p in ["/a", "/b", "/c"]},
+    "encoded": {p: encoded.allowed(p) for p in ["/%70rivate/x", "/abc", "/caf%C3%A9", "/caf%c3%a9", "/caf\u00e9", "/a%2fb", "/a/b", "/%2570rivate"]},
     "everything_blocked": bench.Robots("User-agent: *\nDisallow: /").allowed("/"),
     "empty": [bench.Robots("").allowed("/x"), bench.Robots("").crawl_delay],
 }))
@@ -120,6 +128,18 @@ print(json.dumps({
       ours: { "/": true, "/only-us/x": false, "/e/1": true },
       ours_delay: 3,
       merged: { "/a": false, "/b": false, "/c": true },
+      // an escaped unreserved character and an unescaped one compare alike, in any hex case;
+      // an escaped reserved one ("/" or "%") stays what it is
+      encoded: {
+        "/%70rivate/x": false,
+        "/abc": false,
+        "/caf%C3%A9": false,
+        "/caf%c3%a9": false,
+        "/café": false,
+        "/a%2fb": false,
+        "/a/b": true,
+        "/%2570rivate": true,
+      },
       everything_blocked: false,
       empty: [true, null],
     });
@@ -321,7 +341,7 @@ print(json.dumps({"result": result, "paths": paths, "hosts": hosts, "agents": ag
       ours: false,
       status: "ok",
       notes: [],
-      requests: 12,
+      requests: 13, // the redirect's second hop (/e/landing) counts too
       home: {
         kb: 0,
         title_length: 5,
@@ -370,10 +390,82 @@ print(json.dumps({"result": result, "paths": paths, "hosts": hosts, "agents": ag
     expect(out.delays).toEqual([0.02, 30]);
   }, 30_000);
 
+  it("follows a redirect one request at a time, so each hop gets robots.txt, spacing, a count and the host check", () => {
+    const out = runPython<{
+      outcomes: Record<string, unknown[]>;
+      paths: string[];
+      hosts: string[];
+      requests: number;
+      min_gap: number;
+    }>(String.raw`
+base, routes, log = serve()
+routes["/robots.txt"] = ok("User-agent: *\nDisallow: /private/\nCrawl-delay: 0.1\n", "text/plain")
+routes["/old"] = (301, {"Location": "/new"}, b"")
+routes["/new"] = ok(page("New"))
+routes["/to-private"] = (302, {"Location": "/private/x"}, b"")
+routes["/private/x"] = ok(page("Private"))
+routes["/ping"] = (307, {"Location": "/pong"}, b"")
+routes["/pong"] = (307, {"Location": "/ping"}, b"")
+routes["/away"] = (308, {"Location": other_host(base) + "/new"}, b"")
+# raw UTF-8 bytes in Location, which http.client reads as Latin-1
+routes["/accent"] = (301, {"Location": "/ça".encode().decode("latin-1")}, b"")
+routes["/%C3%A7a"] = ok(page("Ça"))
+
+client = bench.Client({"127.0.0.1"}, 0)
+robots = bench.load_robots(client, site_at(base))
+
+def outcome(path):
+    try:
+        response = bench.fetch(client, robots, base + path, 100_000)
+        return ["ok", response.status, response.url.replace(base, "")]
+    except bench.FetchError as error:
+        return ["error", str(error).replace(base, "").replace(other_host(base), "OTHER")]
+
+outcomes = {path: outcome(path) for path in ["/old", "/to-private", "/ping", "/away", "/accent"]}
+gaps = [b["at"] - a["at"] for a, b in zip(log, log[1:])]
+print(json.dumps({
+    "outcomes": outcomes,
+    "paths": [e["path"] for e in log],
+    "hosts": sorted({e["host"].rsplit(":", 1)[0] for e in log}),
+    "requests": client.requests,
+    "min_gap": min(gaps),
+}))
+`);
+
+    expect(out.outcomes).toEqual({
+      "/old": ["ok", 200, "/new"],
+      "/to-private": ["error", "robots.txt disallows /private/x"],
+      "/ping": ["error", "more than 5 redirects"],
+      "/away": ["error", "not one of the site's own URLs: OTHER/new"],
+      "/accent": ["ok", 200, "/%C3%A7a"],
+    });
+    expect(out.paths).toEqual([
+      "/robots.txt",
+      "/old",
+      "/new",
+      "/to-private",
+      "/ping",
+      "/pong",
+      "/ping",
+      "/pong",
+      "/ping",
+      "/pong",
+      "/away",
+      "/accent",
+      "/%C3%A7a",
+    ]);
+    expect(out.hosts).toEqual(["127.0.0.1"]);
+    // every request the site saw is counted, redirect hops included
+    expect(out.requests).toBe(out.paths.length);
+    // and each one waited for the Crawl-delay (0.1 s) since the one before
+    expect(out.min_gap).toBeGreaterThanOrEqual(0.09);
+  }, 30_000);
+
   it("leaves a site that refuses us alone and keeps what it already read", () => {
     const out = runPython<{
       robots: { status: string; requests: number; paths: string[]; notes: string[] };
       sitemap: { status: string; requests: number; paths: string[]; notes: string[]; home: unknown; catalogue: unknown };
+      unreadable: { status: string; requests: number; paths: string[]; notes: string[] };
     }>(String.raw`
 def refused(prepare):
     base, routes, log = serve()
@@ -391,9 +483,12 @@ def sitemap_refused(base, routes):
     routes["/"] = ok(page("Home", "<p>hi</p>"))
     routes["/sitemap.xml"] = (429, {"Retry-After": "3600"}, b"")
 
+def robots_refused_unreadable(base, routes):
+    routes["/robots.txt"] = (403, {"Content-Encoding": "gzip"}, b"not gzip")
+
 first, second = refused(robots_refused), refused(sitemap_refused)
 second["home"] = bool(second["home"])
-print(json.dumps({"robots": first, "sitemap": second}))
+print(json.dumps({"robots": first, "sitemap": second, "unreadable": refused(robots_refused_unreadable)}))
 `);
 
     expect(out.robots).toMatchObject({
@@ -410,6 +505,34 @@ print(json.dumps({"robots": first, "sitemap": second}))
       home: true,
       catalogue: null,
     });
+    // a refusal is recorded from its status line: its body is never read, so a body that
+    // cannot be read does not turn the refusal into a failure that gets retried
+    expect(out.unreadable).toMatchObject({
+      status: "blocked",
+      requests: 1,
+      paths: ["/robots.txt"],
+      notes: ["/robots.txt answered 403"],
+    });
+  }, 30_000);
+
+  it("counts a page listed in two sitemap files once and never samples it twice", () => {
+    const out = runPython<{ catalogue: Record<string, unknown>; event_paths: string[] }>(String.raw`
+base, routes, log = serve()
+routes["/robots.txt"] = OPEN
+routes["/"] = ok(page("Home", "<p>hi</p>"))
+events = [(base + "/e/%d" % i, "2026-11-10") for i in range(1, 4)]
+routes["/sitemap.xml"] = ok(index([base + "/a.xml", base + "/b.xml"]), "application/xml")
+routes["/a.xml"] = ok(urlset(events + [(base + "/about", None)]), "application/xml")
+routes["/b.xml"] = ok(urlset(events[:2] + [(base + "/e/4", "2026-11-11")]), "application/xml")
+for i in range(1, 5):
+    routes["/e/%d" % i] = ok(page("Event %d" % i, "<p>x</p>"))
+result = bench.collect_site(site_at(base, event_url=r"^/e/"), TODAY, delay=0)
+print(json.dumps({"catalogue": result["catalogue"], "event_paths": sorted(e["path"] for e in log if e["path"].startswith("/e/"))}))
+`);
+
+    // /e/1 and /e/2 are in both files: 5 pages and 4 event pages, each read once
+    expect(out.catalogue).toMatchObject({ urls: 5, event_urls: 4 });
+    expect(out.event_paths).toEqual(["/e/1", "/e/2", "/e/3", "/e/4"]);
   }, 30_000);
 
   it("reports an incomplete catalogue or an unmatched pattern instead of a wrong number", () => {
@@ -451,11 +574,20 @@ def nothing_matches(base, routes):
     events(base, routes)
     routes["/sitemap.xml"] = ok(index([base + "/sitemap-a.xml"]), "application/xml")
 
+def pages_gone(base, routes):
+    routes["/sitemap.xml"] = ok(urlset([(base + "/e/%d" % n, None) for n in (1, 2, 3)]), "application/xml")
+
+def pages_disallowed(base, routes):
+    pages_gone(base, routes)
+    routes["/robots.txt"] = ok("User-agent: *\nDisallow: /e/\n", "text/plain")
+
 print(json.dumps({
     "one_file_fails": crawl(one_file_fails, event_url=r"^/e/"),
     "other_host_file": crawl(other_host_file, event_url=r"^/e/"),
     "five_files_fail": crawl(five_files_fail, event_url=r"^/e/"),
     "nothing_matches": crawl(nothing_matches, event_url=r"^/nothing/"),
+    "pages_gone": crawl(pages_gone, event_url=r"^/e/"),
+    "pages_disallowed": crawl(pages_disallowed, event_url=r"^/e/"),
 }))
 `);
 
@@ -495,6 +627,20 @@ print(json.dumps({
     expect(unmatched.catalogue).toMatchObject({ urls: 2, event_urls: 0, complete: true });
     expect(unmatched.notes).toEqual(["no event URLs matched this site's patterns"]);
     expect(unmatched.pages).toBeNull();
+
+    // a sample none of whose pages could be read says why, with one page as an example
+    const gone = out.pages_gone;
+    expect(gone.status).toBe("partial");
+    expect(gone.pages).toBeNull();
+    expect(gone.notes).toEqual([expect.stringMatching(/^event pages: none of the 3 sampled pages could be read \(e\.g\. \/e\/[123]: answered 404\)$/)]);
+
+    const disallowed = out.pages_disallowed;
+    expect(disallowed.status).toBe("partial");
+    expect(disallowed.pages).toBeNull();
+    expect(disallowed.notes).toEqual([
+      expect.stringMatching(/^event pages: none of the 3 sampled pages could be read \(e\.g\. \/e\/[123]: robots\.txt disallows \/e\/[123]\)$/),
+    ]);
+    expect(disallowed.paths).toEqual(["/robots.txt", "/", "/", "/", "/sitemap.xml"]);
   }, 30_000);
 
   it("adds Chrome UX Report speed when a key is set, without leaking it or touching the site's status", () => {

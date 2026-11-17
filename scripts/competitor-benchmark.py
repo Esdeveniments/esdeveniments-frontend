@@ -15,7 +15,8 @@ Crawl-delay), at least one second between requests to a host, one worker per
 host, hard caps on files and bytes, and only the site's own hosts are fetched
 (Google's API is the one other host, and it is asked about the origin, never
 the site's pages). A site that answers 401, 403 or 429 is recorded as blocked
-and left alone; the script never retries or works around it.
+and left alone; the script never retries or works around it. A redirect is
+followed one request at a time, so each hop meets the same rules.
 
 Usage:
   python3 scripts/competitor-benchmark.py --output competitor-benchmark.json
@@ -61,6 +62,8 @@ HOME_RUNS = 3  # home page requests; the response time is their median
 FRESH_DAYS = 30  # a lastmod this recent counts as fresh
 RECENT_DAYS = 90  # event pages sampled from this window when there are enough
 BLOCKED_STATUSES = (401, 403, 429)
+REDIRECT_STATUSES = (301, 302, 303, 307, 308)
+MAX_REDIRECTS = 5  # followed per page; RFC 9309 asks for at least five on robots.txt
 SECTIONS = ("home", "catalogue", "event_pages")  # what each site's result measures from its own pages
 EVENT_PROPS = ("startDate", "endDate", "location", "geo", "image", "offers", "description")
 EVENT_TYPES = {"Festival", "Hackathon", "CourseInstance", "EventSeries"}
@@ -129,19 +132,19 @@ class Response(NamedTuple):
     url: str  # where the answer came from, after any redirects
 
 
-class _SameSiteRedirects(urllib.request.HTTPRedirectHandler):
-    def __init__(self, hosts):
-        self.hosts = hosts
+class _NoRedirects(urllib.request.HTTPRedirectHandler):
+    """Hands every redirect back as an answer (urllib then raises the 3xx as an
+    HTTPError), so `fetch` sends each hop itself."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        if urlparse(newurl).hostname not in self.hosts:
-            return None  # urllib then raises the 3xx as an HTTPError
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        return None
 
 
-def _ascii_url(url):
-    """Percent-encodes what a sitemap may carry unescaped (accents, spaces), keeping existing escapes."""
-    return quote(url, safe=":/?#[]@!$&'()*+,;=%~-._")
+def _ascii_url(url, encoding="utf-8"):
+    """Percent-encodes what a sitemap may carry unescaped (accents, spaces), keeping existing escapes.
+    `encoding` is how a character becomes bytes: a Location header, which http.client
+    decodes as Latin-1, holds its raw bytes as Latin-1 characters."""
+    return quote(url, safe=":/?#[]@!$&'()*+,;=%~-._", encoding=encoding)
 
 
 def _decode(raw, encoding, limit):
@@ -165,8 +168,8 @@ class Client:
         self.deadline = time.monotonic() + seconds
         self.requests = 0
         self.stopped = None  # once set, every later request raises it without going out
-        self._ready = 0.0
-        self._opener = urllib.request.build_opener(_SameSiteRedirects(self.hosts))
+        self._finished = float("-inf")  # when the last request ended
+        self._opener = urllib.request.build_opener(_NoRedirects)
 
     def get(self, url, limit):
         parts = urlparse(url)
@@ -194,7 +197,7 @@ class Client:
         if time.monotonic() > self.deadline:
             self.stopped = OutOfTime("the time budget ran out")
             raise self.stopped
-        pause = self._ready - time.monotonic()
+        pause = self._finished + self.delay - time.monotonic()
         if pause > 0:
             time.sleep(pause)
 
@@ -213,18 +216,30 @@ class Client:
                 handle = error  # a status line is still an answer
             seconds = time.monotonic() - started
             with handle:
-                raw = handle.read(limit + 1)
-                headers = {key.lower(): value for key, value in handle.headers.items()}
                 status, final_url = handle.status, handle.geturl()
+                headers = {key.lower(): value for key, value in handle.headers.items()}
+                # A refusal's body is never read: if it cannot be, `get` must still see the status.
+                raw = b"" if status in BLOCKED_STATUSES else handle.read(limit + 1)
         except (OSError, http.client.HTTPException, ValueError) as error:
             raise FetchError(str(error) or type(error).__name__) from error
         finally:
-            self._ready = time.monotonic() + self.delay
+            self._finished = time.monotonic()
         body, truncated = _decode(raw, headers.get("content-encoding", ""), limit)
         return Response(status, headers, body, seconds, truncated or len(raw) > limit, final_url)
 
 
 # ─── ROBOTS.TXT (RFC 9309) ───
+def _normalized(path):
+    """A rule or a request path the way RFC 9309 compares them: non-ASCII characters
+    percent-encoded, an escaped unreserved character decoded, other escapes in upper
+    case. An escaped reserved character (`%2F`, `%25`) stays as it is."""
+    def unescaped(match):
+        char = chr(int(match.group(1), 16))
+        # quote() leaves exactly RFC 3986's unreserved characters alone
+        return char if quote(char, safe="") == char else match.group().upper()
+    return re.sub(r"%([0-9A-Fa-f]{2})", unescaped, _ascii_url(path))
+
+
 def _pattern(value):
     anchored = value.endswith("$")
     body = value[:-1] if anchored else value
@@ -250,13 +265,13 @@ class Robots:
                 after_agent = True
             elif field in ("allow", "disallow") and groups:
                 if value:  # an empty Disallow allows everything: no rule
-                    groups[-1][1].append((field == "allow", value))
+                    groups[-1][1].append((field == "allow", _normalized(value)))
                 after_agent = False
             elif field == "crawl-delay" and groups:
                 try:
                     groups[-1][2] = float(value)
                 except ValueError:
-                    pass
+                    pass  # not a number: the group asks for no delay
                 after_agent = False
         matching = [g for g in groups if token in g[0]] or [g for g in groups if "*" in g[0]]
         self.rules = [(allow, _pattern(value), len(value)) for g in matching for allow, value in g[1]]
@@ -264,6 +279,7 @@ class Robots:
         self.crawl_delay = delays[0] if delays else None
 
     def allowed(self, path):
+        path = _normalized(path)
         best = None  # (rule length, allow)
         for allow, pattern, length in self.rules:
             if pattern.match(path) and (best is None or length > best[0] or (length == best[0] and allow)):
@@ -272,7 +288,7 @@ class Robots:
 
 
 def load_robots(client, site):
-    response = client.get(urlparse(site.home)._replace(path="/robots.txt").geturl(), 500_000)
+    response = fetch(client, None, urlparse(site.home)._replace(path="/robots.txt").geturl(), 500_000)
     if response.status >= 500:
         raise FetchError(f"robots.txt answered {response.status}")  # RFC 9309: assume disallowed
     text = response.body.decode("utf-8", "replace") if response.status < 300 else ""
@@ -283,12 +299,24 @@ def load_robots(client, site):
 
 
 def fetch(client, robots, url, limit):
-    """GET `url` unless robots.txt forbids it."""
-    parts = urlparse(url)
-    path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
-    if not robots.allowed(path):
-        raise FetchError(f"robots.txt disallows {path}")
-    return client.get(url, limit)
+    """GET `url`, following redirects one request at a time: each hop is checked
+    against robots.txt (`robots` is None for robots.txt itself) and goes through
+    the client, which spaces it, counts it and keeps it on the site's own hosts.
+    `seconds` adds up the hops' own time, not the waits between them."""
+    seconds = 0.0
+    for _ in range(MAX_REDIRECTS + 1):
+        if robots is not None:
+            parts = urlparse(url)
+            path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
+            if not robots.allowed(path):
+                raise FetchError(f"robots.txt disallows {path}")
+        response = client.get(url, limit)
+        seconds += response.seconds
+        location = response.headers.get("location")
+        if response.status not in REDIRECT_STATUSES or not location:
+            return response._replace(seconds=seconds)
+        url = _ascii_url(urljoin(response.url, location), "iso-8859-1")
+    raise FetchError(f"more than {MAX_REDIRECTS} redirects")
 
 
 # ─── PAGES ───
@@ -459,21 +487,24 @@ def measure_home(client, robots, site):
 
 
 def measure_event_pages(client, robots, urls):
-    """The sample's pages, as far as the site let us read them (None when none)."""
-    pages = []
+    """The sample's pages, as far as the site let us read them; FetchError when none could be."""
+    pages, failures = [], []
     for url in urls:
         try:
             response = fetch(client, robots, url, MAX_PAGE_BYTES)
-        except FetchError:
+            if response.status != 200:
+                raise FetchError(f"answered {response.status}")
+        except FetchError as error:
+            failures.append(f"{url}: {error}")
             continue
         except Stop:
             break
-        if response.status == 200:
-            page = analyze_page(response.body.decode("utf-8", "replace"))
-            pages.append({**page, "kb": len(response.body) / 1024, "seconds": response.seconds,
-                          "self_canonical": _same_page(page["canonical"], response.url)})
+        page = analyze_page(response.body.decode("utf-8", "replace"))
+        pages.append({**page, "kb": len(response.body) / 1024, "seconds": response.seconds,
+                      "self_canonical": _same_page(page["canonical"], response.url)})
     if not pages:
-        return None
+        example = f" (e.g. {failures[0]})" if failures else ""
+        raise FetchError(f"none of the {len(urls)} sampled pages could be read{example}")
 
     def share(test):
         return ratio(sum(1 for page in pages if test(page)), len(pages))
@@ -548,8 +579,8 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
     event_map = re.compile(site.event_sitemap) if site.event_sitemap else None
     fresh_since = (today - timedelta(days=FRESH_DAYS)).isoformat()
     queue, seen, skipped = deque([site.sitemap]), {site.sitemap}, set()
-    fetched = urls = events = dated = fresh = 0
-    candidates, unread = [], []
+    fetched = events = dated = fresh = 0
+    candidates, unread, pages = [], [], set()  # `pages`: every page URL read so far
     while queue:
         sitemap = queue.popleft()
         try:
@@ -577,7 +608,9 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
             continue
         all_events = bool(event_map and event_map.search(sitemap))
         for loc, lastmod in entries:
-            urls += 1
+            if loc in pages:
+                continue  # listed in two files: counted once, with its first lastmod
+            pages.add(loc)
             day = _day(lastmod)
             if day:
                 dated += 1
@@ -594,12 +627,12 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
         return None, []
     listed = len(seen) + len(skipped)
     catalogue = {
-        "urls": urls,
+        "urls": len(pages),
         "event_urls": events if (event_path or event_map) else None,
         "sitemaps": listed,
         "fetched": fetched,
         "complete": fetched == listed,
-        "with_lastmod": ratio(dated, urls),
+        "with_lastmod": ratio(dated, len(pages)),
         "fresh_30": ratio(fresh, dated),
     }
     return catalogue, pick_sample(candidates, sample_size, today)
@@ -670,6 +703,7 @@ def collect_site(site, today, sample_size=SAMPLE_SIZE, delay=MIN_DELAY, seconds=
             notes.append(f"{name}: {error}")
         except Stop:
             pass  # noted once below, from client.stopped
+        return None
 
     robots = step("robots.txt", lambda: load_robots(client, site))
     if robots:
