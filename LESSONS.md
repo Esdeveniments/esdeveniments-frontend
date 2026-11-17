@@ -1225,19 +1225,26 @@ debug IDs of a live client chunk and of two server chunks matched no uploaded
 bundle (`GET /api/0/projects/<org>/<project>/artifact-lookup/?debug_id=<id>`
 returned `[]`), and the latest release had 0 files. `next.config.js` set
 `sourcemaps.assets` to a glob of source files and ignored `.next/**`. The SDK
-hands `assets` to the CLI as the paths to upload, so the glob replaced
-`.next/server` and `.next/static/chunks`, and nothing was uploaded. Every CI
-build printed it (`Sentry source map upload warning: Directory
-'**/*.{js,jsx,ts,tsx}' does not exist.`), but the Docker build never sets `CI`,
-and everything that prints an upload problem keyed on it: `silent`, and the
-`errorHandler` (once a handler is set, the plugin logs nothing itself).
+hands `assets` to the CLI as directories to upload, so the glob was read as a
+directory name and nothing was uploaded. Every CI build printed it (`Sentry
+source map upload warning: Directory '**/*.{js,jsx,ts,tsx}' does not exist.`),
+but the Docker build never sets `CI`, and everything that prints an upload
+problem keyed on it: `silent`, and the `errorHandler` (once a handler is set,
+the plugin logs nothing itself).
 
-Both options are gone. `silent` and the `errorHandler` warning now follow
-`SENTRY_AUTH_TOKEN`, so the deploy build prints the upload and any failure.
-After a deploy, take a `//# debugId=` from a `.next/server` chunk and check that
+`assets` is now `[".next/server"]` and `ignore` is gone. Only the server has
+maps, because `productionBrowserSourceMaps` is off. The SDK's default list also
+names `.next/static/chunks`, where the CLI fails on JS without maps right after
+it uploaded the server directory, so every build warned and never printed
+"Successfully uploaded source maps". `silent` and the `errorHandler` warning
+follow `SENTRY_AUTH_TOKEN`, so the deploy build prints the upload and any
+failure. Against a local server that speaks the artifact bundle protocol, the
+build sends one bundle with 864 JS and map pairs, each with a debug ID. After a
+deploy, take a `//# debugId=` from a `.next/server` chunk and check that
 `artifact-lookup` returns a bundle, then check that the next server error shows
 frames from `lib/` and `utils/`.
 
-Client maps are still off. `productionBrowserSourceMaps: false` stops the SDK
-from enabling them, and turning it on adds map generation to every build, so it
-needs its own measurement.
+Client maps are still off, so add `.next/static/chunks` to `assets` when they
+come back. `productionBrowserSourceMaps: false` stops the SDK from enabling
+them, and turning it on adds map generation to every build, so it needs its own
+measurement.

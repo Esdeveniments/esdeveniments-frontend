@@ -292,12 +292,17 @@ module.exports = withSentryConfig(
     // Prevent original sources from appearing in devtools in production
     hideSourceMaps: true,
 
-    // Leave `assets` and `ignore` unset: the SDK then uploads what the build
-    // wrote (.next/server and .next/static/chunks) and skips Next's own
-    // manifests. A glob of source files here replaced that and `.next/**` was
-    // ignored, so no map was ever uploaded and server stack traces stayed
-    // minified ("Source code was not found").
+    // `assets` are directories: the old glob of source files was read as a
+    // directory name and `.next/**` was ignored, so no map was ever uploaded and
+    // server stack traces stayed minified ("Source code was not found"). Only
+    // .next/server has maps, since client maps are off
+    // (productionBrowserSourceMaps). The SDK's default list also names
+    // .next/static/chunks, where the CLI errors on JS without maps right after
+    // the server upload, so every build warned and never printed "Successfully
+    // uploaded". Add that directory if client maps are ever turned on. `ignore`
+    // stays unset: the SDK skips Next's own manifests.
     sourcemaps: {
+      assets: [".next/server"],
       // Delete source maps after upload to prevent exposing them in production
       deleteSourcemapsAfterUpload: true,
     },
