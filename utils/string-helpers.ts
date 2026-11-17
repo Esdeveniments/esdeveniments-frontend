@@ -332,15 +332,6 @@ const PLACE_RELATION_PREPOSITIONS: Record<
   en: { in: "in", of: "of", from: "from" },
 };
 
-/**
- * "es" or "en", for the tables that have no Catalan entry. The locale comes
- * from the URL, and Proxy skips some paths (/static/...), so a value that is
- * not a locale can get here while the layout 404s it. It reads as English
- * instead of throwing.
- */
-const spanishOrEnglish = (locale: Exclude<AppLocale, "ca">): "es" | "en" =>
-  locale === "es" ? "es" : "en";
-
 /** "El Masnou" → { article: "el", rest: "Masnou" }; "L'Escala" → { article: "l", rest: "Escala" }. */
 function splitCatalanArticle(name: string): {
   article: CatalanArticle | null;
@@ -519,7 +510,10 @@ export function formatPlacePrepositionParts(
   lowercase: boolean = true,
   relation: PlaceRelation = "in"
 ): PlacePhraseParts {
-  if (locale === "ca") {
+  // Catalan, the default locale, also answers a value that is not a locale. It
+  // comes from the URL, and Proxy skips some paths (/static/...), so one can get
+  // here while the layout 404s it.
+  if (locale !== "es" && locale !== "en") {
     const parts = catalanPlaceParts(
       name,
       type,
@@ -533,7 +527,7 @@ export function formatPlacePrepositionParts(
 
   const raw = (name || "").trim();
   return {
-    preposition: PLACE_RELATION_PREPOSITIONS[spanishOrEnglish(locale)][relation],
+    preposition: PLACE_RELATION_PREPOSITIONS[locale][relation],
     place: lowercase ? raw.toLowerCase() : raw,
   };
 }
@@ -595,13 +589,11 @@ export function formatNamePrepositionParts(
   relation: NameRelation = "of"
 ): PlacePhraseParts {
   const text = (name || "").trim();
-  if (locale !== "ca") {
-    return {
-      preposition: NAME_PREPOSITIONS[spanishOrEnglish(locale)][relation],
-      place: text,
-    };
+  if (locale === "es" || locale === "en") {
+    return { preposition: NAME_PREPOSITIONS[locale][relation], place: text };
   }
 
+  // Catalan, also for a value that is not a locale (see formatPlacePrepositionParts)
   const forms = CATALAN_NAME_PREPOSITIONS[relation];
   const article = INSTITUTION_ARTICLES.get(text.split(/\s+/)[0].toLowerCase());
   if (article === "l") {

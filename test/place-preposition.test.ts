@@ -11,16 +11,15 @@ import { getProfileDisplayName } from "../utils/profile-name";
 import type { AppLocale } from "types/i18n";
 
 describe("formatPlacePreposition", () => {
-  it("reads a value that is not a locale as English instead of throwing", () => {
+  it("reads a value that is not a locale as Catalan, the default, instead of throwing", () => {
     // /static/<place> skips Proxy, so Next passes "static" as the locale.
     const notALocale = "static" as unknown as AppLocale;
-    expect(
-      formatPlacePrepositionParts("Barcelona", "town", notALocale).preposition
-    ).toBe("in");
-    expect(formatNamePrepositionParts("Òmnium", notALocale, "by")).toEqual({
-      preposition: "by",
-      place: "Òmnium",
-    });
+    const place = formatPlacePrepositionParts("Barcelona", "town", notALocale);
+    expect(place).toEqual(formatPlacePrepositionParts("Barcelona", "town", "ca"));
+    expect(place.preposition).toBe("a");
+    const name = formatNamePrepositionParts("Òmnium", notALocale, "by");
+    expect(name).toEqual(formatNamePrepositionParts("Òmnium", "ca", "by"));
+    expect(name.preposition).toBe("per");
   });
 
   it("uses Catalan a/al forms for ca locale", () => {

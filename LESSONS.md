@@ -1199,7 +1199,8 @@ the look-alikes that must not.
 path under them (`/static/css`, `/static/barcelona/avui`) still reaches a page with
 the folder name as the locale. The layout answers 404 and that response is not
 cached. A page used to throw the same TypeError on the way, so the preposition
-tables in `utils/string-helpers.ts` now read an unsupported locale as English.
+helpers in `utils/string-helpers.ts` now read a value that is not a locale as
+Catalan, the default locale, like the rest of the code does.
 `/sitemap_index.xml`, the name WordPress and Yoast use, 301s to `/sitemap.xml` in
 `next.config.js`.
 
