@@ -13,7 +13,7 @@ import type {
   PlaceRelation,
   StringHelperLabels,
 } from "types/common";
-import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "types/i18n";
 import localeLabels from "../i18n/locale-labels.generated.json";
 import { sanitize, sanitizeLegacyApostrophe } from "./sanitize-segment";
 
@@ -332,6 +332,14 @@ const PLACE_RELATION_PREPOSITIONS: Record<
   en: { in: "in", of: "of", from: "from" },
 };
 
+/**
+ * The locale, or the default one for a value that is not a locale. It comes
+ * from the URL, and Proxy skips some paths (/static/...), so one can reach a
+ * page while the layout 404s it.
+ */
+const knownLocale = (locale: AppLocale): AppLocale =>
+  SUPPORTED_LOCALES.find((candidate) => candidate === locale) ?? DEFAULT_LOCALE;
+
 /** "El Masnou" → { article: "el", rest: "Masnou" }; "L'Escala" → { article: "l", rest: "Escala" }. */
 function splitCatalanArticle(name: string): {
   article: CatalanArticle | null;
@@ -510,10 +518,8 @@ export function formatPlacePrepositionParts(
   lowercase: boolean = true,
   relation: PlaceRelation = "in"
 ): PlacePhraseParts {
-  // Catalan, the default locale, also answers a value that is not a locale. It
-  // comes from the URL, and Proxy skips some paths (/static/...), so one can get
-  // here while the layout 404s it.
-  if (locale !== "es" && locale !== "en") {
+  const known = knownLocale(locale);
+  if (known === "ca") {
     const parts = catalanPlaceParts(
       name,
       type,
@@ -527,7 +533,7 @@ export function formatPlacePrepositionParts(
 
   const raw = (name || "").trim();
   return {
-    preposition: PLACE_RELATION_PREPOSITIONS[locale][relation],
+    preposition: PLACE_RELATION_PREPOSITIONS[known][relation],
     place: lowercase ? raw.toLowerCase() : raw,
   };
 }
@@ -589,11 +595,11 @@ export function formatNamePrepositionParts(
   relation: NameRelation = "of"
 ): PlacePhraseParts {
   const text = (name || "").trim();
-  if (locale === "es" || locale === "en") {
-    return { preposition: NAME_PREPOSITIONS[locale][relation], place: text };
+  const known = knownLocale(locale);
+  if (known !== "ca") {
+    return { preposition: NAME_PREPOSITIONS[known][relation], place: text };
   }
 
-  // Catalan, also for a value that is not a locale (see formatPlacePrepositionParts)
   const forms = CATALAN_NAME_PREPOSITIONS[relation];
   const article = INSTITUTION_ARTICLES.get(text.split(/\s+/)[0].toLowerCase());
   if (article === "l") {
