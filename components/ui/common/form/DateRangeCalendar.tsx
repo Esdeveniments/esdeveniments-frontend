@@ -4,14 +4,15 @@ import { useState, type ReactElement } from "react";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { useLocale, useTranslations } from "next-intl";
-import { ca, es, enUS } from "react-day-picker/locale";
+import { ca, es, enUS, fr } from "react-day-picker/locale";
 import type { DayPickerLocale } from "react-day-picker/locale";
 import type { DateRangeCalendarProps } from "types/props";
+import type { AppLocale } from "types/i18n";
 import { nowInMadrid } from "@utils/constants";
 import "react-day-picker/style.css";
 
 // DayPicker locales extend date-fns with translated aria labels.
-const LOCALE_MAP: Record<string, DayPickerLocale> = { ca, es, en: enUS };
+const LOCALE_MAP: Record<AppLocale, DayPickerLocale> = { ca, es, en: enUS, fr };
 
 function toYMD(d: Date): string {
   const y = d.getFullYear();
@@ -48,7 +49,7 @@ export default function DateRangeCalendar({
 }: DateRangeCalendarProps): ReactElement {
   const t = useTranslations("Components.DateRangeCalendar");
   const locale = useLocale();
-  const dateFnsLocale = LOCALE_MAP[locale] ?? ca;
+  const dateFnsLocale = LOCALE_MAP[locale as AppLocale] ?? ca;
   // The parent only stores complete ranges, so remember which start is still
   // waiting for its end. DayPicker needs `to: undefined` to finish the range
   // on the next tap instead of starting a new one. The parent may move the end

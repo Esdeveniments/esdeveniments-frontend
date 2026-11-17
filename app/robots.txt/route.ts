@@ -3,6 +3,8 @@ import type { MetadataRoute } from "next";
 import { getCacheControlHeader } from "@utils/cache";
 import { isProductionHost } from "@utils/production-host";
 import { siteUrl } from "@config/index";
+import robotsPolicy from "@config/robots-policy.json";
+import { SUPPORTED_LOCALES } from "types/i18n";
 
 /**
  * robots.txt route handler with explicit cache control
@@ -62,16 +64,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // Disallow. Other Next.js internals, API routes, utility pages and the
   // sign-in entry (a 307 into Logto, linked from every page with its own
   // ?redirect=) stay out of crawls.
-  const CRAWL_ALLOW = ["/", "/_next/static/"];
+  const CRAWL_ALLOW = robotsPolicy.crawlAllow;
   const CRAWL_DISALLOW = [
-    "/_next/",
-    "/api/",
-    "/e2e/",
-    "/offline/",
-    "/iniciar-sessio",
-    "/ca/iniciar-sessio",
-    "/es/iniciar-sessio",
-    "/en/iniciar-sessio",
+    ...robotsPolicy.crawlDisallowBase,
+    ...robotsPolicy.crawlDisallowLocalized.flatMap((path) => [
+      path,
+      ...SUPPORTED_LOCALES.map((locale) => `/${locale}${path}`),
+    ]),
   ];
 
   const robotsConfig: MetadataRoute.Robots = {
@@ -84,45 +83,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // group repeats the `*` paths; an allow-only group would let these
       // bots crawl /api/.
       {
-        userAgent: [
-          // Search and browsing (cite and link to us)
-          "OAI-SearchBot",
-          "ChatGPT-User",
-          "Claude-SearchBot",
-          "Claude-User",
-          "Claude-Web",
-          "PerplexityBot",
-          "Perplexity-User",
-          "DeepSeekBot",
-          "ora-agent",
-          "Qwen-Agent",
-          // Training and AI features
-          "GPTBot",
-          "ClaudeBot",
-          "anthropic-ai",
-          "Google-Extended",
-          "Applebot-Extended",
-          "Meta-ExternalAgent",
-          "cohere-ai",
-        ],
+        userAgent: robotsPolicy.allowedAiAgents,
         allow: CRAWL_ALLOW,
         disallow: CRAWL_DISALLOW,
       },
       // Still-blocked: non-vendor data harvesters with no direct
       // user-agent value. These resell scraped data without powering any
       // end-user agent.
-      {
-        userAgent: "CCBot", // Common Crawl (dataset reseller)
+      ...robotsPolicy.blockedAgents.map((userAgent) => ({
+        userAgent,
         disallow: ["/"],
-      },
-      {
-        userAgent: "Bytespider", // ByteDance/TikTok data harvester
-        disallow: ["/"],
-      },
-      {
-        userAgent: "Omgilibot", // Webz.io data harvesting
-        disallow: ["/"],
-      },
+      })),
     ],
     // One index: it lists every child sitemap, so naming them too only
     // made crawlers fetch each one twice.
@@ -166,7 +137,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // Declare AI content usage preferences
   lines.push("");
   lines.push("# Content Signals — AI usage preferences");
-  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=yes");
+  lines.push(`Content-Signal: ${robotsPolicy.contentSignal}`);
 
   // NLWeb schema feed directive
   lines.push("");

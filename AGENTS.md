@@ -2,7 +2,7 @@
 
 Single source of truth for AI agents working in this repo (Copilot, Claude Code, Codex, Cursor and others all read this file). Keep it current: when code changes a rule below, change the rule in the same PR.
 
-**What this is**: esdeveniments.cat, a Catalan events site. Next.js 16 App Router (`cacheComponents`, `partialPrefetching`), React 19, TypeScript strict, next-intl 4 (`ca` default, `es`, `en`), Tailwind, SWR, Vitest, Playwright. Node 26, Yarn 4.12 (Corepack). Priorities: SEO, Core Web Vitals, low hosting cost.
+**What this is**: esdeveniments.cat, a Catalan events site. Next.js 16 App Router (`cacheComponents`, `partialPrefetching`), React 19, TypeScript strict, next-intl 4 (`ca` default, `es`, `en`, `fr`), Tailwind, SWR, Vitest, Playwright. Node 26, Yarn 4.12 (Corepack). Priorities: SEO, Core Web Vitals, low hosting cost.
 
 **Where else to look**
 
@@ -49,7 +49,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 | `yarn dev` | Copies the MapLibre worker, then `next dev` (Turbopack). Run `yarn prebuild` first if you need the service worker |
 | `yarn build` | Copies the MapLibre worker, then `next build`. `build:development\|staging\|production` also run `prebuild` with that env file |
 | `yarn start` | `next start`: serves the built app. `start:development\|staging\|production` load that env file |
-| `yarn prebuild` | Generates `public/sw.js`, `public/robots.txt` and `public/static/maplibre-v*/` (build output, never edit them; `app/robots.txt/route.ts` is the fallback, keep both in sync) |
+| `yarn prebuild` | Generates `public/sw.js`, `public/robots.txt` and `public/static/maplibre-v*/` (build output, never edit them; `app/robots.txt/route.ts` is the fallback and shares `config/robots-policy.json` with `scripts/generate-robots.mjs`) |
 | `yarn lint` / `yarn typecheck` | 0 errors expected; old warnings are acceptable |
 | `yarn test` | Vitest + jsdom, `test/**/*.{test,spec}.{ts,tsx}`. CI runs Node 26 (`NODE_VERSION` in the workflows; keep it in sync with `engines.node`, `.nvmrc` and the Dockerfile base image) |
 | `yarn test:e2e` | Playwright in `e2e/`. Needs a running app and API credentials. Remote: `playwright.remote.config.ts` + `PLAYWRIGHT_TEST_BASE_URL` |
@@ -139,8 +139,8 @@ Stop and propose an alternative when you see a helper used only once, a componen
 
 ## i18n
 
-- Locales in `i18n/routing.ts` (`as-needed` prefix). Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/routing`, never `next/link` (ESLint warns).
-- Server: `getTranslations` (`next-intl/server`); client: `useTranslations`/`useLocale`. Never pass messages down manually. Text lives in `messages/{ca,es,en}.json`; reuse keys.
+- Locales in `config/locales.json` (`types/i18n.ts` and `i18n/routing.ts`, `as-needed` prefix). Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/routing`, never `next/link` (ESLint warns).
+- Server: `getTranslations` (`next-intl/server`); client: `useTranslations`/`useLocale`. Never pass messages down manually. Text lives in `messages/{ca,es,en,fr}.json`; reuse keys.
 - `proxy.ts` sets `x-next-intl-locale`; don't write your own locale detection. Vitest aliases `next-intl` to `test/mocks/next-intl*.ts`.
 
 ## Types
@@ -159,7 +159,7 @@ Stop and propose an alternative when you see a helper used only once, a componen
 - Docker on Hetzner via Coolify, behind Cloudflare (DNS, edge cache, TLS). Redis holds the Next page cache. `develop` deploys to staging; `main` is production. Infra limits: `docs/self-hosted-resource-limits.md`.
 - Cloudflare caches public HTML on www for `s-maxage=1800` (not `/api/*`, RSC or `Accept: text/markdown` requests, staging or AI bots; each exclusion is a Bypass Cache Rule ordered below the HTML rule, see `docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md`). `applyPageHeaders` (`utils/proxy-page-headers.ts`, called from `proxy.ts`) labels each CDN-cacheable page with a `Cache-Tag` (`<host>:html` plus `home`, `place:<slug>`, `event:<slug>` or `user:<username>`, built in `lib/cdn/cache-tags.ts`; never on `private, no-store` responses). Publish, edit and delete purge the event's tags in `after()` through `purgeEventPagesFromCdn` (`lib/cdn/cloudflare-purge.ts`). Profile and avatar saves expire `userTag` and purge `user:<username>` (old and new on a rename) through `invalidateProfilePages` (`lib/cache/revalidate-profile-pages.ts`). Keep the long `s-maxage`; purge instead of shortening it. Free plan: 5 purge requests/min, 100 tags each, so send one batched request per change. Needs `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` (Cache Purge) at runtime in Coolify; `/api/health` reports `cloudflarePurgeConfigured`.
 - Every deploy waits in "Wait for Coolify deployment to complete" until the old container has left the pool (10 health checks in a row on the new commit). Production then purges Cloudflare, checks every referenced `/_next/static` asset with `scripts/check-static-assets.sh` and purges once more if one fails; the smoke tests run the same check on staging. Never purge or asset-check before that wait: during the rollover the old container re-caches old HTML and 404 chunks (`docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md`).
-- After that purge, `submitEventsToIndexNow` (`lib/seo/indexnow.ts`) pings IndexNow (Bing, Yandex, …) with the event's ca/es/en URLs, on the production site only. The key is `INDEXNOW_KEY` (`utils/constants.ts`), served as `public/<key>.txt` and excluded from the `proxy.ts` matcher; change both together.
+- After that purge, `submitEventsToIndexNow` (`lib/seo/indexnow.ts`) pings IndexNow (Bing, Yandex, …) with the event's ca/es/en/fr URLs, on the production site only. The key is `INDEXNOW_KEY` (`utils/constants.ts`), served as `public/<key>.txt` and excluded from the `proxy.ts` matcher; change both together.
 - Server Action IDs are salted with `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` at build time (GitHub secret per Environment, Docker secret mount; the deploy fails without it), so pages already open keep working across deploys. Don't set it in Coolify, and don't rotate it casually: a new key breaks every open page once (see LESSONS.md). Next embeds it in the image and the GitHub Actions build cache (readable by fork PRs), so never capture secrets in inline `"use server"` closures.
 - Rollback: Coolify → Deployments → Rollback, or GitHub Actions "Deploy to Coolify" with `skip_ci`. It does not undo backend or DB changes.
 - Release `develop` → `main` at least weekly. From Aug 2 to Nov 4, 2026 nothing shipped to production; Googlebot got 5xx and slow answers from Aug 18 until that release (#752), and the fixes sat in `develop`. Small releases also make a regression easy to trace to one change.

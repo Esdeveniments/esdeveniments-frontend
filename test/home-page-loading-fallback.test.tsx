@@ -41,4 +41,16 @@ describe("home page loading fallback", () => {
     // The hero skeleton carries the real hero text, so it has the same height.
     expect(html).toContain('data-testid="hero-section-skeleton"');
   });
+
+  test("renders localized fallback copy from server i18n messages", async () => {
+    const html = renderToString(
+      await Page({
+        params: fulfilled({ locale: "fr" }),
+        searchParams: fulfilled({}),
+      }),
+    );
+
+    expect(html).toContain("Que faire en Catalogne");
+    expect(html).toContain("/llms.txt");
+  });
 });

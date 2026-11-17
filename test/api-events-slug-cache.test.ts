@@ -162,6 +162,7 @@ describe("/api/events/[slug] DELETE cache invalidation", () => {
       "/ca/e/my-event",
       "/en/e/my-event",
       "/es/e/my-event",
+      "/fr/e/my-event",
     ]);
   });
 

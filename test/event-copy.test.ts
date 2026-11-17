@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildEventIntroText } from "@utils/event-copy";
 import en from "../messages/en.json";
+import fr from "../messages/fr.json";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
@@ -272,6 +273,9 @@ describe("buildEventIntroText", () => {
         region: undefined,
       });
       expect(await buildEventIntroText(event, en.Utils.EventCopy, "en")).toContain("on Sunday,");
+      expect(await buildEventIntroText(event, fr.Utils.EventCopy, "fr")).toContain(
+        "a lieu le dimanche 15 novembre 2026",
+      );
       expect(await buildEventIntroText(event)).toContain("el diumenge,");
     });
   });

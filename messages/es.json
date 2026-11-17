@@ -45,6 +45,8 @@
           "title": "Planes en el Vallès Occidental"
         }
       },
+      "noscriptH1": "Qué hacer en Cataluña",
+      "noscriptH2": "Agenda cultural en Cataluña con conciertos, exposiciones, teatro, actividades familiares y planes para todas las edades.",
       "noscriptDescription": "Esdeveniments.cat es la plataforma gratuita más completa para descubrir eventos culturales en Cataluña. Consulta la agenda de conciertos, teatro, exposiciones, festivales, actividades familiares y más en más de 900 municipios catalanes. Encuentra qué hacer hoy, mañana o este fin de semana cerca de ti.",
       "noscriptApiNote": "API pública gratuita disponible en /llms.txt y /openapi.json — sin autenticación necesaria."
     },
@@ -113,7 +115,7 @@
       "metaTitle": "API de Esdeveniments.cat para desarrolladores",
       "metaDescription": "Documentación de la API de Esdeveniments.cat: API REST pública y gratuita con la agenda cultural de Cataluña, servidor MCP, inicio rápido y OpenAPI.",
       "heading": "API de Esdeveniments.cat",
-      "intro": "Una API REST pública y gratuita con la agenda cultural de Cataluña: eventos, noticias, categorías y lugares, en catalán, castellano e inglés. Úsala en tu app, en tu web o con un agente de IA.",
+      "intro": "Una API REST pública y gratuita con la agenda cultural de Cataluña: eventos, noticias, categorías y lugares, en catalán, castellano, inglés y francés. Úsala en tu app, en tu web o con un agente de IA.",
       "keysTitle": "Claves de API",
       "keysBody": "No necesitas ninguna clave. Los endpoints de lectura (GET) son públicos y no piden autenticación. Haz un uso razonable: menos de 60 peticiones por minuto por IP. El servidor MCP lo aplica y, si lo superas, responde con un 429 y la cabecera Retry-After.",
       "quickstartTitle": "Inicio rápido",
@@ -618,12 +620,14 @@
       "languages": {
         "ca": "Catalán",
         "es": "Castellano",
-        "en": "Inglés"
+        "en": "Inglés",
+        "fr": "Francés"
       },
       "languagesShort": {
         "ca": "Cat",
         "es": "Esp",
-        "en": "Eng"
+        "en": "Eng",
+        "fr": "Fra"
       },
       "mobilePublishLabel": "Publicar",
       "auth": {
@@ -1154,7 +1158,8 @@
       "translateError": "No hemos podido traducir ahora mismo. Inténtalo de nuevo.",
       "target": {
         "en": "inglés",
-        "es": "castellano"
+        "es": "castellano",
+        "fr": "francés"
       }
     },
     "HorizontalScroll": {
@@ -1266,6 +1271,17 @@
     }
   },
   "Partials": {
+    "WebsiteSchema": {
+      "siteDescription": "Descubre eventos culturales en Cataluña",
+      "orgDescription": "Plataforma de descubrimiento de eventos culturales en Cataluña. Agenda de actividades, conciertos, teatro, exposiciones y más.",
+      "appDescription": "Plataforma gratuita y multilingüe para descubrir eventos culturales en Cataluña. API pública REST, búsqueda por lugar, fecha y categoría.",
+      "areaName": "Cataluña",
+      "areaSameAs": "https://es.wikipedia.org/wiki/Cataluña",
+      "faqWhatQuestion": "¿Qué es Esdeveniments.cat?",
+      "faqWhatAnswer": "Esdeveniments.cat es la plataforma gratuita y multilingüe más completa para descubrir eventos culturales en Cataluña. Cubre más de 900 municipios con conciertos, teatro, exposiciones, festivales y más.",
+      "faqApiQuestion": "¿Tiene Esdeveniments.cat una API pública?",
+      "faqApiAnswer": "Sí, Esdeveniments.cat ofrece una API REST pública y gratuita. No requiere autenticación para endpoints de lectura. Documentación disponible en /llms.txt y /openapi.json."
+    },
     "GeneratePagesData": {
       "categories": {
         "literatura": {

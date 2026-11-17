@@ -7,8 +7,8 @@ import type { NextPage } from "next";
 import type { TeamMember as TeamMemberType } from "types/common";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import { DEFAULT_LOCALE } from "types/i18n";
-import type { AppLocale } from "types/i18n";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { SUPPORTED_LOCALES, type AppLocale } from "types/i18n";
 
 export async function generateMetadata() {
   const locale = (await rootLocale()) as AppLocale;
@@ -48,16 +48,8 @@ const teamMembers: TeamMemberType[] = [
 const QuiSom: NextPage = async () => {
   const locale = (await rootLocale()) as AppLocale;
   const t = await getTranslations({ locale, namespace: "App.About" });
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
   const absolute = (path: string) =>
-    path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
+    path.startsWith("http") ? path : toLocalizedUrl(path, locale);
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
@@ -82,7 +74,7 @@ const QuiSom: NextPage = async () => {
           "@type": "ContactPoint",
           contactType: "general inquiries",
           email: contactEmail,
-          availableLanguage: ["ca", "es", "en"],
+          availableLanguage: [...SUPPORTED_LOCALES],
         },
       ],
       sameAs: socialLinksSameAs,
@@ -112,7 +104,7 @@ const QuiSom: NextPage = async () => {
               {t.rich("paragraph2", {
                 publish: (chunks) => (
                   <PressableAnchor
-                    href={withLocale("/publica")}
+                    href="/publica"
                     prefetch={false}
                     className="text-primary hover:underline underline-offset-2 font-medium"
                     variant="inline"

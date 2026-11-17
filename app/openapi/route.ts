@@ -18,7 +18,7 @@ export async function GET() {
       title: "Esdeveniments.cat API",
       version: "1.0.0",
       description:
-        "Public API for discovering cultural events, news, places, and categories in Catalonia (Spain). Multilingual support (ca/es/en). All GET endpoints are public and require no authentication. POST /api/sponsors/checkout accepts an Idempotency-Key header so retries are safe. Developer portal: " + `${siteUrl}/developers`,
+        `Public API for discovering cultural events, news, places, and categories in Catalonia (Spain). Multilingual support (${SUPPORTED_LOCALES.join("/")}). All GET endpoints are public and require no authentication. POST /api/sponsors/checkout accepts an Idempotency-Key header so retries are safe. Developer portal: ` + `${siteUrl}/developers`,
       contact: {
         name: "Esdeveniments.cat",
         url: `${siteUrl}/qui-som`,

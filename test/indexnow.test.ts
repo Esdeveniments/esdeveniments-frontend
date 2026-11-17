@@ -48,9 +48,11 @@ describe("submitEventsToIndexNow", () => {
       "https://www.esdeveniments.cat/e/old-slug",
       "https://www.esdeveniments.cat/es/e/old-slug",
       "https://www.esdeveniments.cat/en/e/old-slug",
+      "https://www.esdeveniments.cat/fr/e/old-slug",
       "https://www.esdeveniments.cat/e/new-slug",
       "https://www.esdeveniments.cat/es/e/new-slug",
       "https://www.esdeveniments.cat/en/e/new-slug",
+      "https://www.esdeveniments.cat/fr/e/new-slug",
     ]);
   });
 
@@ -68,7 +70,10 @@ describe("submitEventsToIndexNow", () => {
     expect(body.urlList).toContain(
       "https://www.esdeveniments.cat/en/festa-major/gracia",
     );
-    expect(body.urlList).toHaveLength(6);
+    expect(body.urlList).toContain(
+      "https://www.esdeveniments.cat/fr/festa-major/gracia",
+    );
+    expect(body.urlList).toHaveLength(8);
   });
 
   it("never submits from staging or previews", async () => {

@@ -137,10 +137,18 @@ describe("place phrases with an article in the name", () => {
     expect(formatPlacePreposition(comarca, "region", "ca", false, "of")).toBe(ofPhrase);
   });
 
-  it("keeps the article in Spanish and English", () => {
+  it("keeps the article in Spanish, English, and French and elides French 'de' before vowels", () => {
     expect(formatPlacePreposition("El Masnou", "town", "es", false, "of")).toBe("de El Masnou");
     expect(formatPlacePreposition("El Masnou", "town", "es", false, "from")).toBe("desde El Masnou");
     expect(formatPlacePreposition("El Masnou", "town", "en", false, "of")).toBe("of El Masnou");
+    expect(formatPlacePreposition("Girona", "town", "fr", false)).toBe("à Girona");
+    expect(formatPlacePreposition("Catalunya", "general", "fr", false)).toBe("en Catalunya");
+    expect(formatPlacePreposition("Osona", "region", "fr", false)).toBe("en Osona");
+    expect(formatPlacePreposition("Alt Empordà", "region", "fr", false)).toBe("en Alt Empordà");
+    expect(formatPlacePreposition("Osona", "region", "fr", false, "of")).toBe("d'Osona");
+    expect(formatPlacePreposition("Alt Empordà", "region", "fr", false, "of")).toBe("d'Alt Empordà");
+    expect(formatPlacePreposition("El Masnou", "town", "fr", false, "of")).toBe("de El Masnou");
+    expect(formatPlacePreposition("Girona", "town", "fr", false, "from")).toBe("depuis Girona");
   });
 
   it("splits the preposition from the place for split layouts", () => {
@@ -187,13 +195,22 @@ describe("formatNameOf", () => {
     });
   });
 
-  it("uses plain de/of in Spanish and English", () => {
+  it("formats Spanish, English, and French name prepositions", () => {
     expect(formatNameOf("Ajuntament del Masnou", "es")).toBe(
       "de Ajuntament del Masnou"
     );
     expect(formatNameOf("Ajuntament del Masnou", "en")).toBe(
       "of Ajuntament del Masnou"
     );
+    expect(formatNameOf("Òmnium Cultural", "fr")).toBe(
+      "d'Òmnium Cultural"
+    );
+    expect(formatNameOf("Île-de-France", "fr")).toBe("d'Île-de-France");
+    expect(formatNameOf("Pau Riba", "fr")).toBe("de Pau Riba");
+    expect(formatNamePrepositionParts("Òmnium Cultural", "fr", "by")).toEqual({
+      preposition: "par",
+      place: "Òmnium Cultural",
+    });
   });
 });
 

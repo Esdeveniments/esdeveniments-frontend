@@ -1,0 +1,26 @@
+{
+  "crawlAllow": ["/", "/_next/static/"],
+  "crawlDisallowBase": ["/_next/", "/api/", "/e2e/", "/offline/"],
+  "crawlDisallowLocalized": ["/iniciar-sessio"],
+  "allowedAiAgents": [
+    "OAI-SearchBot",
+    "ChatGPT-User",
+    "Claude-SearchBot",
+    "Claude-User",
+    "Claude-Web",
+    "PerplexityBot",
+    "Perplexity-User",
+    "DeepSeekBot",
+    "ora-agent",
+    "Qwen-Agent",
+    "GPTBot",
+    "ClaudeBot",
+    "anthropic-ai",
+    "Google-Extended",
+    "Applebot-Extended",
+    "Meta-ExternalAgent",
+    "cohere-ai"
+  ],
+  "blockedAgents": ["CCBot", "Bytespider", "Omgilibot"],
+  "contentSignal": "ai-train=no, search=yes, ai-input=yes"
+}

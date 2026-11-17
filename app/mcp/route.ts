@@ -10,6 +10,13 @@ import { PUBLIC_RATE_LIMIT_PER_MINUTE } from "@utils/constants";
 import { isValidEventSlug } from "@utils/event-helpers";
 import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
 import { MCP_TOOLS as TOOLS } from "@config/mcp-tools";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_NAMES,
+  NON_DEFAULT_LOCALES,
+} from "types/i18n";
+
+const englishConjunction = new Intl.ListFormat("en", { type: "conjunction" });
 
 /**
  * MCP (Model Context Protocol) Streamable HTTP endpoint
@@ -368,7 +375,7 @@ async function handleRequest(req: JsonRpcRequest): Promise<JsonRpcResponse> {
           "Esdeveniments.cat is a cultural events discovery platform for Catalonia (Spain). " +
           "Use listEvents to search events by place, date, category or keyword. " +
           "Use getEvent for full details. Use listCategories and listPlaces for reference data. " +
-          "All data is in Catalan by default; Spanish and English also available.",
+          `All data is in ${LOCALE_NAMES[DEFAULT_LOCALE]} by default; ${englishConjunction.format(NON_DEFAULT_LOCALES.map((locale) => LOCALE_NAMES[locale]))} UI locales also available.`,
       });
 
     case "notifications/initialized":

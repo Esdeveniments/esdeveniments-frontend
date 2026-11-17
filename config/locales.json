@@ -1,0 +1,9 @@
+{
+  "defaultLocale": "ca",
+  "locales": {
+    "ca": "Catalan",
+    "es": "Spanish",
+    "en": "English",
+    "fr": "French"
+  }
+}

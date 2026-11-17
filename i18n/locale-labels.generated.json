@@ -185,6 +185,68 @@
         "november",
         "december"
       ]
+    },
+    "fr": {
+      "days": [
+        "Dimanche",
+        "Lundi",
+        "Mardi",
+        "Mercredi",
+        "Jeudi",
+        "Vendredi",
+        "Samedi"
+      ],
+      "daysShort": [
+        "Dim.",
+        "Lun.",
+        "Mar.",
+        "Mer.",
+        "Jeu.",
+        "Ven.",
+        "Sam."
+      ],
+      "months": [
+        "janvier",
+        "février",
+        "mars",
+        "avril",
+        "mai",
+        "juin",
+        "juillet",
+        "août",
+        "septembre",
+        "octobre",
+        "novembre",
+        "décembre"
+      ],
+      "monthsShort": [
+        "janv.",
+        "févr.",
+        "mars",
+        "avr.",
+        "mai",
+        "juin",
+        "juil.",
+        "août",
+        "sept.",
+        "oct.",
+        "nov.",
+        "déc."
+      ],
+      "monthsUrl": [
+        "janvier",
+        "fevrier",
+        "mars",
+        "avril",
+        "mai",
+        "juin",
+        "juillet",
+        "aout",
+        "septembre",
+        "octobre",
+        "novembre",
+        "decembre"
+      ]
     }
   },
   "eventFallbacks": {
@@ -199,6 +261,24 @@
     "en": {
       "defaultEvent": "Event",
       "defaultCulturalEvent": "Cultural event"
+    },
+    "fr": {
+      "defaultEvent": "Événement",
+      "defaultCulturalEvent": "Événement culturel"
+    }
+  },
+  "searchQuery": {
+    "ca": {
+      "forSearch": "per a la cerca"
+    },
+    "es": {
+      "forSearch": "para la búsqueda"
+    },
+    "en": {
+      "forSearch": "for the search"
+    },
+    "fr": {
+      "forSearch": "pour la recherche"
     }
   },
   "utils": {

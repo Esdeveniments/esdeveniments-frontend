@@ -9,12 +9,19 @@
  * The route handler (app/robots.txt/route.ts) serves as a fallback.
  */
 
-import { writeFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, "..");
+const localesConfig = JSON.parse(
+  readFileSync(join(rootDir, "config", "locales.json"), "utf8"),
+);
+const robotsPolicy = JSON.parse(
+  readFileSync(join(rootDir, "config", "robots-policy.json"), "utf8"),
+);
+const SUPPORTED_LOCALES = Object.keys(localesConfig.locales);
 
 // Get site URL from environment or use default
 const siteUrl =
@@ -49,69 +56,35 @@ try {
 }
 
 /**
- * robots.txt configuration - KEEP IN SYNC with app/robots.txt/route.ts
- *
- * 2026 policy — AI-agent-first discoverability:
- * - Allow search engine crawlers (Googlebot, Bingbot, etc.)
- * - Allow AI agent crawlers (browsing + training) so LLM citations,
- *   deep-research tools, and agent-readiness scanners (orank.ai
- *   sim-chatgpt / sim-claude) can reach our content. Our data is
- *   public cultural-events information; training protection has
- *   lower value than broad agent reach.
- * - Allow /_next/static/ (JS/CSS Google needs to render pages); block the
- *   rest of /_next/ (build internals)
- * - Block /api/ routes (internal endpoints, not for indexing)
- * - Block the sign-in entry (a 307 into Logto). Every page links to it with
- *   its own ?redirect=, so a noindex alone still cost one crawl per page.
+ * robots.txt configuration — shared with app/robots.txt/route.ts via
+ * config/robots-policy.json and config/locales.json.
  */
-const CRAWL_ALLOW = ["/", "/_next/static/"];
+const CRAWL_ALLOW = robotsPolicy.crawlAllow;
 const CRAWL_DISALLOW = [
-  "/_next/",
-  "/api/",
-  "/e2e/",
-  "/offline/",
-  "/iniciar-sessio",
-  "/ca/iniciar-sessio",
-  "/es/iniciar-sessio",
-  "/en/iniciar-sessio",
+  ...robotsPolicy.crawlDisallowBase,
+  ...robotsPolicy.crawlDisallowLocalized.flatMap((path) => [
+    path,
+    ...SUPPORTED_LOCALES.map((locale) => `/${locale}${path}`),
+  ]),
 ];
 
 const robotsConfig = {
   rules: [
     // Default rules for all crawlers (including search engines)
     { userAgent: "*", allow: CRAWL_ALLOW, disallow: CRAWL_DISALLOW },
-    // AI agent crawlers (browsing/search + training) — explicit allow (see
-    // header). A crawler obeys only its most specific group, so this group
-    // repeats the `*` paths; an allow-only group would let them crawl /api/.
-    // Keep in sync with app/robots.txt/route.ts.
+    // AI agent crawlers (browsing/search + training). A crawler obeys only its
+    // most specific group, so this group repeats the `*` paths; an allow-only
+    // group would let them crawl /api/.
     {
-      userAgent: [
-        "OAI-SearchBot",
-        "ChatGPT-User",
-        "Claude-SearchBot",
-        "Claude-User",
-        "Claude-Web",
-        "PerplexityBot",
-        "Perplexity-User",
-        "DeepSeekBot",
-        "ora-agent",
-        "Qwen-Agent",
-        "GPTBot",
-        "ClaudeBot",
-        "anthropic-ai",
-        "Google-Extended",
-        "Applebot-Extended",
-        "Meta-ExternalAgent",
-        "cohere-ai",
-      ],
+      userAgent: robotsPolicy.allowedAiAgents,
       allow: CRAWL_ALLOW,
       disallow: CRAWL_DISALLOW,
     },
-    // Still-blocked: non-vendor data harvesters with no direct user-agent
-    // value. These resell scraped data without powering any end-user agent.
-    { userAgent: "CCBot", disallow: ["/"] },
-    { userAgent: "Bytespider", disallow: ["/"] },
-    { userAgent: "Omgilibot", disallow: ["/"] },
+    // Non-vendor data harvesters with no direct end-user agent value.
+    ...robotsPolicy.blockedAgents.map((userAgent) => ({
+      userAgent,
+      disallow: ["/"],
+    })),
   ],
   // One index: it lists every child sitemap, so naming them too only
   // made crawlers fetch each one twice.
@@ -172,7 +145,7 @@ function generateRobotsTxt() {
   // Content Signals
   lines.push("");
   lines.push("# Content Signals — AI usage preferences");
-  lines.push("Content-Signal: ai-train=no, search=yes, ai-input=yes");
+  lines.push(`Content-Signal: ${robotsPolicy.contentSignal}`);
 
   // Schema feed directive
   lines.push("");
@@ -184,7 +157,8 @@ function generateRobotsTxt() {
 
 // Generate and write robots.txt
 const robotsTxt = generateRobotsTxt();
-const outputPath = join(rootDir, "public", "robots.txt");
+const outputPath =
+  process.env.ROBOTS_OUTPUT_PATH || join(rootDir, "public", "robots.txt");
 
 writeFileSync(outputPath, robotsTxt, "utf-8");
 

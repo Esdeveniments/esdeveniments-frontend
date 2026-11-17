@@ -874,7 +874,10 @@ export interface ServerEventsCategorizedProps {
 
 export type ServerEventsCategorizedContentProps = Pick<
   ServerEventsCategorizedProps,
-  "categorizedEventsPromise" | "categoriesPromise" | "featuredPlaces"
+  | "categorizedEventsPromise"
+  | "categoriesPromise"
+  | "featuredPlaces"
+  | "localAgendasSection"
 >;
 
 export interface SearchAwareHeadingProps {
@@ -1182,6 +1185,17 @@ export interface EventActionBarActionsProps {
   eventUrl: string | null;
   moreInfoLabel: string;
   calendar: import("./common").CalendarEventData;
+}
+
+export interface WebsiteSchemaProps {
+  locale?: AppLocale;
+}
+
+export interface HomeStaticFallbackProps {
+  h1: string;
+  h2: string;
+  description: string;
+  apiNote: string;
 }
 
 // Page share button (event, profile): native share sheet on touch, small menu elsewhere

@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCacheControlHeader } from "@utils/cache";
 import { siteUrl } from "@config/index";
 import { PUBLIC_RATE_LIMIT_TEXT } from "@utils/constants";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_NAMES,
+  NON_DEFAULT_LOCALES,
+  SUPPORTED_LOCALES,
+} from "types/i18n";
 
 /**
  * /docs/llms.txt — Modular llms.txt for documentation section.
@@ -14,7 +20,7 @@ export async function GET(request: NextRequest) {
     "# Updated: " + new Date().toISOString().split("T")[0],
     "",
     "## Overview",
-    "Esdeveniments.cat is a free multilingual (ca/es/en) cultural events discovery platform for Catalonia (Spain).",
+    `Esdeveniments.cat is a free multilingual (${SUPPORTED_LOCALES.join("/")}) cultural events discovery platform for Catalonia (Spain).`,
     "This file covers the documentation and integration guides available.",
     "",
     "## Documentation Index",
@@ -45,7 +51,7 @@ export async function GET(request: NextRequest) {
     "## About the Platform",
     "- Coverage: 900+ municipalities across all 4 provinces of Catalonia",
     "- Categories: 20+ event types (concerts, theatre, exhibitions, festivals, etc.)",
-    "- Languages: Catalan (default), Spanish, English",
+    `- Languages: ${LOCALE_NAMES[DEFAULT_LOCALE]} (default), ${NON_DEFAULT_LOCALES.map((locale) => LOCALE_NAMES[locale]).join(", ")}`,
     "- Updates: Daily from official sources and community submissions",
     "",
     "## Contact",

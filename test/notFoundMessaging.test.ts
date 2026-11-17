@@ -37,6 +37,15 @@ describe("appendSearchQuery", () => {
     );
   });
 
+  it("appends snippet with French locale", () => {
+    const baseText = "Aucun événement disponible";
+    const augmented = appendSearchQuery(baseText, "concerts", "fr");
+
+    expect(augmented).toBe(
+      `Aucun événement disponible pour la recherche "concerts".`
+    );
+  });
+
   it("escapes HTML entities in search query to prevent XSS", () => {
     const baseText = "No s'han trobat esdeveniments";
     const augmented = appendSearchQuery(

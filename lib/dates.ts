@@ -6,6 +6,7 @@ import {
 } from "@utils/constants";
 import { DateRange } from "types/common";
 import type { ValidDateSlug } from "types/dates";
+import { SUPPORTED_LOCALES } from "types/i18n";
 
 /**
  * Normalize a month parameter coming from URLs.
@@ -30,14 +31,8 @@ export const resolveMonthIndexFromSlug = (rawMonth: string): number | null => {
       (candidate) => normalizeMonthParam(candidate).slug === targetSlug
     );
 
-  const listsToTry: string[][] = [
-    MONTHS,
-    getMonthUrlNames("es"),
-    getMonthUrlNames("en"),
-  ];
-
-  for (const list of listsToTry) {
-    const index = resolveIndex(list);
+  for (const locale of SUPPORTED_LOCALES) {
+    const index = resolveIndex(getMonthUrlNames(locale));
     if (index >= 0) return index;
   }
 

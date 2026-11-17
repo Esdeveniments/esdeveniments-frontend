@@ -130,9 +130,20 @@ CWV_THRESHOLDS = {
     "FCP": (1800, 3000, "ms"), "TTFB": (800, 1800, "ms"),
 }
 
-# i18n locale prefixes for URL parsing
-I18N_EVENT_PREFIXES = [("/es/e/", "es"), ("/en/e/", "en"), ("/e/", "ca")]
-LOCALE_PATH_PREFIXES = ["/es/", "/en/"]
+# i18n locale prefixes for URL parsing (single source: config/locales.json)
+with open(
+    os.path.join(os.path.dirname(__file__), "..", "config", "locales.json"),
+    encoding="utf-8",
+) as _locales_file:
+    _LOCALES_CFG = json.load(_locales_file)
+DEFAULT_LOCALE = _LOCALES_CFG["defaultLocale"]
+SUPPORTED_LOCALES = list(_LOCALES_CFG["locales"].keys())
+NON_DEFAULT_LOCALES = [loc for loc in SUPPORTED_LOCALES if loc != DEFAULT_LOCALE]
+I18N_EVENT_PREFIXES = [(f"/{loc}/e/", loc) for loc in NON_DEFAULT_LOCALES] + [
+    ("/e/", DEFAULT_LOCALE)
+]
+LOCALE_PATH_PREFIXES = [f"/{loc}/" for loc in NON_DEFAULT_LOCALES]
+NON_DEFAULT_LOCALE_SEGMENTS = set(NON_DEFAULT_LOCALES)
 
 TODAY = datetime.now(timezone.utc)
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
@@ -225,7 +236,7 @@ def sanitize_md(text):
 def place_of(url):
     """The place slug of a listing page URL, or None for events and other pages."""
     segments = [s for s in urlparse(url).path.split("/") if s]
-    if segments[:1] in (["es"], ["en"]):
+    if segments and segments[0] in NON_DEFAULT_LOCALE_SEGMENTS:
         segments = segments[1:]
     first = segments[0] if segments else None
     if not first or first in NON_PLACE_SEGMENTS or "." in first:
@@ -1398,7 +1409,12 @@ def generate_markdown(data, previous=None):
     if i18n_cannibal:
         lines.append("## 🌐 i18n Cannibalization (Same Event, Multiple Locales)")
         lines.append("")
-        lines.append("Same event slug indexed under multiple locale prefixes (`/e/`, `/es/e/`, `/en/e/`), splitting ranking signals.")
+        cannibal_prefixes = ", ".join(
+            ["`/e/`"] + [f"`/{loc}/e/`" for loc in NON_DEFAULT_LOCALES]
+        )
+        lines.append(
+            f"Same event slug indexed under multiple locale prefixes ({cannibal_prefixes}), splitting ranking signals."
+        )
         lines.append("")
         for item in i18n_cannibal[:8]:
             slug_short = item["slug"][:60] + "..." if len(item["slug"]) > 60 else item["slug"]

@@ -1,7 +1,13 @@
+import { readFileSync } from "node:fs";
 import * as cheerio from "cheerio";
 
-const DEFAULT_LOCALE = "ca";
-const locales = ["ca", "es", "en"];
+const localesConfig = JSON.parse(
+  readFileSync(new URL("./config/locales.json", import.meta.url), "utf8"),
+);
+const DEFAULT_LOCALE = localesConfig.defaultLocale;
+const locales = Object.keys(localesConfig.locales);
+const doubleLocalePattern = new RegExp(`\\/(${locales.join("|")})\\/\\1(\\/|$)`);
+const localePrefixPattern = new RegExp(`^\\/(${locales.join("|")})(\\/|$)`);
 
 // Configurable base URL (supports localhost, staging, preview)
 const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
@@ -48,15 +54,14 @@ function extractJsonLdNodes(data) {
 }
 
 function assertNoDoubleLocale(pathname, errors) {
-  // Guard against /es/es/... (or en/en, ca/ca)
-  if (/\/(ca|es|en)\/\1(\/|$)/.test(pathname)) {
+  if (doubleLocalePattern.test(pathname)) {
     errors.push(`double-locale-prefix in URL path: ${pathname}`);
   }
 }
 
 function assertLocalePrefix(pathname, locale, errors) {
   if (locale === DEFAULT_LOCALE) {
-    if (/^\/(es|en)(\/|$)/.test(pathname) || /^\/ca(\/|$)/.test(pathname)) {
+    if (localePrefixPattern.test(pathname)) {
       errors.push(`default locale should not be prefixed: ${pathname}`);
     }
     return;
@@ -124,7 +129,7 @@ async function check() {
           alternates[hreflang] = normalizeUrl(href, url);
         });
 
-        const required = ["ca", "es", "en", "x-default"];
+        const required = [...locales, "x-default"];
         for (const key of required) {
           if (!alternates[key]) {
             errors.push(`missing alternate hreflang=${key}`);
@@ -147,7 +152,7 @@ async function check() {
               // must point to default locale
               assertLocalePrefix(u.pathname, DEFAULT_LOCALE, errors);
             }
-            if (hreflang === "ca" || hreflang === "es" || hreflang === "en") {
+            if (locales.includes(hreflang)) {
               assertLocalePrefix(u.pathname, hreflang, errors);
             }
           } catch {
@@ -155,9 +160,9 @@ async function check() {
           }
         }
 
-        if (alternates["ca"] && alternates["x-default"]) {
-          if (alternates["x-default"] !== alternates["ca"]) {
-            errors.push("x-default must match ca alternate");
+        if (alternates[DEFAULT_LOCALE] && alternates["x-default"]) {
+          if (alternates["x-default"] !== alternates[DEFAULT_LOCALE]) {
+            errors.push(`x-default must match ${DEFAULT_LOCALE} alternate`);
           }
         }
         

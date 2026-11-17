@@ -77,6 +77,9 @@ export function formatShortDateRange(
     : formatter.format(startDate);
 }
 
+const formatDayForLocale = (day: number, locale: AppLocale): string =>
+  locale === "fr" && day === 1 ? "1er" : String(day);
+
 const formatDateForLocale = (
   locale: AppLocale,
   day: number,
@@ -93,6 +96,12 @@ const formatDateForLocale = (
       return includeYear
         ? `${monthName} ${day}, ${year}`
         : `${monthName} ${day}`;
+    case "fr": {
+      const dayLabel = formatDayForLocale(day, locale);
+      return includeYear
+        ? `${dayLabel} ${monthName} ${year}`
+        : `${dayLabel} ${monthName}`;
+    }
     case "ca":
     default: {
       // Catalan elides "de" before a vowel: "d’abril", "d’agost", "d’octubre".
@@ -166,7 +175,7 @@ export const getFormattedDate = (
   const shouldShortenStartForSameMonthRange =
     localeToUse !== "en" && isMultipleDays && isSameMonth && isSameYear;
   const formattedStart = shouldShortenStartForSameMonthRange
-    ? `${startDay}`
+    ? formatDayForLocale(startDay, localeToUse)
     : formatDateForLocale(
         localeToUse,
         startDay,
@@ -517,7 +526,7 @@ export const formatCardDate = (
       return `${prefix}${month} ${day}${yearSuffix}`;
     }
     const prefix = dayName ? `${dayName} ` : "";
-    return `${prefix}${day} ${month}${yearSuffix}`;
+    return `${prefix}${formatDayForLocale(day, locale)} ${month}${yearSuffix}`;
   };
 
   if (!isMultiDay) {

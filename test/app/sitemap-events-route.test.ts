@@ -88,8 +88,10 @@ describe("app/sitemap-events/[...parts]/route", () => {
       "/e/upcoming-edited",
       "/es/e/upcoming-edited",
       "/en/e/upcoming-edited",
+      "/fr/e/upcoming-edited",
     ]);
-    // ca + es + en + x-default on each of the three entries
-    expect(xml.match(/hreflang="es" href="[^"]*\/es\/e\/upcoming-edited"/g)).toHaveLength(3);
+    // ca + es + en + fr + x-default on each of the four entries
+    expect(xml.match(/hreflang="es" href="[^"]*\/es\/e\/upcoming-edited"/g)).toHaveLength(4);
+    expect(xml.match(/hreflang="fr" href="[^"]*\/fr\/e\/upcoming-edited"/g)).toHaveLength(4);
   });
 });

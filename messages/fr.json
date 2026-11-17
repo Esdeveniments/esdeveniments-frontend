@@ -1,0 +1,2123 @@
+{
+  "App": {
+    "Home": {
+      "seoSections": {
+        "weekend": {
+          "title": "Que faire ce week-end",
+          "links": {
+            "topPlans": "10 idées pour le week-end",
+            "popularFestes": "Fêtes populaires ce week-end",
+            "family": "Sorties avec enfants ce week-end",
+            "music": "Concerts ce week-end"
+          }
+        },
+        "today": {
+          "title": "Que faire aujourd’hui",
+          "links": {
+            "barcelona": "Que faire aujourd’hui à Barcelona",
+            "maresme": "Que faire aujourd’hui dans le Maresme",
+            "vallesOriental": "Que faire aujourd’hui dans le Vallès Oriental",
+            "mataro": "Que faire aujourd’hui à Mataró"
+          }
+        },
+        "tomorrow": {
+          "title": "Que faire demain",
+          "links": {
+            "barcelona": "Que faire demain à Barcelona",
+            "baixLlobregat": "Que faire demain dans le Baix Llobregat",
+            "vallesOriental": "Que faire demain dans le Vallès Oriental"
+          }
+        },
+        "localAgendas": {
+          "title": "Agendas locaux les plus consultés"
+        }
+      },
+      "featuredPlaces": {
+        "barcelona": {
+          "title": "Que faire à Barcelona",
+          "subtitle": "Sorties incontournables en ville"
+        },
+        "maresme": {
+          "title": "Agenda du Maresme",
+          "subtitle": "Le meilleur de la comarque"
+        },
+        "vallesOccidental": {
+          "title": "Sorties dans le Vallès Occidental"
+        }
+      },
+      "noscriptH1": "Que faire en Catalogne",
+      "noscriptH2": "Agenda culturel en Catalogne avec concerts, expositions, théâtre, activités en famille et sorties pour tous les âges.",
+      "noscriptDescription": "Esdeveniments.cat est la plateforme gratuite la plus complète pour découvrir les événements culturels en Catalogne. Consultez l’agenda des concerts, du théâtre, des expositions, des festivals, des activités en famille et bien plus dans plus de 900 communes catalanes. Découvrez quoi faire aujourd’hui, demain ou ce week-end près de chez vous.",
+      "noscriptApiNote": "API publique gratuite disponible sur /llms.txt et /openapi.json — aucune authentification requise."
+    },
+    "NotFound": {
+      "title": "Page introuvable",
+      "description": "Nous n’avons pas trouvé la page que vous recherchez.",
+      "homeLink": "Retour à l’accueil"
+    },
+    "Error": {
+      "title": "Une erreur est survenue",
+      "retry": "Veuillez réessayer.",
+      "reload": "Recharger"
+    },
+    "GlobalError": {
+      "title": "Une erreur est survenue",
+      "retry": "Veuillez réessayer.",
+      "reload": "Recharger"
+    },
+    "Offline": {
+      "title": "Hors ligne - Esdeveniments.cat",
+      "heading": "🌐 Hors ligne",
+      "description": "Impossible de se connecter à Internet. Certains contenus enregistrés en cache peuvent rester disponibles.",
+      "homeLink": "Retour à l’accueil",
+      "barcelona": "Barcelona",
+      "catalunya": "Catalogne",
+      "schemaName": "Page hors ligne d’Esdeveniments.cat",
+      "schemaDescription": "Page hors ligne d’Esdeveniments.cat pour continuer à naviguer en attendant le rétablissement de la connexion."
+    },
+    "Favorites": {
+      "title": "Favoris - Esdeveniments.cat",
+      "description": "Vos événements à venir enregistrés",
+      "heading": "Favoris",
+      "subtitle": "Seuls les événements à venir s’affichent ici. Lorsqu’un événement est terminé, il est retiré automatiquement des favoris.",
+      "countLabel": "{count}/{max} enregistrés",
+      "emptyTitle": "Vous n’avez pas encore d’événements à venir enregistrés",
+      "emptyDescription": "Touchez le cœur sur un événement pour le retrouver ici. Les événements passés sont retirés automatiquement des favoris.",
+      "errorTitle": "Impossible de charger vos favoris",
+      "errorDescription": "Veuillez réessayer dans un instant. Vos favoris sont conservés en sécurité.",
+      "tabUpcoming": "À venir",
+      "tabPast": "Passés",
+      "pastTitle": "Favoris passés - Esdeveniments.cat",
+      "pastDescription": "Vos événements passés enregistrés",
+      "pastEmptyTitle": "Vous n’avez pas encore d’événements passés enregistrés",
+      "pastEmptyDescription": "Les événements que vous ajoutez aux favoris avec le cœur apparaîtront ici une fois terminés.",
+      "pastAuthGateTitle": "Connectez-vous pour voir vos favoris passés",
+      "pastAuthGateDescription": "Les favoris passés sont uniquement disponibles pour les comptes connectés.",
+      "pastAuthGateLogin": "Se connecter"
+    },
+    "About": {
+      "metaTitle": "Qui sommes-nous - Agenda culturel de Catalogne | Esdeveniments.cat",
+      "metaDescription": "Découvrez l’équipe derrière Esdeveniments.cat, l’agenda collaboratif des concerts, expositions, pièces de théâtre et activités culturelles en Catalogne. Initiative citoyenne gratuite.",
+      "schemaName": "Qui sommes-nous - Esdeveniments.cat",
+      "schemaDescription": "Découvrez l’équipe d’Esdeveniments.cat et la mission de l’agenda culturel collaboratif de Catalogne.",
+      "heading": "Qui sommes-nous ?",
+      "subheading": "esdeveniments.cat",
+      "paragraph1": "Esdeveniments.cat est une initiative citoyenne permettant de découvrir simplement et rapidement tous les événements culturels organisés en Catalogne.",
+      "paragraph2": "L’agenda est collaboratif : toute personne organisant un événement culturel peut le publier <publish>ici</publish> par ses propres moyens.",
+      "paragraph3": "Vous pouvez suivre l’agenda culturel sur ce site web ou nous retrouver sur les réseaux sociaux :",
+      "contactHeading": "Contact",
+      "contactBody": "Pour un partenariat, une demande presse ou toute question, écrivez-nous.",
+      "contactCta": "Nous écrire",
+      "teamHeading": "Notre équipe",
+      "linkedin": "LinkedIn"
+    },
+    "Developers": {
+      "metaTitle": "API Esdeveniments.cat pour les développeurs",
+      "metaDescription": "Documentation de l’API Esdeveniments.cat : API REST publique et gratuite de l’agenda culturel de Catalogne, serveur MCP, démarrage rapide et OpenAPI.",
+      "heading": "API Esdeveniments.cat",
+      "intro": "Une API REST publique et gratuite pour l’agenda culturel de la Catalogne : événements, actualités, catégories et lieux, en catalan, espagnol, anglais et français. Utilisez-la dans votre application, votre site web ou un agent d’IA.",
+      "keysTitle": "Clés d’API",
+      "keysBody": "Aucune clé n’est requise. Les endpoints de lecture (GET) sont publics et sans authentification. Merci d’en faire un usage raisonnable : moins de 60 requêtes par minute et par IP. Le serveur MCP applique cette limite et renvoie un code 429 avec l’en-tête Retry-After au-delà.",
+      "quickstartTitle": "Démarrage rapide",
+      "quickstartBody": "Effectuez votre premier appel avec curl. Les listes sont paginées : tant que le champ last vaut false, demandez la page suivante.",
+      "docsTitle": "Documentation",
+      "docsOpenapi": "Spécification OpenAPI 3.1",
+      "docsLlms": "Guide pour LLM (llms.txt)",
+      "docsApiLlms": "Référence de l’API en texte brut",
+      "sandboxTitle": "Tester l’API",
+      "sandboxBody": "Les appels de lecture ne modifient rien : vous pouvez les tester directement sur l’API de production. Ouvrez ces exemples dans votre navigateur :",
+      "sandboxToday": "Événements d’aujourd’hui à Barcelona",
+      "sandboxSearch": "Recherche de concerts de jazz",
+      "sandboxCategories": "Toutes les catégories",
+      "agentsTitle": "Agents d’IA et MCP",
+      "agentsBody": "Connectez un agent d’IA à notre serveur MCP ou utilisez les outils WebMCP enregistrés par le site dans le navigateur.",
+      "agentsMcpLink": "Serveur MCP Esdeveniments.cat",
+      "writesTitle": "Écritures et idempotence",
+      "writesBody": "Le paiement d’un parrainage (POST /api/sponsors/checkout) accepte l’en-tête Idempotency-Key. Envoyez une nouvelle clé (un UUID) à chaque tentative et réutilisez-la en cas de nouvel essai : une seule session de paiement est créée.",
+      "githubTitle": "GitHub et contact",
+      "githubBody": "Suivez le projet sur GitHub ou écrivez-nous si vous avez besoin de plus de données ou d’une limite plus élevée.",
+      "githubLink": "Esdeveniments.cat sur GitHub",
+      "githubRepoLink": "Code source du site (avec AGENTS.md)"
+    },
+    "DevelopersMcp": {
+      "metaTitle": "Serveur MCP Esdeveniments.cat",
+      "metaDescription": "Connectez Claude, ChatGPT ou tout client MCP à l’agenda culturel de Catalogne grâce au serveur MCP d’Esdeveniments.cat. Gratuit et sans clé.",
+      "heading": "Serveur MCP Esdeveniments.cat",
+      "intro": "Le serveur MCP (Model Context Protocol) d’Esdeveniments.cat permet à un agent d’IA de rechercher des événements culturels en Catalogne. Il est gratuit, en lecture seule et ne nécessite aucune clé.",
+      "endpointTitle": "Connexion",
+      "endpointBody": "Transport Streamable HTTP (JSON-RPC 2.0). Ajoutez cette configuration à votre client MCP :",
+      "toolsTitle": "Outils",
+      "discoveryTitle": "Découverte",
+      "discoveryBody": "La fiche du serveur et les compétences destinées aux agents sont disponibles sur :",
+      "webmcpTitle": "WebMCP dans le navigateur",
+      "webmcpBody": "Chaque page du site enregistre également des outils WebMCP (document.modelContext.registerTool), afin que les agents du navigateur puissent rechercher des événements directement depuis la page.",
+      "backLink": "Toute la documentation de l’API"
+    },
+    "TermsOfService": {
+      "metaTitle": "Conditions d’utilisation - Esdeveniments.cat",
+      "metaDescription": "Conditions d’utilisation du site Esdeveniments.cat. Consultez les règles d’utilisation, les responsabilités et les droits relatifs au contenu de l’agenda culturel de Catalogne.",
+      "heading": "Conditions d’utilisation",
+      "lastUpdated": "Dernière mise à jour : novembre 2026",
+      "introTitle": "1. Acceptation des conditions",
+      "introBody": "En accédant à Esdeveniments.cat (ci-après le « Site ») et en l’utilisant, vous acceptez de respecter les présentes conditions d’utilisation. Si vous n’acceptez pas une partie de ces conditions, veuillez ne pas utiliser le Site.",
+      "descriptionTitle": "2. Description du service",
+      "descriptionBody": "Esdeveniments.cat est une plateforme collaborative gratuite qui recense et présente les événements culturels en Catalogne. Le service comprend la consultation d’événements, la publication d’événements par les utilisateurs ainsi que des outils de recherche et de filtrage.",
+      "userContentTitle": "3. Contenu des utilisateurs",
+      "userContentBody": "Les utilisateurs qui publient des événements sur le Site sont seuls responsables de l’exactitude, de la véracité et de la légalité des contenus publiés. Nous nous réservons le droit de supprimer tout contenu jugé inapproprié, inexact ou portant atteinte aux droits de tiers.",
+      "intellectualPropertyTitle": "4. Propriété intellectuelle",
+      "intellectualPropertyBody": "L’ensemble du contenu original du Site (design, code, logos, textes propres) est la propriété d’Esdeveniments.cat. Les images et descriptions des événements appartiennent à leurs organisateurs respectifs.",
+      "disclaimerTitle": "5. Limitation de responsabilité",
+      "disclaimerBody": "Esdeveniments.cat agit en tant qu’agrégateur d’informations culturelles. Nous ne garantissons pas l’exactitude, l’exhaustivité ni l’actualité des informations relatives aux événements. Nous ne sommes pas responsables des modifications, annulations ou erreurs concernant les événements publiés par des tiers.",
+      "thirdPartyTitle": "6. Liens vers des sites tiers",
+      "thirdPartyBody": "Le Site peut contenir des liens vers des sites web tiers. Nous n’exerçons aucun contrôle sur le contenu ni sur les pratiques de confidentialité de ces sites et déclinons toute responsabilité à leur égard.",
+      "modificationsTitle": "7. Modifications",
+      "modificationsBody": "Nous nous réservons le droit de modifier les présentes conditions à tout moment. Les modifications prennent effet dès leur publication sur le Site. L’utilisation continue du Site vaut acceptation des conditions modifiées.",
+      "paidTitle": "8. Promotions et parrainages",
+      "paidSeller": "Les promotions d’événements et les parrainages de pages sont des services payants fournis et facturés par Dynamica BI Sistemes, S.L. (NIF espagnol B44906014), C/ de l’Hospital, 18, 08440 Cardedeu (Barcelona), Espagne, inscrite au Registre du commerce de Barcelona, tome 48738, folio 150, feuille B-594382.",
+      "paidWhat": "Une promotion affiche votre événement parmi les événements mis en avant sur les pages de la zone choisie pendant la durée souscrite, en rotation avec d’autres événements promus. La promotion cesse de s’afficher lorsque l’événement se termine. Un parrainage affiche votre bannière sur la page du lieu choisi pendant la durée souscrite.",
+      "paidPrice": "Les prix s’entendent TVA espagnole (IVA) incluse. Le paiement s’effectue via Stripe et la facture vous est envoyée par e-mail. Si vous indiquez votre numéro d’identification fiscale, il figure sur la facture.",
+      "paidWithdrawal": "Si vous achetez en tant que consommateur, vous disposez d’un délai de rétractation de 14 jours. En payant, vous demandez l’exécution immédiate du service : si vous vous rétractez ensuite, nous vous remboursons au prorata des jours non encore effectués. Une fois la prestation entièrement exécutée, le droit de rétractation ne s’applique plus.",
+      "paidRefunds": "Si votre paiement parvient alors que nous ne pouvons plus fournir le service (par exemple si l’événement a été supprimé), nous vous remboursons intégralement et vous adressons une facture rectificative. Pour toute autre demande, écrivez-nous.",
+      "contactTitle": "9. Contact",
+      "contactBody": "Pour toute question relative aux présentes conditions, vous pouvez nous contacter à l’adresse :"
+    },
+    "PrivacyPolicy": {
+      "metaTitle": "Politique de confidentialité - Esdeveniments.cat",
+      "metaDescription": "Politique de confidentialité d’Esdeveniments.cat. Informations sur la collecte, l’utilisation et la protection de vos données personnelles sur l’agenda culturel de Catalogne.",
+      "heading": "Politique de confidentialité",
+      "lastUpdated": "Dernière mise à jour : novembre 2026",
+      "introTitle": "1. Introduction",
+      "introBody": "Chez Esdeveniments.cat (ci-après le « Site »), nous nous engageons à protéger votre vie privée. Cette politique détaille les données que nous collectons, l’usage que nous en faisons et vos droits.",
+      "dataCollectedTitle": "2. Données collectées",
+      "dataCollectedBody": "Nous collectons les catégories de données suivantes :",
+      "dataAnalytics": "Données d’audience : informations anonymes sur l’utilisation du Site via Google Analytics (pages consultées, durée des visites, appareil, pays d’origine).",
+      "dataCookies": "Cookies : cookies techniques nécessaires au bon fonctionnement du Site et cookies de mesure d’audience destinés à améliorer le service.",
+      "dataVisitor": "Identifiant de visiteur : un identifiant anonyme enregistré dans un cookie afin de comptabiliser les consultations des événements.",
+      "dataEvents": "Données d’événements : lorsque vous publiez un événement, nous recueillons les informations fournies (titre, description, lieu, dates, images).",
+      "purposeTitle": "3. Finalités du traitement",
+      "purposeBody": "Nous utilisons les données collectées pour :",
+      "purposeImprove": "Améliorer le fonctionnement et l’expérience utilisateur du Site.",
+      "purposeAnalytics": "Analyser l’utilisation du Site de manière agrégée et anonyme.",
+      "purposeDisplay": "Afficher et gérer les événements publiés.",
+      "purposeAds": "Afficher des publicités pertinentes (Google Ads).",
+      "purposePayments": "Encaisser les promotions et parrainages et émettre les factures correspondantes. Pour ce traitement, le responsable est Dynamica BI Sistemes, S.L. (NIF espagnol B44906014), C/ de l’Hospital, 18, 08440 Cardedeu (Barcelona), Espagne, inscrite au Registre du commerce de Barcelona, tome 48738, folio 150, feuille B-594382.",
+      "thirdPartyTitle": "4. Services tiers",
+      "thirdPartyBody": "Nous faisons appel aux services tiers suivants susceptibles de traiter des données :",
+      "thirdPartyGA": "Google Analytics : analyse du trafic web.",
+      "thirdPartyAds": "Google Ads : publicité contextuelle.",
+      "thirdPartySentry": "Sentry : suivi des erreurs techniques pour améliorer la stabilité du Site.",
+      "thirdPartyStripe": "Stripe : paiements et facturation. Vos coordonnées bancaires sont traitées par Stripe ; nous n’y avons jamais accès.",
+      "thirdPartyNote": "Chaque service tiers applique sa propre politique de confidentialité.",
+      "cookiesTitle": "5. Cookies",
+      "cookiesBody": "Nous utilisons des cookies techniques indispensables au fonctionnement du Site ainsi que des cookies d’analyse. Vous pouvez configurer votre navigateur pour refuser les cookies, bien que certaines fonctionnalités puissent en être affectées.",
+      "retentionTitle": "6. Conservation des données",
+      "retentionBody": "Les données d’analyse sont conservées selon les durées standard de Google Analytics. Les données relatives aux événements publiés sont conservées tant que l’événement est pertinent ou jusqu’à ce que l’organisateur en demande la suppression.",
+      "retentionInvoices": "Les données de facturation sont conservées pendant 6 ans, conformément aux obligations comptables et commerciales espagnoles.",
+      "rightsTitle": "7. Droits des utilisateurs (RGPD)",
+      "rightsBody": "Conformément au Règlement général sur la protection des données (RGPD), vous disposez du droit :",
+      "rightsAccess": "D’accéder à vos données personnelles.",
+      "rightsRectify": "De rectifier les données inexactes.",
+      "rightsDelete": "De demander la suppression de vos données.",
+      "rightsPortability": "De demander la portabilité de vos données.",
+      "rightsObject": "De vous opposer au traitement de vos données.",
+      "securityTitle": "8. Sécurité",
+      "securityBody": "Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles afin de protéger vos données contre tout accès non autorisé, toute altération ou toute destruction.",
+      "changesTitle": "9. Modifications de cette politique",
+      "changesBody": "Nous pouvons mettre à jour la présente politique périodiquement. Toute modification sera publiée sur cette page avec sa date de mise à jour.",
+      "contactTitle": "10. Contact",
+      "contactBody": "Pour exercer vos droits ou pour toute question relative à la confidentialité, contactez-nous à l’adresse :"
+    },
+    "News": {
+      "metaTitle": "Actualités et recommandations | Que faire en Catalogne - Esdeveniments.cat",
+      "metaDescription": "Les dernières actualités, sélections et idées de sorties culturelles en Catalogne. Découvrez concerts, expositions, théâtre et activités.",
+      "heading": "Actualités",
+      "intro": "Les dernières actualités et recommandations d’événements.",
+      "breadcrumbHome": "Accueil",
+      "breadcrumbCurrent": "Actualités"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbHome": "Accueil",
+      "breadcrumbNews": "Actualités",
+      "sectionWeekend": "Week-end",
+      "sectionWeek": "Semaine",
+      "eventsCount": "{count, plural, one {{count} proposition} other {{count} propositions}}",
+      "mustSee": "Les incontournables",
+      "moreProposals": "Plus d’idées",
+      "relatedArticles": "Articles similaires",
+      "shareArticle": "Partager l’article"
+    },
+    "EventEdit": {
+      "coverUpdateFailed": "L’événement a été enregistré, mais l’image n’a pas pu être mise à jour.",
+      "title": "Modifier l’événement",
+      "description": "Espace sécurisé pour modifier les événements sur Esdeveniments.cat.",
+      "heading": "Modifier votre événement",
+      "subheading": "Mettez à jour les informations, le lieu ou l’image de votre événement.",
+      "backToEvent": "Retour à l’événement",
+      "myEvents": "Mes événements"
+    },
+    "PublishPage": {
+      "metaTitle": "Publiez votre événement gratuitement en Catalogne | Agenda culturel - Esdeveniments.cat",
+      "metaDescription": "Ajoutez votre concert, exposition, pièce de théâtre ou activité à l’agenda de Catalogne. Publication gratuite et rapide auprès de milliers d’amateurs de culture et de sorties.",
+      "schemaName": "Publier un événement culturel en Catalogne",
+      "schemaDescription": "Formulaire officiel pour ajouter concerts, expositions, théâtre et activités culturelles à l’agenda collaboratif de Catalogne.",
+      "schemaAction": "Publier un événement culturel"
+    },
+    "EditProfile": {
+      "title": "Modifier votre profil",
+      "description": "Mettez à jour votre nom, nom d’utilisateur, biographie et photo de profil.",
+      "heading": "Modifier votre profil",
+      "subheading": "Ces informations sont visibles publiquement sur votre profil.",
+      "onboardingHeading": "Complétez votre profil",
+      "onboardingSubheading": "Pour finaliser la création de votre compte, choisissez un nom d’utilisateur et un nom affiché.",
+      "usernameHint": "Ce nom d’utilisateur est provisoire. Choisissez le vôtre.",
+      "usernameLockedHint": "Une fois défini, le nom d’utilisateur ne peut plus être modifié.",
+      "submitLabel": "Enregistrer les modifications",
+      "savingLabel": "Enregistrement…",
+      "success": "Profil enregistré.",
+      "fields": {
+        "username": "Nom d’utilisateur",
+        "displayName": "Nom affiché",
+        "bio": "Biographie"
+      },
+      "usernameErrors": {
+        "usernameTooShort": "Doit contenir au moins 3 caractères.",
+        "usernameTooLong": "Ne doit pas dépasser 30 caractères.",
+        "usernameInvalidChars": "Lettres minuscules, chiffres et tirets uniquement, sans tirets consécutifs ni au début ou à la fin.",
+        "usernameReservedPrefix": "Ne peut pas commencer par « user- ».",
+        "usernameReserved": "Ce nom d’utilisateur est réservé."
+      },
+      "errors": {
+        "displayNameRequired": "Le nom affiché est obligatoire.",
+        "displayNameTooLong": "Trop long (80 caractères maximum).",
+        "bioTooLong": "Trop longue (500 caractères maximum).",
+        "usernameTaken": "Ce nom d’utilisateur est déjà pris.",
+        "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+        "generic": "Impossible d’enregistrer le profil. Veuillez réessayer."
+      },
+      "avatar": {
+        "label": "Photo de profil",
+        "uploadButton": "Importer une photo",
+        "removeButton": "Supprimer la photo",
+        "uploading": "Envoi…",
+        "removing": "Suppression…",
+        "altPreview": "Photo de profil",
+        "errorUnsupported": "Format non pris en charge. Utilisez JPG ou PNG.",
+        "errorTooLarge": "L’image dépasse la limite de 2 Mo.",
+        "errorUploadFailed": "Impossible d’envoyer la photo. Veuillez réessayer.",
+        "errorRemoveFailed": "Impossible de supprimer la photo. Veuillez réessayer.",
+        "hint": "PNG ou JPG, jusqu’à 2 Mo."
+      },
+      "authGate": {
+        "title": "Connectez-vous pour modifier votre profil",
+        "description": "Vous devez vous connecter pour compléter ou modifier votre profil.",
+        "login": "Se connecter"
+      },
+      "viewProfile": "Voir le profil",
+      "usernameUrl": "Votre adresse : {url}",
+      "bioCount": "{count}/{max}",
+      "bioPlaceholder": "Présentez-vous et indiquez quels événements vous organisez."
+    },
+    "PlacesNearby": {
+      "invalidNumber": "Coordonnées non valides : lat,lng doivent être des nombres",
+      "invalidRange": "Coordonnées non valides : lat ∈ [-90,90], lng ∈ [-180,180]",
+      "notConfigured": "Places API non configurée",
+      "locationUnavailable": "Localisation non disponible"
+    },
+    "NewsPlace": {
+      "metaTitle": "Actualités et sorties {placeIn} | Agenda et sélections - Esdeveniments.cat",
+      "metaDescription": "Découvrez les dernières actualités, recommandations et sorties culturelles {placeIn}. Concerts, expositions, théâtre et plus encore.",
+      "heading": "Actualités {placeOf}",
+      "seeAgenda": "Voir l’agenda {placeOf}",
+      "rssTitle": "RSS Actualités {place}"
+    },
+    "NewsArticleFallback": {
+      "title": "Actualité | {place}",
+      "description": "Détail de l’actualité"
+    },
+    "NewsPlaceRss": {
+      "title": "Actualités {place} - Esdeveniments.cat",
+      "description": "Les dernières actualités et recommandations culturelles {placeOf}"
+    },
+    "NewsRss": {
+      "title": "Actualités - Esdeveniments.cat",
+      "description": "Les dernières actualités et recommandations culturelles de Catalogne"
+    },
+    "Publish": {
+      "publishCta": {
+        "signIn": "Se connecter pour publier",
+        "completeProfile": "Compléter le profil pour publier",
+        "resolving": "Vérification de la session…",
+        "redirecting": "Publié ! Ouverture…"
+      },
+      "accountNotice": "Vous avez déjà un compte ?",
+      "earlySignIn": "Se connecter",
+      "optionsFailed": "Impossible de charger les communes ou les catégories. Veuillez réessayer.",
+      "draftOwnerChanged": "La session a changé. Nous conservons le formulaire à l’écran, mais ne l’enregistrerons pas sur un autre compte. Copiez ce que vous souhaitez garder puis rechargez la page.",
+      "completeProfileGate": {
+        "title": "Complétez votre profil",
+        "description": "Avant de publier un événement, choisissez un nom d’utilisateur et un nom affiché.",
+        "cta": "Compléter le profil"
+      },
+      "heading": "Publiez votre événement en Catalogne",
+      "subheading": "Ajoutez-le au plus grand agenda culturel de Catalogne. C’est gratuit.",
+      "sponsorTitle": "Vous avez un commerce local ?",
+      "sponsorLink": "Voir les formules de parrainage",
+      "errorCreate": "Impossible de créer l’événement. Veuillez réessayer.",
+      "errorBodyLimit": "L’image et les données dépassent la limite de 10 Mo. Choisissez une image plus légère.",
+      "errorGeneric": "Impossible de publier l’événement. Veuillez réessayer.",
+      "errorFormParsing": "La connexion a été interrompue pendant l’envoi du formulaire. Rechargez la page et réessayez.",
+      "errorDuplicate": "Cet événement existe déjà. Si vous pensez qu’il s’agit d’une erreur, contactez-nous.",
+      "errorStaleSession": "Votre session a expiré. Reconnectez-vous pour continuer.",
+      "submitLabel": "Publier",
+      "imageTooLarge": "L’image dépasse la limite de {limit} Mo. Choisissez-en une plus légère.",
+      "uploadSuccess": "Image envoyée avec succès.",
+      "uploadFailed": "Impossible d’envoyer l’image. Vérifiez votre connexion et réessayez.",
+      "imageRequired": "L’image est obligatoire.",
+      "fallbackRegion": "Région {id}",
+      "fallbackCity": "Ville {id}",
+      "noEventsFound": "Aucun événement récent trouvé pour cette zone. Veuillez réessayer plus tard.",
+      "restoreDraftTitle": "Vous avez un brouillon enregistré",
+      "draftChooseTitle": "Quel brouillon souhaitez-vous reprendre ?",
+      "draftChooseDescription": "Nous avons conservé l’événement saisi avant votre connexion, mais ce compte avait déjà un brouillon. Si vous continuez avec le nouveau, il remplacera le précédent.",
+      "draftUseGuest": "Continuer avec le nouveau",
+      "draftUseAccount": "Récupérer le précédent",
+      "draftAccountTitle": "Brouillon précédent du compte : {title}",
+      "restoreDraftDescription": "Vous pouvez récupérer ce que vous rédigiez ou repartir de zéro.",
+      "restoreDraftApply": "Récupérer le brouillon",
+      "restoreDraftDiscard": "Supprimer",
+      "draftHeading": "Brouillon local",
+      "draftRestoreReplacesEdits": "Récupérer le brouillon enregistré remplacera vos modifications actuelles dans le formulaire. Copiez d’abord tout texte que vous souhaitez conserver.",
+      "draftLoading": "Recherche d’un brouillon…",
+      "draftSaving": "Enregistrement…",
+      "draftSaved": "Enregistré sur cet appareil",
+      "draftDiscarding": "Suppression du brouillon…",
+      "draftSaveFailed": "Le navigateur n’a pas pu effectuer l’opération sur le brouillon. Ne fermez pas cette page. Vérifiez les autorisations de stockage du navigateur et réessayez.",
+      "draftStorageFull": "L’espace de stockage est plein, le brouillon dépasse la limite ou cinq brouillons sont déjà enregistrés. Ne fermez pas cette page. Libérez de l’espace, réduisez le texte ou l’image, ou supprimez un autre brouillon avant de réessayer.",
+      "draftRecordInvalid": "Impossible de lire le brouillon enregistré. Vous pouvez réessayer ou le supprimer pour repartir de zéro. Ne fermez pas la page si vous avez des modifications en cours.",
+      "draftConflict": "Un autre onglet a modifié les brouillons enregistrés. Vos modifications n’ont été ni écrasées ni enregistrées. Ne fermez pas cette page ; vérifiez le brouillon enregistré avant de choisir quoi conserver.",
+      "draftReviewConflict": "Vérifier le brouillon enregistré",
+      "draftResolveBeforePublish": "Vérifiez le brouillon enregistré et choisissez de le récupérer ou de le supprimer avant de publier.",
+      "draftAutoPublishStopped": "L’événement n’a pas été publié automatiquement. Vérifiez le formulaire et appuyez sur Publier pour continuer.",
+      "draftHandoffFailed": "Impossible de continuer. Réessayez ou supprimez le brouillon.",
+      "draftResumeFailed": "Impossible de récupérer le brouillon associé à ce retour. Il a peut-être expiré, changé ou appartient à un autre compte. Consultez le brouillon disponible ou recommencez.",
+      "draftAuthNotice": "Nous enregistrons votre brouillon. Une fois connecté, nous reprendrons la publication.",
+      "draftProfileNotice": "Nous enregistrons votre brouillon. Une fois votre profil complété, nous reprendrons la publication.",
+      "draftRetry": "Réessayer",
+      "draftDiscardConfirm": "Supprimer ce brouillon ?",
+      "draftDiscardDescription": "Le formulaire et l’image seront effacés. Cette action est irréversible.",
+      "draftKeep": "Conserver le brouillon",
+      "draftDateExpired": "Vérifiez les dates : ce brouillon commence à une date passée. Nous ne les avons pas modifiées.",
+      "draftCityUnavailable": "La commune enregistrée ne figure plus dans la liste. Vérifiez-la et sélectionnez-la à nouveau. Nous avons conservé la valeur d’origine.",
+      "draftCategoryUnavailable": "Une catégorie enregistrée ne figure plus dans la liste. Vérifiez les catégories. Nous avons conservé les valeurs d’origine.",
+      "draftCleanupFailed": "Votre événement a bien été publié, mais le brouillon local n’a pas pu être supprimé. Supprimez-le en revenant au formulaire. Ne publiez pas l’événement une seconde fois.",
+      "geoNotSupported": "Votre navigateur ne permet pas d’obtenir la localisation.",
+      "geoDenied": "Impossible d’obtenir votre position. Vérifiez les autorisations.",
+      "promoteUpsell": {
+        "title": "Donnez de l’élan à votre événement",
+        "description": "Mettez-le en avant pour toucher plus de monde et apparaître en tête de liste.",
+        "promoteButton": "Promouvoir",
+        "keepFreeButton": "Pas maintenant",
+        "shareTitle": "C’est en ligne ! Faites passer le mot",
+        "shareDescription": "Envoyez-le à vos groupes et contacts : c’est le moyen le plus rapide d’attirer plus de public."
+      }
+    },
+    "PlaceFallback": {
+      "placeSuffix": " {placeIn}",
+      "catalunyaSuffix": " en Catalogne",
+      "title": "Événements{suffix}",
+      "subTitle": "Découvrez des sorties et activités{suffix}.",
+      "metaTitle": "Événements{suffix} | Esdeveniments.cat",
+      "metaDescription": "Explorez les meilleures sorties et activités{suffix}.",
+      "notFoundTitle": "Aucun événement disponible"
+    },
+    "Sitemap": {
+      "metaTitle": "Archives - Esdeveniments.cat",
+      "metaDescription": "Découvrez tout ce qui s’est passé en Catalogne chaque année. Les meilleures propositions culturelles pour profiter pleinement de la Catalogne - Archives - Esdeveniments.cat",
+      "breadcrumbHome": "Accueil",
+      "breadcrumbCurrent": "Archives"
+    },
+    "PlaceByDate": {
+      "dateFallback": "les prochains jours",
+      "title": "Événements {dateLabel} {placeIn}{categoryLabel}",
+      "subtitleWithDate": "Découvrez des idées de sorties pour {date} {placeIn}{categoryLabel}.",
+      "subtitleFallback": "Découvrez des idées de sorties pour les prochains jours {placeIn}{categoryLabel}.",
+      "categoryDescriptionSuffix": " dans la catégorie {categoryLabel}",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explorez les activités et sorties pour {date} {placeIn}{categoryDescriptionSuffix}.",
+      "metaDescriptionFallback": "Explorez les activités et sorties pour les prochains jours {placeIn}{categoryDescriptionSuffix}.",
+      "notFoundTitle": "Aucun événement disponible",
+      "notFoundDescriptionWithDate": "Nous n’avons trouvé aucun événement pour {date} {placeIn}. Veuillez réessayer plus tard.",
+      "notFoundDescriptionFallback": "Nous n’avons trouvé aucun événement pour les prochains jours {placeIn}. Veuillez réessayer plus tard."
+    },
+    "PlaceByDateCategory": {
+      "dateFallback": "les prochains jours",
+      "categoryFallback": "Événements",
+      "plansWithCategory": "sorties {categoryPhrase}",
+      "plansFallback": "sorties",
+      "proposalsWithCategory": "propositions {categoryPhrase}",
+      "proposalsFallback": "propositions",
+      "activitiesWithCategory": "activités {categoryPhrase}",
+      "activitiesFallback": "activités",
+      "title": "{categoryLabel} {dateLabel} {placeIn}",
+      "subtitleWithDate": "Découvrez des {plansLabel} pour {date} {placeIn}.",
+      "subtitleFallback": "Découvrez des {plansLabel} pour les prochains jours {placeIn}.",
+      "metaTitle": "{title} | Esdeveniments.cat",
+      "metaDescriptionWithDate": "Explorez des {proposalsLabel} pour {date} {placeIn}.",
+      "metaDescriptionFallback": "Explorez des {proposalsLabel} pour les prochains jours {placeIn}.",
+      "notFoundTitle": "Aucun événement disponible",
+      "notFoundDescriptionWithDate": "Nous n’avons pas trouvé d’{activitiesLabel} pour {date} {placeIn}.",
+      "notFoundDescriptionFallback": "Nous n’avons pas trouvé d’{activitiesLabel} pour les prochains jours {placeIn}."
+    },
+    "EventPromote": {
+      "refreshingSession": "Restauration de votre session...",
+      "title": "Promouvoir votre événement",
+      "description": "Touchez plus de public en mettant votre événement en avant sur Esdeveniments.cat.",
+      "heading": "Promouvoir votre événement",
+      "subheading": "Démarquez-vous pour toucher plus de personnes et apparaître en tête d’affiche.",
+      "benefit1": "Plus de visibilité dans l’agenda",
+      "benefit2": "Priorité face aux autres événements",
+      "benefit3": "Plus de personnes intéressées",
+      "backToEvent": "Retour à l’événement",
+      "confirmButton": "Confirmer et payer",
+      "confirmButtonLoading": "Redirection vers le paiement...",
+      "errorGeneric": "Une erreur est survenue. Veuillez réessayer.",
+      "chooseOption": "Choisissez où et pendant combien de temps",
+      "plansHeading": "Tarifs des promotions",
+      "eventEndsTooSoon": "Cet événement est déjà terminé ou se termine trop tôt pour être promu.",
+      "taxIncluded": "Prix TVA incluse. Paiement unique.",
+      "duration": "{days, plural, one {# jour} other {# jours}}",
+      "scope": {
+        "CITY": "Votre commune",
+        "REGION": "Votre comarque",
+        "PROVINCE": "Votre province",
+        "CATALONIA": "Toute la Catalogne"
+      },
+      "pendingCheckout": "Vous avez un paiement en attente pour cet événement. Vous pouvez le reprendre ou choisir une autre formule : le précédent sera annulé sans aucuns frais.",
+      "resumeCheckout": "Reprendre le paiement",
+      "refreshStatus": "Actualiser le statut",
+      "tryAgain": "Réessayer",
+      "chooseAnotherOption": "Choisir une autre formule",
+      "errors": {
+        "PROMOTION_ALREADY_ACTIVE": "Cet événement fait déjà l’objet d’une promotion.",
+        "CHECKOUT_ALREADY_PENDING": "Un paiement est déjà en cours pour cet événement. Veuillez réessayer dans quelques instants.",
+        "REFUND_PENDING": "Un remboursement est en cours pour cet événement.",
+        "PROMOTIONS_DISABLED": "Les promotions ne sont pas disponibles pour le moment.",
+        "MISSING_EVENT_LOCATION": "L’événement doit avoir une commune renseignée pour pouvoir être promu.",
+        "MISSING_EVENT_DATE": "L’événement doit avoir une date renseignée pour pouvoir être promu.",
+        "INSUFFICIENT_EVENT_DURATION": "L’événement se termine avant la fin de cette promotion.",
+        "NO_AVAILABLE_OPTIONS": "Aucune formule de promotion n’est disponible pour cet événement pour le moment.",
+        "AUTHENTICATION_REQUIRED": "Votre session a expiré. Veuillez vous reconnecter.",
+        "NOT_EVENT_OWNER": "Seule la personne ayant créé l’événement peut le promouvoir.",
+        "INVALID_OPTION": "Cette formule n’est plus disponible. Choisissez-en une autre.",
+        "CHECKOUT_EXPIRED": "Le paiement a expiré. Veuillez réessayer.",
+        "PAYMENT_PROCESSING": "Nous traitons votre paiement. Patientez quelques secondes."
+      },
+      "status": {
+        "ACTIVE": "Votre événement est promu jusqu’au {endsAt}.",
+        "PENDING": "Nous confirmons votre paiement. Cela peut prendre quelques secondes.",
+        "PAID": "Paiement reçu. La promotion sera activée sous peu.",
+        "EXPIRED": "Le paiement a expiré et aucun montant n’a été débité.",
+        "FAILED": "Le paiement n’a pas pu aboutir.",
+        "REFUND_PENDING": "Nous traitons votre remboursement.",
+        "REFUNDED": "Votre paiement a été remboursé.",
+        "NONE": "Aucun paiement n’est associé à cet événement.",
+        "unknown": "Impossible de vérifier l’état du paiement pour le moment. Réessayez dans quelques instants.",
+        "promotionEXPIRED": "La promotion de cet événement est terminée.",
+        "promotionREVOKED": "La promotion de cet événement a été retirée."
+      },
+      "successPage": {
+        "title": "Merci !"
+      },
+      "cancelPage": {
+        "title": "Paiement annulé",
+        "pending": "Aucun montant n’a été débité. Vous pouvez reprendre le paiement ou choisir une autre formule."
+      }
+    },
+    "EventMeta": {
+      "descriptionSuffix": "Consultez les horaires, l’itinéraire et d’autres sorties à proximité."
+    }
+  },
+  "Components": {
+    "HowTo": {
+      "name": "Comment assister à {title}",
+      "step1": "Consultez la date et l’horaire de l’événement dans notre agenda.",
+      "step2": "Ajoutez l’événement à votre calendrier ou partagez-le.",
+      "step3": "Consultez la page officielle ou le site de l’organisateur pour plus de détails."
+    },
+    "Breadcrumbs": {
+      "home": "Accueil"
+    },
+    "Profile": {
+      "title": "{name} : agenda d’événements",
+      "metaDescription": "Consultez l’agenda {nameOf} : prochains concerts, expositions, fêtes et autres activités.",
+      "events": "Événements",
+      "verified": "Vérifié",
+      "verifiedOrganizer": "Organisateur vérifié",
+      "noEvents": "Aucun événement pour le moment",
+      "website": "Site web",
+      "totalEvents": "{count, plural, one {# événement} other {# événements}}",
+      "notFound": "Profil introuvable",
+      "notFoundDescription": "Le profil que vous recherchez n’existe pas ou a été supprimé.",
+      "backHome": "Retour à l’accueil",
+      "editProfile": "Modifier le profil",
+      "tabUpcoming": "À venir",
+      "tabPast": "Passés",
+      "noUpcomingEvents": "Aucun événement programmé pour le moment",
+      "noPastEvents": "Aucun événement passé pour le moment",
+      "viewAllPastEvents": "{count, plural, one {Voir l’événement passé} other {Voir les # événements passés}}",
+      "upcomingInTown": "Prochains événements {placeIn}",
+      "moreInTown": "Plus d’événements {placeIn}",
+      "pastTitle": "{name} : événements passés",
+      "pastMetaDescription": "Découvrez les événements passés {nameOf} : concerts, expositions et activités déjà organisés.",
+      "visitsCount": "{count, plural, one {# visite} other {# visites}}",
+      "loadMoreError": "Impossible de charger plus d’événements. Veuillez réessayer.",
+      "loadedCount": "{count, plural, one {# événement supplémentaire chargé} other {# événements supplémentaires chargés}}",
+      "recentEvents": "Événements récents"
+    },
+    "Footer": {
+      "navigation": {
+        "home": "Accueil",
+        "agenda": "Agenda",
+        "favorites": "Favoris",
+        "publish": "Publier",
+        "news": "Actualités",
+        "about": "Qui sommes-nous",
+        "advertise": "Sponsoriser",
+        "contact": "Contact",
+        "archive": "Archives",
+        "terms": "Conditions d’utilisation",
+        "privacy": "Confidentialité",
+        "login": "Se connecter",
+        "developers": "API développeurs",
+        "festesMajors": "Festes majors"
+      },
+      "sponsorCta": {
+        "title": "Donnez de la visibilité à votre commerce local",
+        "description": "Sponsorisez un espace exclusif dans votre zone. Une seule annonce par commune."
+      },
+      "featuredAgendas": "Agendas à la une",
+      "copyright": "© {year} Esdeveniments.cat",
+      "tagline": "Découvrez les meilleurs événements en Catalogne"
+    },
+    "Navbar": {
+      "navigation": {
+        "home": "Accueil",
+        "agenda": "Agenda",
+        "favorites": "Favoris",
+        "publish": "Publier",
+        "news": "Actualités",
+        "archive": "Archives"
+      },
+      "logoAlt": "Logo Esdeveniments.cat",
+      "aria": {
+        "home": "Accueil",
+        "agenda": "Agenda",
+        "favorites": "Favoris",
+        "publish": "Publier",
+        "news": "Actualités"
+      },
+      "languageLabel": "Langue",
+      "languages": {
+        "ca": "Catalan",
+        "es": "Espagnol",
+        "en": "Anglais",
+        "fr": "Français"
+      },
+      "languagesShort": {
+        "ca": "Cat",
+        "es": "Esp",
+        "en": "Eng",
+        "fr": "Fra"
+      },
+      "mobilePublishLabel": "Publier",
+      "auth": {
+        "login": "Se connecter",
+        "loginShort": "Connexion",
+        "logout": "Déconnexion",
+        "userMenu": "Menu utilisateur",
+        "myProfile": "Mon profil",
+        "incompleteProfile": "⚠️ Session incomplète — déconnectez-vous puis reconnectez-vous pour charger votre profil."
+      }
+    },
+    "NoEventsFound": {
+      "cta": "Ajouter un événement",
+      "helper": "C’est gratuit et cela ne prend qu’une minute"
+    },
+    "NoEventFound": {
+      "imageTitle": "Événement introuvable - Esdeveniments.cat",
+      "imageAlt": "Événement introuvable - Esdeveniments.cat",
+      "title": "Oups ! Cet événement n’existe pas ou a été annulé par les organisateurs",
+      "description": "Vous pouvez essayer la <search>recherche</search>, découvrir <today>ce qui se passe aujourd’hui en Catalogne</today> ou <publish>publier l’événement</publish>. Si vous pensez qu’il s’agit d’une erreur, contactez-nous à : <email>hola@esdeveniments.cat</email>."
+    },
+    "Notification": {
+      "createdSuccess": "Parfait ! L’événement {title} a bien été créé et est désormais visible par tout le monde !",
+      "close": "Fermer",
+      "viewEvent": "Voir l’événement"
+    },
+    "FavoriteButton": {
+      "maxReached": "Vous avez atteint la limite de {max} favoris. Retirez-en un pour en ajouter d’autres."
+    },
+    "FavoritesLoginNudge": {
+      "message": "Enregistré ! Connectez-vous pour synchroniser vos favoris sur tous vos appareils.",
+      "login": "Se connecter",
+      "dismiss": "Fermer"
+    },
+    "EventNotifications": {
+      "thankYou": "Merci d’aider à améliorer le contenu d’Esdeveniments.cat ! Votre modification sera visible sous 24 heures."
+    },
+    "LatestNewsSection": {
+      "title": "Dernières actualités",
+      "titleWithPlace": "Dernières actualités {placeIn}",
+      "titleStale": "Actualités",
+      "titleStaleWithPlace": "Actualités {placeIn}",
+      "viewAll": "Tout voir"
+    },
+    "NewsList": {
+      "emptyTitle": "Aucune actualité récente trouvée",
+      "emptyBody": "Nous n’avons pas encore d’actualités {placeIn}, mais nous en ajoutons chaque semaine. En attendant, explorez les dernières actualités d’autres régions.",
+      "viewAll": "Voir toutes les actualités",
+      "itemListName": "Actualités {placeOf}",
+      "prev": "Plus récentes",
+      "next": "Plus anciennes",
+      "emptyBodyIndex": "Aucune actualité n’est encore publiée. En attendant, consultez l’agenda pour trouver des idées de sorties près de chez vous.",
+      "viewAgenda": "Voir l’agenda",
+      "emptyPageTitle": "Cette page ne contient aucune actualité",
+      "firstPage": "Voir les dernières actualités",
+      "paginationLabel": "Pagination des actualités",
+      "pageOf": "Page {page} sur {total}",
+      "pageTitle": "{title} (page {page})"
+    },
+    "CulturalMessage": {
+      "explorePrefix": "Explorez plus de sorties {placeIn}",
+      "today": "Que faire aujourd’hui",
+      "tomorrow": "Que faire demain",
+      "week": "Que faire cette semaine",
+      "weekend": "Que faire ce week-end"
+    },
+    "HeroSearch": {
+      "titlePrefix": "Que faire",
+      "modalTitle": "Sélectionner une commune",
+      "modalAction": "Sélectionner",
+      "errorLoadingLocations": "Erreur lors du chargement des communes.",
+      "retry": "Réessayer",
+      "selectPlaceholder": "Rechercher une commune ou une comarque...",
+      "subtitleDefault": "Agenda culturel, fêtes locales et activités",
+      "searchPlaceholder": "Rechercher des événements {placeIn}...",
+      "clearSearch": "Effacer la recherche",
+      "search": "Rechercher"
+    },
+    "HeroFilters": {
+      "today": "Aujourd’hui",
+      "tomorrow": "Demain",
+      "weekend": "Week-end",
+      "active": "actif"
+    },
+    "HomePageSkeleton": {
+      "seeAlso": "Voir aussi"
+    },
+    "EventsAround": {
+      "carouselSuffix": "carrousel d’événements",
+      "relatedEvents": "Événements similaires"
+    },
+    "ServerEventsCategorized": {
+      "cta": "Vous ne trouvez pas ce que vous cherchez ?",
+      "ctaButton": "Voir tout l’agenda",
+      "quickCategoriesTitle": "Explorer par centre d’intérêt",
+      "popularTitle": "Populaire en ce moment en Catalogne"
+    },
+    "Filters": {
+      "triggerLabel": "Filtres",
+      "removeFilter": "Retirer le filtre {filter}",
+      "priceFree": "Gratuit",
+      "pricePaid": "Payant"
+    },
+    "Social": {
+      "followUs": "Suivez-nous"
+    },
+    "SocialFollowPopup": {
+      "headline": "Laissez les sorties venir à vous",
+      "subtext": "Chaque jour, nous partageons les meilleurs événements sur les réseaux sociaux. Suivez-nous pour ne rien manquer.",
+      "installHeadline": "Gardez l’agenda à portée de main",
+      "installSubtext": "Installez l’application pour accéder rapidement aux événements depuis votre écran d’accueil, même hors ligne.",
+      "followLabel": "Suivez-nous",
+      "installEnable": "Installer l’app",
+      "installEnabling": "Ouverture de l’installation...",
+      "installStepShare": "Appuyez sur Partager dans la barre inférieure",
+      "installStepShareIpad": "Appuyez sur Partager en haut à droite",
+      "installStepShareMenu": "Ouvrez le menu ⋯ et appuyez sur Partager",
+      "installStepAdd": "Choisissez « Sur l’écran d’accueil »",
+      "installInAppHelp": "Pour installer l’application, ouvrez cette page dans Safari (appuyez sur ⋯ puis « Ouvrir dans le navigateur »).",
+      "pushEnable": "Activer les notifications",
+      "pushEnabling": "Activation des notifications...",
+      "pushEnabled": "Notifications activées",
+      "pushBlockedHelp": "Les notifications sont bloquées. Vous pouvez les activer dans les réglages de votre navigateur pour ce site.",
+      "close": "Pas maintenant",
+      "aria": "Suivez-nous sur les réseaux sociaux",
+      "ariaInstall": "Installer l’application Esdeveniments"
+    },
+    "RestaurantPromotionForm": {
+      "heading": "Promouvoir votre restaurant",
+      "intro": "Faites apparaître votre restaurant sur cette page d’événement et touchez davantage de clients.",
+      "restaurantNameLabel": "Nom du restaurant *",
+      "restaurantNamePlaceholder": "Saisissez le nom du restaurant",
+      "locationLabel": "Adresse *",
+      "locationPlaceholder": "Saisissez l’adresse du restaurant",
+      "durationLabel": "Durée de la promotion *",
+      "durationOption": "{days} jour{days, plural, one {} other {s}}",
+      "geoScopeTypeLabel": "Portée géographique *",
+      "geoScopeTown": "Commune / ville",
+      "geoScopeRegion": "Région",
+      "geoScopeTownPlaceholder": "Saisissez le nom de la commune ou de la ville",
+      "geoScopeRegionPlaceholder": "Saisissez le nom de la région",
+      "placeIdLabel": "Google Place ID (facultatif)",
+      "placeIdPlaceholder": "Saisissez le Google Place ID si vous l’avez",
+      "placeIdHelp": "Si votre restaurant figure sur Google Maps, vous trouverez le Place ID dans l’URL",
+      "imageLabel": "Image du restaurant *",
+      "priceLabel": "Prix total :",
+      "loading": "Chargement...",
+      "priceNote": "Le paiement sera traité en toute sécurité via Stripe",
+      "processing": "Traitement en cours...",
+      "submit": "Accéder au paiement"
+    },
+    "AdBoard": {
+      "title": "L’annonce n’a pas pu être chargée.",
+      "body": "Aidez-nous à faire vivre ce site en désactivant votre bloqueur de publicités. Merci pour votre compréhension et votre soutien !",
+      "contactPrefix": "Si vous souhaitez annoncer ici,",
+      "contactCta": "contactez-nous",
+      "contactSuffix": "pour obtenir plus d’informations."
+    },
+    "EditModalLegacy": {
+      "title": "Suggérer une modification",
+      "editTitle": "Modifier le titre ou d’autres informations",
+      "editDescription": "Modifiez le titre, le lieu, les horaires, etc.",
+      "removeTitle": "Supprimer",
+      "removeDescription": "L’événement n’existe pas, est en double, etc.",
+      "deleteTitle": "Suggérer une suppression",
+      "deleteReasonPrompt": "Motif de la suppression suggérée",
+      "deleteLegend": "Demande de suppression",
+      "reason": {
+        "notExist": "N’existe pas",
+        "duplicated": "En double",
+        "offensive": "Offensant, nuisible ou trompeur",
+        "others": "Autre",
+        "othersDescription": "Envoyez un e-mail précisant le motif à :",
+        "othersEmail": "hola@esdeveniments.cat"
+      },
+      "submit": "Envoyer"
+    },
+    "FiltersModal": {
+      "geo": {
+        "permissionDenied": "Autorisation de localisation refusée. Activez la localisation dans votre navigateur pour utiliser cette fonction.",
+        "positionUnavailable": "Localisation indisponible. Essayez de choisir une commune plutôt que d’utiliser la distance.",
+        "timeout": "Délai d’attente dépassé. Réessayez ou sélectionnez une commune.",
+        "genericError": "Erreur lors de l’obtention de la localisation. Essayez de sélectionner une commune plutôt que la distance.",
+        "unsupported": "La géolocalisation n’est pas disponible sur ce navigateur.",
+        "loading": "Recherche de votre position..."
+      },
+      "distance": {
+        "label": "Distance",
+        "labelFromPlace": "Distance {placeFrom}",
+        "labelFromLocation": "Distance depuis votre position",
+        "helperRegion": "Pour utiliser le filtre de distance, sélectionnez une commune précise ou utilisez votre position actuelle.",
+        "helperPlace": "Si vous choisissez une commune, le rayon est calculé depuis ce point. Sinon, nous utilisons votre position actuelle. Activez le filtre pour limiter les résultats à un rayon précis.",
+        "toggle": "Filtrer par rayon",
+        "rangeLabel": "Événements dans un rayon de"
+      },
+      "useLocation": {
+        "using": "Vous utilisez votre position",
+        "cta": "Utiliser ma position",
+        "active": "Position actuelle activée.",
+        "switchToPlace": "Choisir une commune",
+        "regionNotice": "Vous avez sélectionné une comarque. Les comarques n’ayant pas un point géographique unique, le filtre de distance ne peut pas s’appliquer. Pour l’utiliser, choisissez une commune précise ou votre position. Vous pouvez continuer à filtrer par date et par catégorie."
+      },
+      "modal": {
+        "title": "Filtres",
+        "action": "Appliquer les filtres",
+        "locations": "Communes",
+        "loadError": "Erreur lors du chargement des communes. Veuillez réessayer plus tard.",
+        "selectPlaceholder": "Sélectionner une commune ou une comarque",
+        "tagline": "Filtres actifs",
+        "dateHeading": "Date",
+        "categoriesHeading": "Catégories",
+        "priceHeading": "Prix",
+        "calendarLabel": "Ou choisir dans le calendrier :"
+      }
+    },
+    "ImageUploader": {
+      "label": "Image",
+      "unsupported": "Ce fichier n’est pas pris en charge. Choisissez une image JPG ou PNG.",
+      "originalTooLarge": "L’image dépasse la limite de {limit} Mo. Choisissez-en une plus légère.",
+      "tooLarge": "Impossible de réduire l’image sous {limit} Mo. Choisissez-en une plus légère.",
+      "compressFailed": "Impossible de réduire l’image. Veuillez réessayer.",
+      "optimizing": "Optimisation de l’image…",
+      "remove": "Supprimer l’image",
+      "altPreview": "Image",
+      "uploadDropCta": "ou glissez-la ici",
+      "selectButton": "Choisir une image",
+      "formatHelper": "JPG ou PNG",
+      "change": "Changer"
+    },
+    "HeroCTA": {
+      "buttonBase": "Voir les événements",
+      "dateWeekend": "ce week-end",
+      "helper": "Découvrez les meilleures sorties près de chez vous"
+    },
+    "PromotionInfoModal": {
+      "title": "Promouvoir votre restaurant",
+      "intro1": "Vous souhaitez mettre votre restaurant en avant ici lorsque les visiteurs consultent un événement à proximité ? Nous préparons le système de promotions.",
+      "intro2": "Pour le moment, envoyez-nous un e-mail à <email>{contactEmail}</email> avec :",
+      "itemName": "Nom du restaurant",
+      "itemPlace": "Commune / Région",
+      "itemLink": "Lien (Google Maps ou site web / réseaux sociaux)",
+      "footer": "Nous vous préviendrons dès que les promotions automatisées seront disponibles.",
+      "contactSubject": "Promouvoir un restaurant"
+    },
+    "PromotedRestaurantCard": {
+      "title": "Restaurant partenaire",
+      "badge": "Sponsorisé",
+      "activeUntil": "Promotion active jusqu’au {date}"
+    },
+    "WhereToEatSection": {
+      "title": "Où manger",
+      "promote": "Promouvoir votre restaurant",
+      "showPhoto": "Voir la photo",
+      "loadIntro": "Trouvez où manger à proximité de l’événement.",
+      "loadCta": "Afficher les restaurants proches",
+      "loginCta": "Connectez-vous pour voir les restaurants",
+      "empty": "Impossible d’afficher les restaurants proches pour le moment."
+    },
+    "FeaturedPlaceSection": {
+      "seeMore": "Voir plus",
+      "aria": "Explorer {title} par date"
+    },
+    "EventCategories": {
+      "title": "Catégories"
+    },
+    "CategoryEventsSection": {
+      "heading": "L’agenda {categoryPhrase} en Catalogne",
+      "seeMore": "Voir plus",
+      "sponsored": "Contenu sponsorisé",
+      "headingNoArticle": "Agenda en Catalogne · {categoryName}"
+    },
+    "Weather": {
+      "title": "Météo",
+      "noData": "Aucune donnée météorologique disponible."
+    },
+    "DateFilterBadges": {
+      "ariaLabel": "Voir aussi",
+      "today": {
+        "label": "Aujourd’hui",
+        "aria": "Voir les activités d’aujourd’hui"
+      },
+      "tomorrow": {
+        "label": "Demain",
+        "aria": "Voir les activités de demain"
+      },
+      "weekend": {
+        "label": "Week-end",
+        "aria": "Voir les activités de ce week-end"
+      },
+      "ariaCategory": "{ariaLabelText} pour la catégorie {contextName}",
+      "ariaPlace": "{ariaLabelText} {placeIn}"
+    },
+    "PlacePageExploreNav": {
+      "sectionAriaLabel": "Explorer par date ou catégorie",
+      "dateTitle": "Parcourir par date",
+      "dateAriaLabel": "Filtrer par date",
+      "categoryTitle": "Explorer les catégories",
+      "otherCategoryTitle": "Autres catégories {placeIn}",
+      "categoryAriaLabel": "Parcourir par catégorie",
+      "categoryLinkAria": "Voir {category} {placeIn}"
+    },
+    "ExploreNearby": {
+      "sectionAriaLabel": "Explorer les lieux proches",
+      "regionsTitle": "Comarques de Catalogne",
+      "regionsAriaLabel": "Parcourir par comarque",
+      "citiesTitle": "Villes et villages {placeOf}",
+      "citiesAriaLabel": "Parcourir les villes et villages",
+      "nearbyTitle": "Communes voisines",
+      "nearbyAriaLabel": "Découvrir les événements dans les communes voisines",
+      "linkAria": "Voir les événements {placeIn}",
+      "regionWeekend": "Ce week-end {placeIn}"
+    },
+    "TownGuide": {
+      "title": "L’agenda {placeOf}",
+      "summary": "{count, plural, =0 {Aucune activité n’est programmée {placeIn} en ce moment.} one {Il y a actuellement # activité programmée {placeIn}.} other {Il y a actuellement # activités programmées {placeIn}.}}",
+      "categories": "Les plus fréquentes : {categories}.",
+      "region": "{place} se trouve {regionIn}.",
+      "regionEvents": "Plus de sorties {regionIn}"
+    },
+    "DateCountLine": {
+      "today": "{count, plural, one {# activité aujourd’hui} other {# activités aujourd’hui}}.",
+      "tomorrow": "{count, plural, one {# activité demain} other {# activités demain}}.",
+      "week": "{count, plural, one {# activité cette semaine} other {# activités cette semaine}}.",
+      "weekend": "{count, plural, one {# activité ce week-end} other {# activités ce week-end}}."
+    },
+    "SearchBar": {
+      "placeholder": "Que recherchez-vous ?",
+      "clear": "Effacer la recherche",
+      "search": "Rechercher",
+      "suggestions": {
+        "label": "Suggestions de recherche",
+        "searchEvents": "Rechercher des événements « {query} »",
+        "places": "Lieux",
+        "profiles": "Profils dans toute la Catalogne",
+        "placeType": "lieu",
+        "profileType": "profil",
+        "loadingProfiles": "Recherche de profils…",
+        "upcomingEvents": "{count, plural, =0 {Aucun événement à venir} one {# événement à venir} other {# événements à venir}}",
+        "count": "{count, plural, one {# suggestion} other {# suggestions}}"
+      }
+    },
+    "PastEventBanner": {
+      "title": "Cet événement est déjà terminé",
+      "subtitle": "Ne manquez pas ce qui se passe {timeWindow} {placeIn}",
+      "primaryCta": "Consulter l’agenda",
+      "secondaryCta": "ou explorer cette catégorie",
+      "srStatus": "Statut : {label}.",
+      "timeWindow": "cette semaine",
+      "nextEdition": "Prochaine édition : {dates}"
+    },
+    "EventPage": {
+      "sponsored": "Contenu sponsorisé",
+      "editEvent": "Modifier",
+      "editTitle": "Modifier : {title}",
+      "editError": "Erreur lors de la mise à jour de l’événement",
+      "editSave": "Enregistrer les modifications",
+      "visitsCount": "{count, plural, one {{count} visite} other {{count} visites}}",
+      "free": "Gratuit",
+      "paid": "Payant",
+      "interested": "{count, plural, one {{count} personne intéressée} other {{count} personnes intéressées}}",
+      "popular": "Populaire",
+      "readMore": "Lire la suite",
+      "readLess": "Réduire",
+      "durationLabel": "Durée : {duration}",
+      "sidebarAriaLabel": "Détails de l’événement",
+      "toolbarAriaLabel": "Actions sur l’événement",
+      "sidebarViewAllEvents": "Voir tous les événements",
+      "shareEvent": "Partager",
+      "promoteEvent": "Promouvoir",
+      "deleteEvent": "Supprimer l’événement",
+      "deleteConfirmTitle": "Supprimer cet événement ?",
+      "deleteConfirmDescription": "Il n’apparaîtra plus dans l’agenda et ne pourra pas être récupéré.",
+      "deleteConfirm": "Supprimer",
+      "deleteCancel": "Annuler",
+      "deleteError": "Impossible de supprimer l’événement. Veuillez réessayer.",
+      "ownerBarTitle": "Vous avez publié cet événement",
+      "moreActions": "Plus d’actions",
+      "organizerEventCount": "{count, plural, one {# événement publié} other {# événements publiés}}",
+      "moreInfo": "Plus d’infos",
+      "organizer": "Organisateur",
+      "reportPrompt": "Une information est inexacte ?",
+      "reportLink": "Signalez-le-nous",
+      "reportSubject": "Signalement sur l’événement : {title}",
+      "reportBody": "Page : {url}\n\nQue faut-il vérifier ?\n",
+      "houseAdTitle": "Vous organisez un événement ?",
+      "houseAdText": "Publiez gratuitement votre événement et touchez davantage d’habitants de la région.",
+      "houseAdCta": "Publier un événement"
+    },
+    "CardContent": {
+      "dateRange": "Du {start} au {end}",
+      "dateSingle": "{nameDay} {start}",
+      "favoriteAddAria": "Ajouter aux favoris",
+      "favoriteRemoveAria": "Retirer des favoris",
+      "today": "Aujourd’hui",
+      "tomorrow": "Demain",
+      "until": "{day, select, 1 {Jusqu’au {date}} 11 {Jusqu’au {date}} other {Jusqu’au {date}}}",
+      "promoted": "Sponsorisé"
+    },
+    "EventForm": {
+      "title": "Titre",
+      "url": "Lien de l’événement",
+      "region": "Comarque",
+      "town": "Commune",
+      "locationHint": "Place, rue ou salle",
+      "urlHint": "Site web ou réseaux sociaux de l’événement",
+      "reviewTitle": "Avant de publier",
+      "reviewReady": "Tout est prêt ! Vérifiez et publiez.",
+      "reviewMissing": "{count, plural, one {Champ manquant : {fields}} other {Champs manquants : {fields}}}",
+      "imageLabel": "Image",
+      "datesLabel": "Dates et horaires",
+      "previewButton": "Aperçu",
+      "previewModalTitle": "Aperçu de votre événement",
+      "previewMissingUrl": "Ajoutez un lien pour permettre au public de consulter plus de détails.",
+      "previewMissingDescription": "Ajoutez une description pour qu’il soit plus facile à trouver.",
+      "previewMissingCategories": "Vous n’avez pas encore ajouté de catégories",
+      "previewWarnings": "Recommandations",
+      "previewRequired": "Obligatoire",
+      "previewRequiredImage": "Image manquante",
+      "previewNoTitle": "Sans titre",
+      "previewCategoriesLabel": "Catégories",
+      "previewNoCategories": "Aucune catégorie sélectionnée",
+      "previewLinkLabel": "Lien",
+      "previewOptional": "Facultatif",
+      "previewDescriptionLabel": "Description",
+      "step": "Étape {current} sur {total}",
+      "stepBasics": "Informations de base",
+      "stepLocation": "Lieu",
+      "stepImage": "Image et vérification",
+      "previous": "Retour",
+      "next": "Suivant",
+      "useLocation": "Utiliser ma position",
+      "locating": "Localisation…",
+      "testLink": "Tester le lien",
+      "regionPlaceholder": "Choisissez une comarque",
+      "townPlaceholder": "Choisissez une commune",
+      "categoriesPlaceholder": "Choisissez des catégories",
+      "categories": "Catégories",
+      "location": "Lieu",
+      "email": "Adresse e-mail",
+      "emailSubtitle": "Souhaitez-vous être prévenu lorsque l’événement est mis à jour ? (nous ne conservons pas cette donnée)",
+      "publishing": "Publication…",
+      "regionSkeleton": "Comarque",
+      "townSkeleton": "Commune",
+      "optional": "(facultatif)",
+      "stepDone": "terminée",
+      "stepCurrent": "étape actuelle",
+      "stepTodo": "à faire",
+      "price": "Prix",
+      "priceFree": "Gratuit",
+      "pricePaid": "Payant",
+      "priceUnknown": "Non précisé",
+      "priceAmount": "Prix en euros",
+      "priceAmountHint": "S’il existe plusieurs tarifs, indiquez le plus avantageux.",
+      "priceCurrent": "Prix actuel : « {price} ». Il sera conservé si vous ne choisissez pas une autre option."
+    },
+    "Layout": {
+      "rss": "RSS",
+      "rssNews": "RSS Actualités"
+    },
+    "EventDetailsSection": {
+      "createdBy": "Publié {by} <link>{name}</link>"
+    },
+    "EventLocation": {
+      "title": "Lieu",
+      "showMap": "Afficher la carte",
+      "hideMap": "Masquer la carte",
+      "getDirections": "Itinéraire",
+      "profileLink": "Profil {nameOf}"
+    },
+    "EventCalendar": {
+      "priceLabel": "Prix :",
+      "priceFree": "Gratuit"
+    },
+    "Select": {
+      "placeholder": "une option",
+      "create": "Ajouter un nouveau lieu : « {value} »",
+      "noOptions": "Aucune option trouvée"
+    },
+    "MultiSelect": {
+      "placeholder": "Sélectionner des catégories",
+      "loading": "Chargement des catégories...",
+      "noOptions": "Aucune catégorie trouvée",
+      "loadingShort": "Chargement..."
+    },
+    "TextArea": {
+      "label": "Description",
+      "placeholder": "Décrivez votre événement…"
+    },
+    "DateRangeCalendar": {
+      "pickStart": "Choisissez le premier jour",
+      "pickEnd": "Choisissez maintenant le dernier jour (ou touchez le même jour pour un événement d’une journée)",
+      "clear": "Effacer les dates"
+    },
+    "DatePicker": {
+      "startTime": "Heure de début",
+      "endTime": "Heure de fin",
+      "dateAndTime": "Date et heure",
+      "dateFormat": "d MMMM, yyyy HH:mm aa",
+      "monthYearFormat": "MMMM yyyy",
+      "allDay": "Toute la journée (sans heure de fin)",
+      "allDayHelper": "Si l’événement dure toute la journée, nous fixerons la fin au même jour."
+    },
+    "LoadMoreButton": {
+      "loading": "Chargement d’autres événements",
+      "label": "Afficher plus"
+    },
+    "HybridEventsListClient": {
+      "errorTitle": "Erreur lors du chargement des événements",
+      "error": "Veuillez réessayer plus tard.",
+      "resultsCount": "{count, plural, =0 {Aucun événement} one {# événement} other {# événements}}",
+      "retry": "Réessayer",
+      "recoveryTitle": "Élargir la recherche",
+      "recoveryPlace": "« {search} » dans toute la Catalogne",
+      "recoveryDate": "« {search} » à n’importe quelle date",
+      "recoveryCategory": "« {search} » dans toutes les catégories",
+      "recoveryDistance": "« {search} » sans limite de distance"
+    },
+    "Hero": {
+      "options": {
+        "tomorrow": "Demain"
+      }
+    },
+    "EditModal": {
+      "editTitle": "Suggérer une modification",
+      "editIntro": "Modifier le titre ou d’autres informations",
+      "editHelper": "Modifiez le titre, le lieu, les horaires, etc.",
+      "dupHelper": "L’événement n’existe pas, est en double, etc.",
+      "deleteTitle": "Suggérer une suppression",
+      "deleteReasonLabel": "Motif de la suppression suggérée",
+      "deleteLegend": "Demande de suppression",
+      "deleteOption": "Offensant, nuisible ou trompeur"
+    },
+    "HomePageSkeletonLegacy": {
+      "ariaAlso": "Voir aussi"
+    },
+    "Description": {
+      "title": "Description",
+      "translateCta": "Traduire la description en {target}",
+      "translating": "Traduction…",
+      "translatedLabel": "Traduit du catalan en {target}",
+      "showOriginal": "Voir l’original",
+      "translateError": "Impossible de traduire pour le moment. Veuillez réessayer.",
+      "target": {
+        "en": "anglais",
+        "es": "espagnol",
+        "fr": "français"
+      }
+    },
+    "HorizontalScroll": {
+      "next": "Suivant",
+      "previous": "Précédent"
+    },
+    "SitemapHeader": {
+      "title": "Archives historiques {placeOf}",
+      "subtitle": "Découvrez l’évolution culturelle {placeOf} année après année. Chaque lien vous mène aux événements d’un mois précis."
+    },
+    "SitemapContent": {
+      "title": "Archives des événements culturels",
+      "description": "Découvrez tout ce qui s’est passé en Catalogne chaque année. Parcourez les comarques et les communes pour explorer l’histoire culturelle du territoire.",
+      "regionsTitle": "Comarques de Catalogne",
+      "citiesTitle": "Communes principales",
+      "footer": "Les archives rassemblent les événements culturels de toutes les comarques de Catalogne. Chaque lien ouvre un historique détaillé classé par années et par mois."
+    },
+    "NewsCities": {
+      "title": "Villes avec actualités",
+      "all": "Toutes"
+    },
+    "NewsArticleDetail": {
+      "breadcrumbNews": "Actualités",
+      "moreProposals": "PLUS D’IDÉES"
+    },
+    "UseGeolocation": {
+      "notAvailable": "La géolocalisation n’est pas disponible sur ce navigateur.",
+      "denied": "Autorisation de localisation refusée. Activez la localisation dans votre navigateur pour utiliser cette fonction.",
+      "unavailable": "Localisation indisponible. Essayez de choisir une commune plutôt que d’utiliser la distance.",
+      "timeout": "Délai d’attente dépassé. Réessayez ou sélectionnez une commune.",
+      "genericError": "Erreur lors de l’obtention de la localisation. Essayez de sélectionner une commune plutôt que la distance."
+    },
+    "PwaBackButton": {
+      "label": "Retour",
+      "ariaLabel": "Revenir en arrière"
+    },
+    "PromotedEvents": {
+      "title": "Événements sponsorisés"
+    },
+    "Modal": {
+      "close": "Fermer"
+    },
+    "FestaMajorLink": {
+      "label": "Programme complet de la Festa Major {placeOf}"
+    },
+    "PlaceFestesLinks": {
+      "title": "Fêtes et traditions",
+      "town": "Festa Major {placeOf}",
+      "region": "Festes majors {placeOf}"
+    },
+    "EventsMap": {
+      "loading": "Chargement de la carte…",
+      "error": "Impossible de charger la carte.",
+      "retry": "Réessayer",
+      "placeOption": "{label} ({count})",
+      "showAll": "Tout afficher",
+      "legendVenue": "Lieu exact",
+      "legendTown": "Commune (lieu à confirmer)",
+      "mappedCount": "{count, plural, one {# activité sur la carte} other {# activités sur la carte}}",
+      "hint": "Touchez un point pour voir ses activités.",
+      "townNote": "Le lieu exact de ces activités n’est pas encore connu : le repère indique la commune.",
+      "empty": "Aucune activité à afficher sur la carte.",
+      "mapTitle": "Carte des activités",
+      "zoomIn": "Zoom avant",
+      "zoomOut": "Zoom arrière",
+      "findMyLocation": "Ma position",
+      "locationNotAvailable": "Position non disponible",
+      "toggleAttribution": "Afficher les crédits",
+      "close": "Fermer la carte",
+      "floating": "Carte",
+      "back": "Tous les lieux",
+      "eventsCount": "{count, plural, one {# activité} other {# activités}}"
+    },
+    "ShareKit": {
+      "whatsapp": "Envoyer sur WhatsApp",
+      "facebook": "Partager sur Facebook",
+      "image": "Affiche",
+      "imageTitle": "Créer une affiche à publier sur Instagram ou en statut WhatsApp",
+      "imageLoading": "Création…",
+      "imageError": "Impossible de créer l’affiche. Veuillez réessayer.",
+      "more": "Plus",
+      "copyLink": "Copier",
+      "copyLinkLabel": "Copier le lien",
+      "copied": "Copié",
+      "copyError": "Impossible de copier le lien. Veuillez réessayer.",
+      "modalTitle": "Partager l’événement",
+      "modalDescription": "Plus on en parle, plus il y aura de monde.",
+      "share": "Partager",
+      "shareLabel": "Partager {title}",
+      "shareDate": "Date : {date}",
+      "sharePlace": "Lieu : {place}",
+      "email": "Envoyer par e-mail",
+      "moreOptions": "Plus d’options"
+    }
+  },
+  "Partials": {
+    "WebsiteSchema": {
+      "siteDescription": "Découvrez les événements culturels en Catalogne",
+      "orgDescription": "Plateforme de découverte d'événements culturels en Catalogne. Agenda d'activités, concerts, théâtre, expositions, fêtes locales et plus encore.",
+      "appDescription": "Plateforme gratuite et multilingue pour découvrir les événements culturels en Catalogne. API publique REST, recherche par lieu, date et catégorie.",
+      "areaName": "Catalogne",
+      "areaSameAs": "https://fr.wikipedia.org/wiki/Catalogne",
+      "faqWhatQuestion": "Qu'est-ce qu'Esdeveniments.cat ?",
+      "faqWhatAnswer": "Esdeveniments.cat est la plateforme gratuite et multilingue la plus complète pour découvrir les événements culturels en Catalogne. Elle couvre plus de 900 communes avec des concerts, du théâtre, des expositions, des festivals et bien plus.",
+      "faqApiQuestion": "Esdeveniments.cat propose-t-il une API publique ?",
+      "faqApiAnswer": "Oui, Esdeveniments.cat propose une API REST publique et gratuite. Aucune authentification n'est requise pour les endpoints de lecture. Documentation disponible sur /llms.txt et /openapi.json."
+    },
+    "GeneratePagesData": {
+      "categories": {
+        "literatura": {
+          "titleSuffix": "Littérature et livres",
+          "description": "littérature, livres, présentations littéraires, clubs de lecture, rencontres d’auteurs",
+          "context": "Découvrez la littérature catalane avec présentations, clubs de lecture et rencontres d’auteurs",
+          "noEvents": "d’activités littéraires ou de présentations de livres"
+        },
+        "fires-i-mercats": {
+          "titleSuffix": "Foires et marchés",
+          "description": "marchés, foires, marchés artisanaux, produits locaux, artisanat",
+          "context": "Envie de marchés ? Découvrez les foires et marchés artisanaux de produits locaux",
+          "noEvents": "de foires ni de marchés dans la zone"
+        },
+        "festes-populars": {
+          "titleSuffix": "Fêtes locales et populaires",
+          "description": "festes majors, fêtes populaires, correfocs, castells, célébrations traditionnelles",
+          "context": "Fêtes locales au programme ? Découvrez les correfocs, les castells et les meilleures fêtes populaires catalanes",
+          "noEvents": "de fêtes populaires ou de célébrations traditionnelles"
+        },
+        "tallers-i-formacio": {
+          "titleSuffix": "Ateliers et formation",
+          "description": "ateliers, formation, cours, apprentissage, activités pratiques",
+          "context": "Apprenez et formez-vous avec des ateliers pratiques, des cours spécialisés et des formations",
+          "noEvents": "d’ateliers, de cours ni de formations"
+        },
+        "dansa": {
+          "titleSuffix": "Danse",
+          "description": "danse, bal, spectacles de danse, cours de danse, danse contemporaine",
+          "context": "Vivez la passion de la danse avec des spectacles, des ateliers et des cours pour tous les niveaux",
+          "noEvents": "d’activités ou de spectacles de danse"
+        },
+        "salut-i-benestar": {
+          "titleSuffix": "Santé et bien-être",
+          "description": "santé, bien-être, activités saines, yoga, méditation, remise en forme",
+          "context": "Prenez soin de vous avec des activités bien-être, des séances de yoga et de méditation",
+          "noEvents": "d’activités de santé, de bien-être ou de yoga"
+        },
+        "esport": {
+          "titleSuffix": "Sport et activité physique",
+          "description": "sport, activité physique, compétitions sportives, courses populaires",
+          "context": "Bougez avec des activités sportives, des compétitions, des courses populaires et des sorties en plein air",
+          "noEvents": "d’activités ou d’événements sportifs"
+        },
+        "patrimoni-cultural": {
+          "titleSuffix": "Patrimoine culturel",
+          "description": "patrimoine culturel, histoire, monuments, traditions, visites guidées",
+          "context": "Découvrez la richesse du patrimoine culturel catalan avec des visites guidées, des parcours historiques et des monuments",
+          "noEvents": "d’activités liées au patrimoine culturel"
+        },
+        "serveis-municipals": {
+          "titleSuffix": "Services municipaux",
+          "description": "services municipaux, administration, démarches, information citoyenne, participation",
+          "context": "Informez-vous sur les services municipaux disponibles, les démarches et la vie citoyenne",
+          "noEvents": "d’activités ou d’informations sur les services municipaux"
+        },
+        "gent-gran": {
+          "titleSuffix": "Activités pour les seniors",
+          "description": "activités pour seniors, aînés, troisième âge, clubs seniors",
+          "context": "Découvrez des activités pensées pour les seniors : ateliers, conférences, gymnastique douce et rencontres",
+          "noEvents": "d’activités destinées aux seniors"
+        },
+        "familia-i-infants": {
+          "titleSuffix": "Sorties avec enfants",
+          "description": "que faire avec des enfants, activités enfants, sorties en famille, spectacles jeune public",
+          "context": "Que faire avec des enfants ? Découvrez des spectacles familiaux, des ateliers jeunesse et des sorties en famille",
+          "noEvents": "de sorties avec enfants ou d’activités familiales"
+        },
+        "exposicions": {
+          "titleSuffix": "Expositions et musées",
+          "description": "expositions, musées, galeries d’art, arts visuels, parcours culturels",
+          "context": "Explorez l’art et la culture visuelle à travers les expositions, les musées et les galeries d’art",
+          "noEvents": "d’expositions ou d’activités artistiques"
+        },
+        "cinema": {
+          "titleSuffix": "Cinéma et films",
+          "description": "cinéma, films à l’affiche, projections, séances, festivals de cinéma",
+          "context": "Envie de cinéma ? Découvrez les films à l’affiche, les projections et les festivals de cinéma",
+          "noEvents": "de séances de cinéma ou d’activités audiovisuelles"
+        },
+        "musica": {
+          "titleSuffix": "Concerts et musique live",
+          "description": "concerts, musique live, festivals, spectacles musicaux, scènes locales",
+          "context": "Envie d’un concert ? Découvrez les concerts, la musique live et les festivals",
+          "noEvents": "de concerts, festivals ou spectacles musicaux"
+        },
+        "teatre": {
+          "titleSuffix": "Spectacles de théâtre",
+          "description": "théâtre, pièces de théâtre, humour, opéra, arts de la scène",
+          "context": "Envie de théâtre ? Découvrez les pièces, les spectacles d’humour et le meilleur des arts de la scène",
+          "noEvents": "de pièces de théâtre ou de spectacles vivants"
+        },
+        "altres": {
+          "titleSuffix": "Autres activités",
+          "description": "autres activités, événements divers, idées originales, sorties loisirs",
+          "context": "Découvrez d’autres activités intéressantes et des idées de sorties originales pour votre temps libre",
+          "noEvents": "d’activités dans cette catégorie"
+        }
+      },
+      "root": {
+        "title": "Que faire en Catalogne. Agenda {year}",
+        "subTitle": "Agenda culturel en Catalogne en {month}, avec concerts, expositions, théâtre, sorties en famille et idées pour tous les âges.",
+        "metaTitle": "Que faire en Catalogne - Agenda culturel et sorties {year}",
+        "metaDescription": "Découvrez que faire en Catalogne en {month} : concerts, expositions, théâtre, activités en famille et sorties gratuites près de chez vous.",
+        "notFound": "Désolé, il n’y a pas d’événements disponibles en Catalogne en ce moment. Consultez d’autres dates ou des communes voisines dans notre agenda culturel pour trouver des idées de sorties."
+      },
+      "categoryWithDate": {
+        "avui": {
+          "title": "{titleSuffix} aujourd’hui {label}",
+          "subTitle": "{titleSuffix} aujourd’hui {label} : propositions à jour et idées de dernière minute. Concerts, théâtre, expositions et activités pour tous les goûts.",
+          "metaTitle": "{categoryTitle} aujourd’hui {label} ({dates})",
+          "metaDescription": "{context} aujourd’hui {label}.",
+          "notFound": "Désolé, il n’y a pas {noEventsText} aujourd’hui {label}. Consultez les propositions pour demain, ce week-end ou dans les communes voisines pour trouver des sorties qui vous intéressent."
+        },
+        "dema": {
+          "title": "{titleSuffix} demain {label}",
+          "subTitle": "{titleSuffix} demain {label} : préparez votre sortie à l’avance. Musique, théâtre, expositions et activités pour profiter de la culture locale.",
+          "metaTitle": "{categoryTitle} demain {label} ({dates})",
+          "metaDescription": "{context} demain {label}.",
+          "notFound": "Désolé, il n’y a pas {noEventsText} demain {label}. Consultez l’agenda pour aujourd’hui, cette semaine ou d’autres destinations proches afin de trouver de nouvelles idées."
+        },
+        "setmana": {
+          "title": "{titleSuffix} cette semaine {label}",
+          "subTitle": "{titleSuffix} cette semaine {label} : faites le plein d’idées de sorties. Concerts, ateliers, expositions et activités en famille.",
+          "metaTitle": "{categoryTitle} cette semaine {label} ({dates})",
+          "metaDescription": "{context} cette semaine {label}.",
+          "notFound": "Désolé, il n’y a pas {noEventsText} cette semaine {label}. Essayez de changer la date ou explorez d’autres communes et comarques voisines pour trouver de nouvelles sorties."
+        },
+        "capDeSetmana": {
+          "title": "{titleSuffix} ce week-end {label}",
+          "subTitle": "{titleSuffix} ce week-end {label} : idées pour sortir et profiter en famille. Concerts, activités avec enfants et culture locale.",
+          "metaTitle": "{categoryTitle} ce week-end {label} ({dates})",
+          "metaDescription": "{context} ce week-end {label}.",
+          "notFound": "Désolé, il n’y a pas {noEventsText} ce week-end {label}. Consultez d’autres dates, explorez les activités dans le reste de la Catalogne ou ajustez vos filtres de recherche."
+        }
+      },
+      "categoryNoDate": {
+        "title": "{titleSuffix} {label} {year}",
+        "subTitle": "{titleSuffix} {label} : une sélection d’événements et d’activités culturelles. Concerts, ateliers, expositions, sorties en famille et bons plans gratuits.",
+        "metaTitle": "{categoryTitle} {label} {year} | Que faire - Agenda et sorties",
+        "metaDescription": "{context} {label}. Consultez l’agenda.",
+        "notFound": "Désolé, il n’y a pas {noEventsText} {label} en ce moment. Essayez d’autres dates, catégories ou communes voisines pour découvrir de nouvelles propositions culturelles."
+      },
+      "regionNoDate": {
+        "title": "Que faire {label}. Agenda {year}",
+        "subTitle": "Découvrez les meilleures sorties culturelles et de loisirs {label} en {month}. Concerts, théâtre, expositions, balades et activités en famille.",
+        "metaTitle": "Que faire {label} - Agenda et sorties {year}",
+        "metaDescription": "Explorez l’agenda culturel {label} en {month} : concerts, festivals, théâtre, activités pour enfants et sorties gratuites.",
+        "canonical": "{siteUrl}/{place}",
+        "notFound": "Désolé, il n’y a pas d’événements {label} à cette date. Consultez d’autres jours, ajustez les filtres ou regardez les communes voisines pour trouver de nouvelles activités."
+      },
+      "townNoDate": {
+        "barcelona": {
+          "title": "Que faire à Barcelona. Agenda {year}",
+          "metaTitle": "Que faire à Barcelona - Agenda et sorties {year}",
+          "metaDescription": "Événements à Barcelona et idées de sorties en {month} : concerts, fêtes, activités en famille, ateliers, expositions et bien plus."
+        },
+        "default": {
+          "title": "Que faire {label}. Agenda {year}",
+          "metaTitle": "Que faire {label} - Agenda et sorties {year}",
+          "metaDescription": "Découvrez que faire {label} en {month} : concerts, fêtes, activités en famille, ateliers, expositions et autres sorties."
+        },
+        "titleTest": {
+          "metaTitle": "Agenda {placeOf} : concerts, foires et fêtes"
+        },
+        "subTitle": "Découvrez les meilleures sorties culturelles et de loisirs {label} en {month}. Agenda à jour avec fêtes, concerts, théâtre, cinéma, expositions et activités familiales.",
+        "notFound": "Désolé, il n’y a pas d’événements {label} pour cette date. Essayez de changer la date, d’explorer d’autres catégories ou de consulter les communes voisines.",
+        "canonical": "{siteUrl}/{place}"
+      },
+      "byDatePlace": {
+        "avui": {
+          "title": "Que faire aujourd’hui {label}",
+          "subTitle": "Découvrez que faire aujourd’hui {label} : concerts, théâtre, expositions, activités en famille et sorties de dernière minute. Consultez l’agenda mis à jour.",
+          "metaTitle": "Que faire aujourd’hui {label} ({dates})",
+          "metaDescription": "Découvrez que faire aujourd’hui {label} : concerts, fêtes, sorties avec enfants, activités gratuites et autres idées près de chez vous.",
+          "notFound": "Désolé, il n’y a pas d’événements aujourd’hui {label}. Consultez les propositions pour demain, cette semaine ou dans les communes voisines pour trouver des sorties adaptées."
+        },
+        "dema": {
+          "title": "Que faire demain {label}",
+          "subTitle": "Préparez votre journée et découvrez que faire demain {label} : concerts, théâtre, expositions et activités en famille. Consultez l’agenda et choisissez votre sortie.",
+          "metaTitle": "Que faire demain {label} ({dates})",
+          "metaDescription": "Découvrez que faire demain {label} : concerts, activités pour enfants, expositions, balades et autres idées pour organiser votre journée.",
+          "notFound": "Désolé, il n’y a pas d’événements demain {label}. Consultez l’agenda pour aujourd’hui, cette semaine ou d’autres destinations proches afin de découvrir de nouvelles options."
+        },
+        "setmana": {
+          "title": "Que faire cette semaine {label}",
+          "subTitle": "Découvrez que faire cette semaine {label} avec concerts, ateliers, expositions et activités en famille. Des sorties culturelles tout au long de la semaine.",
+          "metaTitle": "Que faire cette semaine {label} ({dates})",
+          "metaDescription": "L’agenda culturel de cette semaine {label} : concerts, expositions, théâtre, sorties en famille, balades et autres idées.",
+          "notFound": "Désolé, il n’y a pas d’événements cette semaine {label}. Essayez d’autres semaines, changez de catégorie ou explorez les communes voisines pour trouver plus d’activités."
+        },
+        "capDeSetmana": {
+          "title": "Que faire ce week-end {label}",
+          "subTitle": "Découvrez que faire ce week-end {label} : concerts, fêtes, activités en famille et sorties en plein air. Trouvez votre sortie et profitez du week-end.",
+          "metaTitle": "Que faire ce week-end {label} ({dates})",
+          "metaDescription": "Les meilleures sorties pour ce week-end {label} : concerts, fêtes populaires, activités avec enfants, balades et autres idées culturelles.",
+          "notFound": "Désolé, il n’y a pas d’événements ce week-end {label}. Consultez d’autres dates, explorez d’autres catégories ou découvrez ce qui se passe dans le reste de la Catalogne."
+        }
+      },
+      "byDateNoPlace": {
+        "avui": {
+          "title": "Que faire aujourd’hui en Catalogne",
+          "subTitle": "Découvrez que faire aujourd’hui en Catalogne grâce à un agenda culturel à jour. Concerts, théâtre, expositions, sorties en famille et bons plans gratuits.",
+          "metaTitle": "Que faire aujourd’hui en Catalogne ({dates})",
+          "metaDescription": "Découvrez que faire aujourd’hui en Catalogne : concerts, festivals, sorties avec enfants, activités gratuites et idées de dernière minute.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Désolé, il n’y a pas d’événements aujourd’hui en Catalogne. Consultez les propositions pour demain ou cette semaine, ou filtrez par commune et catégorie."
+        },
+        "dema": {
+          "title": "Que faire demain en Catalogne",
+          "subTitle": "Découvrez que faire demain en Catalogne et préparez votre temps libre. Concerts, théâtre, expositions, activités en famille et idées pour tous les goûts.",
+          "metaTitle": "Que faire demain en Catalogne ({dates})",
+          "metaDescription": "Découvrez que faire demain en Catalogne : concerts, sorties en famille, balades, fêtes et autres idées pour organiser votre journée à l’avance.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Désolé, il n’y a pas d’événements demain en Catalogne. Consultez l’agenda pour aujourd’hui ou cette semaine, ou explorez différentes catégories et communes."
+        },
+        "setmana": {
+          "title": "Que faire cette semaine en Catalogne",
+          "subTitle": "Découvrez que faire cette semaine en Catalogne avec des idées culturelles pour chaque jour. Concerts, expositions, théâtre, fêtes et sorties en famille.",
+          "metaTitle": "Que faire cette semaine en Catalogne ({dates})",
+          "metaDescription": "L’agenda culturel de cette semaine en Catalogne : concerts, festivals, balades, ateliers, activités pour enfants et autres sorties.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Désolé, il n’y a pas d’événements cette semaine en Catalogne. Essayez une autre semaine, ajustez les filtres ou explorez différentes régions du territoire."
+        },
+        "capDeSetmana": {
+          "title": "Que faire ce week-end en Catalogne",
+          "subTitle": "Découvrez que faire ce week-end en Catalogne et profitez-en pleinement. Concerts, fêtes populaires, sorties avec enfants, balades et escapades.",
+          "metaTitle": "Que faire ce week-end en Catalogne ({dates})",
+          "metaDescription": "Les meilleures sorties pour ce week-end en Catalogne : concerts, fêtes populaires, activités pour enfants, balades et idées de loisirs.",
+          "canonical": "{siteUrl}/{byDate}",
+          "notFound": "Désolé, il n’y a pas d’événements ce week-end en Catalogne. Consultez d’autres week-ends, explorez d’autres catégories ou ciblez une zone précise."
+        }
+      },
+      "fallback": {
+        "title": "Que faire en Catalogne. Agenda {year}",
+        "subTitle": "Agenda culturel de la Catalogne en {month}, avec concerts, expositions, théâtre, activités en famille, fêtes populaires et bien d’autres idées de sorties.",
+        "metaTitle": "Découvrez les événements en Catalogne en {year}",
+        "metaDescription": "Explorez l’agenda culturel de la Catalogne : concerts, balades, festivals, sorties avec enfants et activités gratuites tout au long de {year}.",
+        "notFound": "Désolé, il n’y a pas d’événements disponibles en Catalogne en ce moment. Essayez d’autres dates, catégories ou communes pour découvrir de nouvelles sorties culturelles."
+      }
+    }
+  },
+  "Pages": {
+    "SitemapMonth": {
+      "metaTitle": "Archives {placeOf} en {month} {year} - Esdeveniments.cat",
+      "metaDescription": "Découvrez ce qui s’est passé {placeIn} en {month} {year}. Théâtre, cinéma, musique, art et bien d’autres raisons de continuer à explorer - Archives - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Accueil",
+        "archive": "Archives"
+      },
+      "itemListTitle": "Événements {placeIn} - {month} {year}",
+      "itemListDescription": "Sélection d’événements culturels {placeIn} en {month} {year}",
+      "collectionTitle": "Archives {placeOf} - {month} {year}",
+      "collectionDescription": "Événements culturels qui ont eu lieu {placeIn} en {month} {year}",
+      "collectionFallbackDescription": "Collection d’événements culturels",
+      "headerTitle": "Archives {placeOf} - {month} {year}",
+      "headerCount": "{count} événements culturels répertoriés",
+      "headerEmpty": "Aucun événement trouvé pour cette période",
+      "srList": "Liste d’événements",
+      "footerExplore": "Envie d’explorer plus d’événements {placeIn} ?",
+      "footerViewArchives": "Voir toutes les archives",
+      "footerCurrentEvents": "Événements actuels"
+    },
+    "SitemapTown": {
+      "metaTitle": "Archives. Découvrez tout ce qui s’est passé {placeIn} - Esdeveniments.cat",
+      "metaDescription": "Découvrez tout ce qui s’est passé {placeIn} année après année. Les meilleures sorties culturelles pour profiter pleinement {placeOf} - Archives - Esdeveniments.cat",
+      "breadcrumbs": {
+        "home": "Accueil",
+        "archive": "Archives"
+      },
+      "collectionTitle": "Archives {placeOf}",
+      "collectionDescription": "Historique des événements culturels {placeIn} classé par années et par mois",
+      "mainEntityName": "Archives historiques {placeOf}",
+      "mainEntityDescription": "Collection d’événements culturels {placeIn}",
+      "aboutTitle": "À propos de ces archives",
+      "aboutBody": "Ces archives rassemblent les événements culturels organisés {placeIn} par ordre chronologique. Chaque mois comprend théâtre, musique, art, festivals et autres activités culturelles.",
+      "quickNavTitle": "Navigation rapide",
+      "quickNavBody": "Utilisez les liens pour accéder directement à un mois précis. Les années les plus récentes apparaissent en premier pour faciliter la consultation."
+    },
+    "FestaMajor": {
+      "metaTitle": "Festa Major {placeOf} {year} : programme et animations",
+      "metaDescription": "Programme de la Festa Major {placeOf} {year} : dates, horaires et tous les événements jour par jour. Concerts, défilés, correfocs et bien plus.",
+      "regionMetaTitle": "Festes majors {placeOf} {year} : calendrier par commune",
+      "regionMetaDescription": "Quand a lieu la festa major de chaque commune {placeOf} ? Calendrier {year} des festes majors avec le programme complet.",
+      "title": "Festa Major {placeOf} {year}",
+      "regionTitle": "Festes majors {placeOf} {year}",
+      "breadcrumbHome": "Accueil",
+      "breadcrumbAll": "Festes majors",
+      "intro": "{count, plural, one {# événement} other {# événements}} au programme.",
+      "introDates": "Dates : {dates}.",
+      "introFestaDates": "Dates de la {festa} : {dates}.",
+      "previousYearNotice": "Nous n’avons pas encore le programme complet de {currentYear}. Voici celui de {year}.",
+      "announcedTitle": "Programme {year}",
+      "empty": "Nous n’avons pas encore d’événements pour la Festa Major {placeOf}. Dès que le programme sera publié, vous le trouverez ici.",
+      "unavailable": "Impossible de charger le programme pour le moment. Veuillez réessayer dans quelques instants.",
+      "festesTitle": "Festes majors {placeOf}",
+      "ownFesta": "Festa Major {placeOf}",
+      "programmeTitle": "Programme",
+      "previousTitle": "Festa major {year}",
+      "previousLink": "Voir les événements",
+      "moreTitle": "Cela pourrait aussi vous intéresser",
+      "townAgenda": "Agenda {placeOf}",
+      "regionHub": "Festes majors {placeOf}",
+      "allFestes": "Calendrier des festes majors de Catalogne",
+      "regionIntro": "{count, plural, one {# commune} other {# communes}} avec une festa major au calendrier.",
+      "regionEmpty": "Nous n’avons pas encore de festes majors {placeOf}.",
+      "lastYearDates": "dates {year}"
+    },
+    "FestesMajors": {
+      "metaTitle": "Festes majors de Catalogne {year} : calendrier mois par mois",
+      "metaDescription": "Quand a lieu la festa major de chaque ville ou village ? Calendrier {year} des festes majors de Catalogne, mois par mois, avec tous les programmes.",
+      "title": "Festes majors de Catalogne {year}",
+      "intro": "{count, plural, one {# commune} other {# communes}}, classées par date. Si le programme {year} n’est pas encore publié, nous affichons les dates de l’an dernier.",
+      "weekendTitle": "Ce week-end",
+      "nowTitle": "Ces jours-ci",
+      "monthsTitle": "Par mois",
+      "calendarTitle": "Toute l’année {year}, mois par mois",
+      "regionsTitle": "Par comarques",
+      "festivitiesTitle": "Fêtes de saison",
+      "empty": "Nous n’avons pas encore de festes majors au calendrier.",
+      "unavailable": "Impossible de charger le calendrier pour le moment. Veuillez réessayer dans quelques instants.",
+      "lead": "Défilés, correfocs, géants, concerts et habaneras : chaque commune célèbre sa festa major, et il y en a toute l’année. Cherchez la vôtre ou découvrez-en de nouvelles."
+    },
+    "Festivity": {
+      "intro": "{count, plural, one {# commune a déjà annoncé sa date.} other {# communes ont déjà annoncé leurs dates.}}",
+      "upcomingTitle": "Prochaines dates",
+      "noUpcoming": "Aucune date n’a encore été annoncée. Les communes les publient généralement à partir de {type, select, carnaval {janvier} other {novembre}}.",
+      "pendingTitle": "En attente de confirmation",
+      "pendingIntro": "Ces communes l’ont célébré {type, select, carnaval {lors du dernier Carnaval} other {à Noël dernier}}, mais n’ont pas encore annoncé la date. Pour vous donner une idée, voici celle {type, select, carnaval {du dernier Carnaval} other {de Noël dernier}}.",
+      "pastTitle": "Déjà passées",
+      "empty": "Nous n’avons aucune date pour le moment. Revenez vers la fin {type, select, carnaval {janvier} other {novembre}}.",
+      "unavailable": "Impossible de charger le calendrier pour le moment. Veuillez réessayer dans quelques instants.",
+      "moreTitle": "Cela pourrait aussi vous intéresser",
+      "catalunyaAgenda": "Agenda de la Catalogne",
+      "types": {
+        "firesDeNadal": {
+          "name": "Marchés de Noël",
+          "title": "Marchés de Noël en Catalogne {year}",
+          "metaTitle": "Marchés de Noël {year} en Catalogne : dates par commune",
+          "metaDescription": "Quand a lieu le marché de Noël de chaque commune ? Calendrier des foires et marchés de Noël et de Santa Llúcia en Catalogne en {year}, avec dates et horaires.",
+          "eventLink": "Tous les marchés de Noël en Catalogne",
+          "lead": "Tiós, caganers, santons pour la crèche et tourons : de fin novembre jusqu’à l’Épiphanie, les foires de Noël et de Santa Llúcia animent les places. Découvrez quand a lieu celle de votre ville."
+        },
+        "pessebresVivents": {
+          "name": "Crèches vivantes",
+          "title": "Crèches vivantes en Catalogne {year}",
+          "metaTitle": "Crèches vivantes {year} en Catalogne : dates et horaires",
+          "metaDescription": "Où et quand voir les crèches vivantes à Noël ? Calendrier des crèches vivantes de Catalogne {year}, avec les dates, les horaires et les communes.",
+          "eventLink": "Toutes les crèches vivantes en Catalogne",
+          "lead": "Comédiens, animaux et décors grandeur nature : à Noël, de nombreux villages catalans mettent en scène la Nativité. Retrouvez ici les jours et horaires de chaque crèche vivante."
+        },
+        "cavalcadesDeReis": {
+          "name": "Défilés des Rois mages",
+          "title": "Défilés des Rois mages {year} en Catalogne",
+          "metaTitle": "Défilés des Rois mages {year} en Catalogne : horaires par commune",
+          "metaDescription": "À quelle heure passe le défilé des Rois mages dans votre ville ? Horaires des cavalcades des Rois mages {year} en Catalogne, commune par commune.",
+          "eventLink": "Tous les défilés des Rois mages en Catalogne",
+          "lead": "Le soir du 5 janvier, les Rois mages arrivent dans chaque commune accompagnés de leurs pages et de leurs chars. Consultez l’horaire du défilé près de chez vous."
+        },
+        "carnaval": {
+          "name": "Carnaval",
+          "title": "Carnaval {year} en Catalogne",
+          "metaTitle": "Carnaval {year} en Catalogne : défilés et dates par commune",
+          "metaDescription": "Quand a lieu le défilé de Carnaval dans votre ville ? Calendrier du Carnaval {year} en Catalogne : corsos, arrivée du Roi Carnestoltes et enterrement de la sardine, ville par ville.",
+          "eventLink": "Tous les carnavals en Catalogne",
+          "lead": "Costumes, troupes et chars : pour le Carnaval, le Roi Carnestoltes investit les villes et les défilés animent les rues jusqu’à l’enterrement de la sardine. Découvrez les dates près de chez vous."
+        }
+      }
+    }
+  },
+  "Utils": {
+    "EventFallbacks": {
+      "defaultEvent": "Événement",
+      "defaultCulturalEvent": "Événement culturel"
+    },
+    "Validation": {
+      "genericError": "Certains champs comportent des erreurs",
+      "imageRequired": "Ajoutez une image",
+      "titleRequired": "Saisissez un titre",
+      "descriptionRequired": "Saisissez une description",
+      "locationRequired": "Indiquez le lieu",
+      "invalidUrl": "Saisissez un lien valide, par exemple exemple.com",
+      "invalidEmail": "Saisissez une adresse e-mail valide",
+      "townRequired": "Choisissez une commune",
+      "invalidPrice": "Saisissez un prix supérieur à 0, comme 10 ou 12,50. Si c’est gratuit, choisissez « Gratuit »."
+    },
+    "SearchQuery": {
+      "forSearch": "pour la recherche"
+    },
+    "EventStatus": {
+      "past": "Événement terminé",
+      "live": "En cours",
+      "upcoming": "À venir",
+      "endsInDays": "Se termine dans {count} jours",
+      "endsInHours": "Se termine dans {count} heures",
+      "endsInOneDay": "Se termine dans 1 jour",
+      "endsInOneHour": "Se termine dans 1 heure",
+      "endsSoon": "Se termine bientôt",
+      "startsInDays": "Commence dans {count} jours",
+      "startsInHours": "Commence dans {count} heures",
+      "startsInOneDay": "Commence dans 1 jour",
+      "startsInOneHour": "Commence dans 1 heure",
+      "startsToday": "Commence aujourd’hui",
+      "today": "Aujourd’hui",
+      "endedOn": "Terminé le",
+      "dateRangePast": "Du {start} au {end}"
+    },
+    "EventStatusBadge": {
+      "ariaLabelPrefix": "Statut :",
+      "past": "Terminé",
+      "live": "En cours"
+    },
+    "EventTime": {
+      "consult": "Consulter les horaires",
+      "startsAt": "Commence à {time}",
+      "range": "De {start} à {end}",
+      "simpleRange": "{start} - {end}"
+    },
+    "OpeningHours": {
+      "openNow": "Ouvert maintenant",
+      "closesAt": "Ferme à {time}",
+      "closedNow": "Fermé maintenant",
+      "opensAt": "Ouvre à {time}",
+      "unknown": "Horaires non disponibles",
+      "overnight": "(nuit)",
+      "inferred": "(probable)",
+      "confirmed": "(confirmé)",
+      "openConfirmed": "Ouvert (confirmé)",
+      "openProbable": "Ouvert (probable)",
+      "closed": "Fermé",
+      "unconfirmed": "Horaires non confirmés"
+    },
+    "EventCopy": {
+      "sentence": {
+        "dateRange": "du {start} au {end}",
+        "dateSingle": "le {nameDay} {start}",
+        "sentence": "« {title} » a lieu {date}{time}{place}.",
+        "timeSuffix": ", à {time}",
+        "timeSuffixRange": ", de {start} à {end}",
+        "placeSuffix": ", {place}"
+      }
+    },
+    "StringHelpers": {
+      "articles": {
+        "el": "Le",
+        "la": "La",
+        "l": "L’",
+        "els": "Les",
+        "les": "Les"
+      },
+      "prepositions": {
+        "a": "à",
+        "al": "au",
+        "als": "aux",
+        "aLa": "à la",
+        "aLes": "aux",
+        "aL": "à l’",
+        "de": "de",
+        "del": "du",
+        "dels": "des",
+        "deLa": "de la",
+        "deLes": "des",
+        "deL": "de l’",
+        "per": "par",
+        "pel": "par le",
+        "perLa": "par la"
+      }
+    },
+    "Calendar": {
+      "moreInfoText": "Plus d’informations : {url}",
+      "dateRange": "Du {start} au {end}",
+      "dateSingle": "À partir du {start}",
+      "loading": "Chargement...",
+      "button": "Ajouter au calendrier",
+      "buttonShort": "Calendrier",
+      "providers": {
+        "google": "Google Calendar",
+        "outlook": "Outlook",
+        "other": "Autres"
+      },
+      "ariaAdd": "Ajouter à {name}"
+    },
+    "Rss": {
+      "feedTitle": "RSS {site} - {place}",
+      "feedDescription": "RSS {site} {placeOf}",
+      "itemDescription": "{title}\n\n🗓️ {nameDay} {formattedStart}\n\n🏡 {location}, {town}, {region} \n\nℹ️ Plus d’informations disponibles sur notre site web !"
+    }
+  },
+  "Config": {
+    "TopAgenda": {
+      "agendaOf": "Agenda {placeOf}"
+    },
+    "Filters": {
+      "place": "Commune",
+      "category": "Catégorie",
+      "date": "Date",
+      "distance": "Distance",
+      "search": "Rechercher",
+      "price": "Prix"
+    },
+    "Categories": {
+      "festesPopulars": "Fêtes populaires",
+      "firesIMercats": "Foires et marchés",
+      "familiaIInfants": "Famille et enfants",
+      "musica": "Concerts",
+      "teatre": "Théâtre",
+      "exposicions": "Expositions",
+      "literatura": "Littérature",
+      "tallersIFormacio": "Ateliers et formation",
+      "dansa": "Danse",
+      "salutIBenestar": "Santé et bien-être",
+      "esport": "Sport",
+      "patrimoniCultural": "Patrimoine culturel",
+      "serveisMunicipals": "Services municipaux",
+      "gentGran": "Seniors",
+      "cinema": "Cinéma",
+      "altres": "Autres"
+    },
+    "ByDates": {
+      "today": "Aujourd’hui",
+      "tomorrow": "Demain",
+      "weekend": "Week-end",
+      "week": "Cette semaine",
+      "nextWeek": "Semaine prochaine",
+      "thisMonth": "Ce mois-ci",
+      "nextMonth": "Mois prochain"
+    }
+  },
+  "Sponsor": {
+    "label": "Publicité",
+    "houseAdLabel": "Sponsorisez cet espace",
+    "emptyState": "Annoncez votre activité ici",
+    "cta": "Sponsorisez cet espace",
+    "houseAd": {
+      "pricing": "Si vous voyez ceci, vos concurrents aussi",
+      "pricingSub": "Réservez l’unique espace publicitaire de votre ville",
+      "reach": "Les habitants de votre ville cherchent des sorties",
+      "reachSub": "Ils cherchent où manger, acheter et sortir. Donnez-leur la réponse.",
+      "exclusive": "Rien que vous. Sans concurrence.",
+      "exclusiveSub": "Aucune autre annonce ne rivalise avec la vôtre. Tout l’espace est à vous.",
+      "local": "La seule annonce dans votre ville",
+      "localSub": "Apparaissez quand on cherche où manger, acheter ou sortir",
+      "intent": "Un public déjà prêt à sortir",
+      "intentSub": "Ils cherchent quoi faire et où aller. Donnez-leur la réponse.",
+      "simple": "Qui s’affiche ici gagne des clients",
+      "simpleSub": "L’agenda de votre ville, consulté par ceux qui cherchent où sortir",
+      "results": "Où vos clients vous trouvent-ils ?",
+      "resultsSub": "Ici même, quand ils cherchent quoi faire dans votre ville",
+      "seasonal": "C’est la fête dans votre ville ?",
+      "seasonalSub": "Annoncez-vous au moment où tout le monde sort"
+    }
+  },
+  "Sponsorship": {
+    "meta": {
+      "title": "Sponsorisez votre ville | Esdeveniments.cat",
+      "description": "Votre commerce mis en avant sur l’agenda des événements de votre ville. Espace exclusif sans concurrents."
+    },
+    "hero": {
+      "title": "Apparaissez quand on cherche quoi faire dans votre ville",
+      "subtitle": "Chaque jour, les habitants de votre région consultent l’agenda des événements pour décider où sortir. Un espace exclusif pour votre activité, sans concurrents.",
+      "stats": "Un seul annonceur par ville · Dès 0,50 €/jour · Garantie satisfait ou remboursé",
+      "cta": "Commencer dès 5 €"
+    },
+    "benefits": {
+      "title": "Pourquoi sponsoriser avec nous ?",
+      "targeted": {
+        "title": "Un public déjà prêt à sortir",
+        "description": "Vous apparaissez quand les visiteurs cherchent quoi faire dans leur ville. Vous touchez des personnes qui veulent déjà sortir et cherchent des idées."
+      },
+      "affordable": {
+        "title": "Moins d’1 € par jour et par ville",
+        "description": "Une annonce locale sur Google coûte plus de 50 €/mois et s’affiche à côté de vos concurrents. Ici, dès 0,50 €/jour, tout l’espace est à vous."
+      },
+      "visibility": {
+        "title": "Une seule annonce par ville",
+        "description": "Tout l’espace publicitaire est réservé à votre établissement. Aucun concurrent n’apparaît à côté. Quand on cherche quoi faire, c’est vous qu’on voit."
+      }
+    },
+    "pricing": {
+      "title": "Des tarifs simples et transparents",
+      "subtitle": "Sans engagement ni renouvellement automatique. Pas satisfait dans les 7 jours ? Nous vous remboursons intégralement.",
+      "popular": "Le plus populaire",
+      "cta": "Choisir",
+      "perDay": "{price}/jour",
+      "savings": "Économisez {percent} %",
+      "guarantee": "Garantie satisfait ou remboursé 7 jours · Sans renouvellement automatique · Paiement sécurisé par Stripe",
+      "plans": {
+        "7days": {
+          "name": "7 jours",
+          "description": "Idéal pour les longs week-ends ou les jours fériés"
+        },
+        "14days": {
+          "name": "14 jours",
+          "description": "Bonne visibilité pendant les périodes de forte activité"
+        },
+        "30days": {
+          "name": "30 jours",
+          "description": "Visibilité maximale pour votre commerce local"
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "Comment ça marche ?",
+      "steps": {
+        "step1": {
+          "title": "Choisissez où apparaître",
+          "description": "Sélectionnez la ville ou la comarque ainsi que la durée souhaitée"
+        },
+        "step2": {
+          "title": "Finalisez le paiement",
+          "description": "Saisissez les informations de votre établissement et payez en toute sécurité avec Stripe"
+        },
+        "step3": {
+          "title": "Importez votre bannière",
+          "description": "Après le paiement, vous pourrez envoyer l’image de votre annonce"
+        },
+        "step4": {
+          "title": "Vérification et activation",
+          "description": "En moins de 24 h ouvrées, votre annonce apparaîtra sur la page de la ville ou de la comarque choisie"
+        }
+      }
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "items": {
+        "faq1": {
+          "question": "Quelle taille doit faire l’image ?",
+          "answer": "Taille optimale : 728×150 px (format 5:1) pour une qualité maximale. Taille minimale : 400×80 px (fonctionne bien, mais moins nette sur grand écran). Les images verticales ou carrées apparaîtront plus petites avec des marges sur les côtés."
+        },
+        "faq2": {
+          "question": "Puis-je choisir la ville ou la comarque ?",
+          "answer": "Oui ! Vous la choisissez avant de payer, afin d’être certain que votre annonce s’affiche exactement là où vous le souhaitez."
+        },
+        "faq3": {
+          "question": "Quand mon annonce est-elle activée ?",
+          "answer": "En moins de 24 h ouvrées après réception du paiement et envoi de votre image."
+        },
+        "faq4": {
+          "question": "Et si je ne suis pas satisfait ?",
+          "answer": "Nous offrons une garantie de satisfaction : si vous n’êtes pas satisfait du service durant les 7 premiers jours, nous vous remboursons. Vous pouvez aussi nous contacter pour modifier l’image ou le lien sans frais supplémentaires."
+        }
+      }
+    },
+    "contact": {
+      "title": "Des questions ?",
+      "description": "Écrivez-nous et nous vous aiderons à choisir la meilleure formule pour votre activité.",
+      "cta": "Nous écrire"
+    },
+    "placeSelector": {
+      "label": "Où souhaitez-vous afficher votre annonce ?",
+      "placeholder": "Rechercher une ville ou une comarque...",
+      "popular": "Populaire",
+      "country": "Catalogne",
+      "region": "Comarque",
+      "city": "Ville",
+      "clear": "Effacer la sélection",
+      "preview": "Vous apparaîtrez sur :",
+      "noResults": "Aucun résultat trouvé",
+      "occupied": "Occupé",
+      "occupiedWithDays": "Occupé · {count, plural, one {# jour restant} other {# jours restants}}",
+      "selectFirst": "Sélectionnez d’abord où vous souhaitez apparaître",
+      "orSpecific": "ou choisissez une zone précise",
+      "catalunya": {
+        "title": "Toute la Catalogne",
+        "subtitle": "Page d’accueil · Visibilité maximale",
+        "badge": "Portée max."
+      }
+    },
+    "checkout": {
+      "processing": "Traitement en cours...",
+      "error": "Une erreur est survenue. Veuillez réessayer.",
+      "successTitle": "Paiement effectué !",
+      "successSubtitle": "Dernière étape : importez l’image de votre bannière. Sans image, nous ne pouvons pas activer le parrainage."
+    },
+    "upload": {
+      "title": "Importez votre bannière",
+      "subtitle": "Elle s’affichera sur la page du lieu que vous avez choisi.",
+      "place": "Emplacement",
+      "previewAlt": "Aperçu de l’image",
+      "cta": "Importer l’image",
+      "uploading": "Envoi en cours...",
+      "progress": "{percent} % effectué",
+      "changeCta": "Changer l’image",
+      "doneCta": "Terminer",
+      "dropzone": {
+        "title": "Glissez l’image ici ou cliquez pour sélectionner",
+        "formats": "Format horizontal • JPG ou PNG",
+        "optimal": "Optimal : 728×150 px",
+        "minimum": "Min. : 400×80 px"
+      },
+      "guidelines": {
+        "title": "Recommandations pour l’image :",
+        "recommended": "Taille optimale : {width}×{height} px (format 5:1)",
+        "horizontal": "Format bannière horizontale allongée",
+        "formats": "Formats : JPG ou PNG",
+        "minimum": "Minimum accepté : 400×80 px"
+      },
+      "validation": {
+        "warning": "Avertissement concernant l’image :",
+        "tooSmall": "L’image est trop petite (minimum {minWidth}×{minHeight} px). Elle risque de paraître floue.",
+        "tooTall": "L’image est trop haute. Elle apparaîtra petite avec de l’espace vide sur les côtés.",
+        "wrongRatio": "Les proportions ({current}:1) ne sont pas idéales. Nous recommandons ~{recommended}:1 (horizontal large).",
+        "canContinue": "Vous pouvez tout de même continuer, mais le rendu risque de ne pas être optimal.",
+        "dimensions": "Dimensions : {width}×{height} px (format {ratio}:1)"
+      },
+      "success": {
+        "title": "Image envoyée avec succès.",
+        "saved": "L’image est bien associée à votre paiement. Nous allons la vérifier et activer votre annonce.",
+        "notSaved": "L’image a été envoyée, mais un problème est survenu lors de l’enregistrement. Veuillez nous contacter avec ce lien.",
+        "imageUrl": "Lien de l’image"
+      },
+      "errors": {
+        "notPaid": "Impossible d’envoyer l’image car le paiement n’apparaît pas comme finalisé.",
+        "invalidSession": "Nous n’avons pas pu vérifier votre paiement. Veuillez réessayer ou nous contacter.",
+        "missingFields": "Il manque des informations pour envoyer l’image. Veuillez réessayer.",
+        "tooLarge": "L’image dépasse la taille maximale autorisée. Réduisez-la et réessayez.",
+        "generic": "Impossible d’envoyer l’image. Veuillez réessayer.",
+        "invalidImage": "Le fichier n’est pas une image valide."
+      }
+    },
+    "uploadPage": {
+      "meta": {
+        "title": "Importer la bannière | Esdeveniments.cat",
+        "description": "Importez l’image de votre bannière pour finaliser le parrainage."
+      },
+      "missingSessionTitle": "Paiement introuvable",
+      "missingSessionSubtitle": "Revenez à la page des tarifs et recommencez l’opération.",
+      "backToPricing": "Retour aux tarifs",
+      "goBack": "Retour"
+    },
+    "successPage": {
+      "meta": {
+        "title": "Parrainage finalisé | Esdeveniments.cat",
+        "description": "Nous avons bien reçu vos informations et l’image de votre bannière."
+      },
+      "title": "Tout est prêt !",
+      "subtitle": "Nous avons bien reçu votre image. Nous nous occupons maintenant du reste.",
+      "nextTitle": "Et maintenant ?",
+      "next1": "1. Nous vérifierons la bannière et le lien pour nous assurer que tout est conforme.",
+      "next2": "2. En moins de 24 h ouvrées, votre annonce apparaîtra sur la page du lieu choisi.",
+      "backHome": "Retour à l’accueil",
+      "backPatrocina": "Retour à Sponsoriser"
+    },
+    "cancelPage": {
+      "meta": {
+        "title": "Paiement annulé | Esdeveniments.cat",
+        "description": "Le paiement n’a pas été finalisé."
+      },
+      "title": "Paiement annulé",
+      "subtitle": "Votre paiement n’a pas été finalisé. Vous pouvez réessayer quand vous le souhaitez.",
+      "note1": "Aucun montant n’a été débité.",
+      "note2": "Si vous avez la moindre question, écrivez-nous et nous vous aiderons.",
+      "tryAgain": "Réessayer",
+      "backHome": "Retour à l’accueil"
+    },
+    "backToHome": "Retour à l’accueil"
+  },
+  "Auth": {
+    "login": {
+      "title": "Se connecter",
+      "subtitle": "Accédez à votre compte pour gérer vos événements",
+      "submit": "Se connecter",
+      "noAccount": "Vous n’avez pas de compte ?",
+      "registerLink": "Créer un compte",
+      "magicLinkSent": "Vérifiez votre boîte mail pour le lien de connexion"
+    },
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Rejoignez la communauté et publiez vos événements",
+      "submit": "Créer un compte",
+      "hasAccount": "Vous avez déjà un compte ?",
+      "loginLink": "Se connecter",
+      "passwordHint": "Minimum 8 caractères"
+    },
+    "fields": {
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "name": "Nom (facultatif)",
+      "passwordShow": "Afficher le mot de passe",
+      "passwordHide": "Masquer le mot de passe"
+    },
+    "errors": {
+      "invalid-credentials": "Adresse e-mail ou mot de passe incorrect.",
+      "invalid-email": "Cette adresse e-mail ne semble pas valide.",
+      "email-taken": "Un compte existe déjà avec cette adresse e-mail.",
+      "weak-password": "Le mot de passe doit contenir au moins 8 caractères.",
+      "network-error": "Vous semblez hors ligne. Vérifiez votre connexion et réessayez.",
+      "server-error": "Le service est momentanément indisponible. Veuillez réessayer dans quelques instants.",
+      "not-configured": "L’authentification n’est pas encore configurée.",
+      "rate-limited": "Trop de tentatives. Veuillez patienter un instant avant de réessayer.",
+      "rate-limited-seconds": "Trop de tentatives. Réessayez dans {seconds}s.",
+      "email-not-verified": "Veuillez vérifier votre adresse e-mail avant de vous connecter.",
+      "account-locked": "Votre compte est bloqué. Veuillez contacter l’assistance.",
+      "unknown": "Impossible de terminer l’action. Veuillez réessayer."
+    },
+    "actions": {
+      "forgotPassword": "Mot de passe oublié ?",
+      "forgotPasswordSent": "Nous avons envoyé un lien de réinitialisation à {email}.",
+      "resendVerification": "Renvoyer l’e-mail de vérification",
+      "verificationSent": "E-mail de vérification renvoyé à {email}.",
+      "contactSupport": "Contacter l’assistance"
+    },
+    "meta": {
+      "loginTitle": "Se connecter | Esdeveniments.cat",
+      "loginDescription": "Connectez-vous à votre compte Esdeveniments.cat",
+      "registerTitle": "Créer un compte | Esdeveniments.cat",
+      "registerDescription": "Créez votre compte Esdeveniments.cat pour publier des événements",
+      "verifyEmailTitle": "Vérifier l’e-mail | Esdeveniments.cat",
+      "verifyEmailDescription": "Vérifiez votre adresse e-mail pour activer votre compte Esdeveniments.cat",
+      "resetPasswordTitle": "Réinitialiser le mot de passe | Esdeveniments.cat",
+      "resetPasswordDescription": "Réinitialisez le mot de passe de votre compte Esdeveniments.cat"
+    },
+    "verification": {
+      "checkEmailTitle": "Vérifiez votre boîte mail",
+      "checkEmailDescription": "Nous avons envoyé un e-mail de vérification à {email}. Cliquez sur le lien pour activer votre compte.",
+      "resend": "Renvoyer l’e-mail de vérification",
+      "resent": "E-mail envoyé !",
+      "successTitle": "Adresse e-mail vérifiée !",
+      "successDescription": "Votre compte a bien été vérifié. Vous pouvez maintenant vous connecter.",
+      "errorTitle": "Échec de la vérification",
+      "errorDescription": "Nous n’avons pas pu vérifier votre adresse e-mail. Le lien a peut-être expiré ou a déjà été utilisé.",
+      "invalidToken": "Lien invalide",
+      "invalidTokenDescription": "Le lien de vérification n’est pas valide. Veuillez vous réinscrire ou demander un nouvel e-mail de vérification."
+    },
+    "resetPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "subtitle": "Saisissez votre nouveau mot de passe",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "submit": "Modifier le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "successTitle": "Mot de passe modifié !",
+      "successDescription": "Votre mot de passe a bien été mis à jour. Vous pouvez maintenant vous connecter.",
+      "errorTitle": "Échec de la réinitialisation",
+      "errorDescription": "Nous n’avons pas pu réinitialiser votre mot de passe. Le lien a peut-être expiré ou a déjà été utilisé.",
+      "invalidToken": "Lien invalide",
+      "invalidTokenDescription": "Le lien de réinitialisation du mot de passe n’est pas valide. Veuillez en demander un nouveau."
+    }
+  }
+}

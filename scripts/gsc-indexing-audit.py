@@ -10,6 +10,8 @@ Pulls signals the GSC UI surfaces but the API exposes only partially:
 
 Auth: ADC. Set up via `gcloud auth application-default login --scopes=...webmasters.readonly`.
 """
+import json
+import os
 import sys
 import re
 import time
@@ -22,6 +24,15 @@ from googleapiclient.errors import HttpError
 
 SITE = "sc-domain:esdeveniments.cat"
 QUOTA_PROJECT = "esdeveniments-3"
+
+with open(
+    os.path.join(os.path.dirname(__file__), "..", "config", "locales.json"),
+    encoding="utf-8",
+) as _locales_file:
+    _SUPPORTED_LOCALES = list(json.load(_locales_file)["locales"].keys())
+LOCALE_PREFIX_RE = re.compile(
+    rf"^({'|'.join(map(re.escape, _SUPPORTED_LOCALES))})(/|$)"
+)
 
 TODAY = datetime.now(timezone.utc)
 END = (TODAY - timedelta(days=3)).strftime("%Y-%m-%d")
@@ -44,8 +55,8 @@ def classify(url: str) -> str:
         path = url.split("://", 1)[1].split("/", 1)[1]
     except IndexError:
         return "homepage"
-    # strip locale prefix (ca | es | en)
-    if re.match(r"^(ca|es|en)(/|$)", path):
+    # strip locale prefix (config/locales.json)
+    if LOCALE_PREFIX_RE.match(path):
         path = path.split("/", 1)[1] if "/" in path else ""
     if not path or path == "":
         return "homepage"
