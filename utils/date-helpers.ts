@@ -141,17 +141,13 @@ export const getFormattedDate = (
   const endDateConverted = convertTZ(endDate, "Europe/Madrid");
   const duration = calculateDetailedDurationISO8601(startDate, endDate);
 
-  let isMultipleDays = false;
-  let isSameMonth = false;
-  let isSameYear = false;
   const startDay = startDateConverted.getDate();
   const endDay = endDateConverted.getDate();
-
-  if (startDay !== endDay) isMultipleDays = true;
-  if (startDateConverted.getMonth() === endDateConverted.getMonth())
-    isSameMonth = true;
-  if (startDateConverted.getFullYear() === endDateConverted.getFullYear())
-    isSameYear = true;
+  const isSameMonth =
+    startDateConverted.getMonth() === endDateConverted.getMonth();
+  const isSameYear =
+    startDateConverted.getFullYear() === endDateConverted.getFullYear();
+  const isMultipleDays = !(isSameYear && isSameMonth && startDay === endDay);
 
   const weekDay = startDateConverted.getDay();
   const month = startDateConverted.getMonth();
