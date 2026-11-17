@@ -207,10 +207,17 @@ export default async function proxy(request: NextRequest) {
 // no locale or CSP), the next.config rewrites (/openapi.json, /.well-known/mcp)
 // and Sentry's tunnelRoute (/monitoring, a next.config rewrite that runs after
 // Proxy; rewriting it to /ca/monitoring dropped every browser error report).
-// Anchored entries ($ or a trailing /) leave place slugs with the same prefix
-// alone.
+// Every entry is anchored ($ or a trailing /) and names a real route or folder,
+// so only those skip Proxy. A bare prefix (`sitemap.*\.xml`, `static`) also
+// skipped /sitemap_index.xml and /staticfoo. Nothing routes those, so Next
+// matched app/[locale] with that text as the locale: requireLocale 404s it, but
+// Next then stores that 404 in the page cache for a year, one entry per URL.
+// Let Proxy answer them. Add a new machine-readable route here, anchored.
+// The IndexNow key is spelled out because a matcher can't import INDEXNOW_KEY;
+// test/proxy-matcher.test.ts checks it, and every app/server-*.xml folder,
+// against the matcher.
 export const config = {
   matcher: [
-    "/((?!_next|favicon\\.ico|robots\\.txt|sitemap.*\\.xml|server-.*\\.xml|rss\\.xml|llms\\.txt|agent\\.txt|pricing\\.md|ads\\.txt|[0-9a-f]{32}\\.txt|static|styles|\\.well-known|manifest\\.webmanifest|mcp|agent-view|monitoring$|ask$|openapi(?:\\.json)?$|index\\.md$|docs/|webmcp\\.js$).*)",
+    "/((?!_next/|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|sitemap-(?:events|places)/|server-(?:festa-major-|google-news-|news-|place-|profile-|static-)?sitemap\\.xml$|rss\\.xml$|llms\\.txt$|agent\\.txt$|pricing\\.md$|ads\\.txt$|f47260be292a3281b5da5b89815e6ed4\\.txt$|static/|\\.well-known/|manifest\\.webmanifest$|mcp$|agent-view$|monitoring$|ask$|openapi(?:\\.json)?$|index\\.md$|docs/llms\\.txt$|webmcp\\.js$).*)",
   ],
 };
