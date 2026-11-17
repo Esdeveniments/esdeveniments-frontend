@@ -19,6 +19,12 @@ function stripMarkdown(text: string): string {
     .replace(/\*+|__/g, "");
 }
 
+/** The same words in the same order, ignoring case, accents and punctuation. */
+function sameWords(a: string, b: string): boolean {
+  const words = tokenize(a).join(" ");
+  return words !== "" && words === tokenize(b).join(" ");
+}
+
 /** True when `segment` is a short heading that repeats the event title. */
 function isTitleEcho(segment: string, title: string): boolean {
   const trimmed = segment.trim();
@@ -73,16 +79,17 @@ export function descriptionToPlainText(description: string): string {
 /**
  * An event description as one line of plain text, for snippets: no HTML or
  * markdown, no leading heading line that repeats the title, whitespace
- * collapsed. Not truncated.
+ * collapsed, and "" when only the title is left. Not truncated.
  */
 export function descriptionToPlainLine(
   description: string | null | undefined,
   title: string,
 ): string {
   if (!description) return "";
-  return dropTitleEcho(descriptionToPlainText(description), title)
+  const line = dropTitleEcho(descriptionToPlainText(description), title)
     .replace(/\s+/g, " ")
     .trim();
+  return sameWords(line, title) ? "" : line;
 }
 
 /**

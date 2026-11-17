@@ -510,6 +510,25 @@ describe("getFormattedDate", () => {
     expect(result.formattedEnd).toBe("31 de diciembre de 2025");
   });
 
+  it.each([
+    ["ca", "9 de desembre del 2024", "31 de desembre del 2026"],
+    ["es", "9 de diciembre de 2024", "31 de diciembre de 2026"],
+    ["en", "December 9, 2024", "December 31, 2026"],
+  ] as const)(
+    "keeps both years when a %s range spans the same month of different years",
+    (locale, formattedStart, formattedEnd) => {
+      const result = getFormattedDate(
+        "2024-12-09T12:00:00.000Z",
+        "2026-12-31T12:00:00.000Z",
+        locale
+      );
+
+      expect(result.isMultipleDays).toBe(true);
+      expect(result.formattedStart).toBe(formattedStart);
+      expect(result.formattedEnd).toBe(formattedEnd);
+    }
+  );
+
   it("includes year for single-day dates in English", () => {
     const result = getFormattedDate("2025-12-19T12:00:00.000Z", undefined, "en");
 

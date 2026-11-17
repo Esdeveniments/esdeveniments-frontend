@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildEventExcerpt, descriptionToPlainText } from "@utils/event-excerpt";
+import {
+  buildEventExcerpt,
+  descriptionToPlainLine,
+  descriptionToPlainText,
+} from "@utils/event-excerpt";
 import { NEWS_EVENT_EXCERPT_MAX_LENGTH } from "@utils/constants";
 
 // Real descriptions from a Barcelona weekend article (Nov 2026), cut at 700 chars.
@@ -107,9 +111,34 @@ describe("buildEventExcerpt", () => {
     ).toBe("Fira de Nadal & mercat Visita la web.");
   });
 
-  it("returns short text as is and empty input as an empty string", () => {
+  it("returns short text as is, and nothing for empty input or a description that only repeats the title", () => {
     expect(buildEventExcerpt("Una nit de jazz.", "Jazz al parc")).toBe("Una nit de jazz.");
     expect(buildEventExcerpt(null, "Jazz al parc")).toBe("");
+    expect(buildEventExcerpt("Jazz al parc.", "Jazz al parc")).toBe("");
+  });
+});
+
+describe("descriptionToPlainLine", () => {
+  it("returns the whole description as one plain line, not cut", () => {
+    const { title, description } = events.clementina;
+    const line = descriptionToPlainLine(description, title);
+    expect(line).toMatch(/^Aquest any es commemoren cinquanta anys/);
+    expect(line).not.toMatch(/[\n*]|\s{2,}/);
+    expect(line.length).toBeGreaterThan(NEWS_EVENT_EXCERPT_MAX_LENGTH);
+    expect(line.endsWith("…")).toBe(false);
+  });
+
+  it("is empty when only the title is left", () => {
+    expect(descriptionToPlainLine(undefined, "Correllengua")).toBe("");
+    expect(
+      descriptionToPlainLine("Just Dance (Espai Jove).", "Just Dance (Espai Jove)"),
+    ).toBe("");
+    expect(
+      descriptionToPlainLine("<p>Exposició de MONTSE Brugué</p>", "Exposició de Montse Brugué"),
+    ).toBe("");
+    expect(descriptionToPlainLine("Correllengua 2026 a Vic", "Correllengua")).toBe(
+      "Correllengua 2026 a Vic",
+    );
   });
 });
 
