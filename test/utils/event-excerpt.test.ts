@@ -145,6 +145,13 @@ describe("descriptionToPlainLine", () => {
     expect(descriptionToPlainLine("Concert a 5 €.", "Concert")).toBe("Concert a 5 €.");
   });
 
+  it("keeps a description that adds a word in another script to the title", () => {
+    expect(
+      descriptionToPlainLine("Taller de japonès: 日本語.", "Taller de japonès"),
+    ).toBe("Taller de japonès: 日本語.");
+    expect(descriptionToPlainLine("Концерт", "Концерт")).toBe("");
+  });
+
   it("is empty when it repeats a title made of short words", () => {
     expect(descriptionToPlainLine("U2.", "U2")).toBe("");
     expect(descriptionToPlainLine("AC/DC", "AC/DC")).toBe("");
