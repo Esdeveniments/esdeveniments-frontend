@@ -16,6 +16,8 @@ const NativeShareButton = ({
   date,
   location,
   subLocation,
+  categorySlug,
+  placeSlug,
   onShareClick,
   hideText = false,
 }: NativeShareButtonProps): JSX.Element | null => {
@@ -55,6 +57,8 @@ const NativeShareButton = ({
             method: "native",
             content_type: "event",
             item_id: getShareItemId(url),
+            ...(categorySlug ? { category_slug: categorySlug } : {}),
+            ...(placeSlug ? { place_slug: placeSlug } : {}),
           });
         } catch (error) {
           // Closing the share sheet is not an error.
@@ -67,7 +71,7 @@ const NativeShareButton = ({
         }
       }
     },
-    [onShareClick, title, shareText, url]
+    [onShareClick, title, shareText, url, categorySlug, placeSlug]
   );
 
   if (!isMobile || !navigator.share) {

@@ -11,8 +11,23 @@ vi.mock("@lib/api/promotions", () => ({
 }));
 vi.mock("@utils/i18n-seo", () => ({ getLocaleSafely: async () => "ca" }));
 vi.mock("@components/ui/eventsAround/EventsAroundSection", () => ({
-  default: ({ events }: { events: EventSummaryResponseDTO[] }) => (
-    <ol>{events.map((e) => <li key={e.id}>{e.id}</li>)}</ol>
+  default: ({
+    events,
+    analyticsEventName,
+    analyticsListName,
+  }: {
+    events: EventSummaryResponseDTO[];
+    analyticsEventName?: string;
+    analyticsListName?: string;
+  }) => (
+    <ol
+      data-event-name={analyticsEventName}
+      data-list-name={analyticsListName}
+    >
+      {events.map((e) => (
+        <li key={e.id}>{e.id}</li>
+      ))}
+    </ol>
   ),
 }));
 
@@ -68,7 +83,7 @@ describe("EventMoreEvents", () => {
 });
 
 describe("EventRelatedEvents", () => {
-  it("sends the viewed event's category and place as the clicks' page context", () => {
+  it("sends related_event_click, list impressions, and the viewed event's category and place", () => {
     const html = renderToStaticMarkup(
       <EventRelatedEvents
         events={[ev("a")]}
@@ -78,6 +93,8 @@ describe("EventRelatedEvents", () => {
     );
     expect(html).toContain('data-analytics-category-slug="concerts"');
     expect(html).toContain('data-analytics-place-slug="cardedeu"');
+    expect(html).toContain('data-event-name="related_event_click"');
+    expect(html).toContain('data-list-name="related_events"');
   });
 });
 
@@ -86,12 +103,16 @@ describe("EventPagePromotedEvents", () => {
     expect(await EventPagePromotedEvents({ events: [] })).toBeNull();
   });
 
-  it("tags clicks and views", async () => {
+  it("tags clicks and views, falling back to the event's region slug when citySlug is absent", async () => {
     const html = renderToStaticMarkup(
-      (await EventPagePromotedEvents({ events: [ev("town")], citySlug: "cardedeu" }))!,
+      (await EventPagePromotedEvents({
+        events: [ev("comarca")],
+        fallbackPlaceSlug: "valles-oriental",
+      }))!,
     );
-    expect(html).toContain("<li>town</li>");
+    expect(html).toContain("<li>comarca</li>");
     expect(html).toContain('data-analytics-context="promoted_event_page"');
-    expect(html).toContain('data-analytics-place-slug="cardedeu"');
+    expect(html).toContain('data-analytics-place-slug="valles-oriental"');
+    expect(html).toContain('data-list-name="promoted_event_page"');
   });
 });

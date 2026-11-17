@@ -12,7 +12,12 @@ import type { ShareButtonProps } from "types/props";
 // Phones use the system share sheet; the desktop menu loads on first click.
 const ShareMenu = dynamic(() => import("./ShareMenu"), { ssr: false });
 
-export default function ShareButton({ target, contentType }: ShareButtonProps) {
+export default function ShareButton({
+  target,
+  contentType,
+  categorySlug,
+  placeSlug,
+}: ShareButtonProps) {
   const t = useTranslations("Components.ShareKit");
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -24,8 +29,10 @@ export default function ShareButton({ target, contentType }: ShareButtonProps) {
         method,
         content_type: contentType,
         item_id: getShareItemId(target.url),
+        ...(categorySlug ? { category_slug: categorySlug } : {}),
+        ...(placeSlug ? { place_slug: placeSlug } : {}),
       }),
-    [contentType, target.url],
+    [contentType, target.url, categorySlug, placeSlug],
   );
 
   const closeMenu = useCallback(() => {

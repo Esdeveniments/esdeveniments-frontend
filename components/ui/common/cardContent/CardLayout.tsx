@@ -26,6 +26,7 @@ export default function CardLayout({
     eventId,
     categorySlug = "",
     placeSlug = "",
+    analyticsPosition,
     title,
     image,
     cardDate,
@@ -106,6 +107,9 @@ export default function CardLayout({
             "data-analytics-event-slug": slug || "",
             "data-analytics-event-category-slug": categorySlug,
             "data-analytics-event-place-slug": placeSlug,
+            ...(analyticsPosition !== undefined
+              ? { "data-analytics-position": String(analyticsPosition) }
+              : {}),
             children: title,
           })}
         </Heading>

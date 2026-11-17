@@ -11,6 +11,8 @@ export default function CardContentClient({
   isPriority = false,
   initialIsFavorite = false,
   headingLevel,
+  analyticsEventName,
+  analyticsPosition,
 }: CardContentProps) {
   const tCard = useTranslations("Components.CardContent");
   const tCategories = useTranslations("Config.Categories");
@@ -26,7 +28,8 @@ export default function CardContentClient({
 
   return (
     <CardLayout
-      card={card}
+      card={analyticsPosition !== undefined ? { ...card, analyticsPosition } : card}
+      analyticsEventName={analyticsEventName}
       isPriority={isPriority}
       headingLevel={headingLevel}
       renderLink={(props) => <CardLinkClient {...props} />}

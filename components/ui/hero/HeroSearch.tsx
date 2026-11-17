@@ -170,11 +170,12 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
       sendGoogleEvent("search", {
         context: "hero_search",
         search_term: toSearchTermParam(value),
+        place_slug: place || undefined,
       });
     }
 
     submitSearch(suggestion);
-  }, [searchTerm, submitSearch]);
+  }, [searchTerm, place, submitSearch]);
 
   const submitTypedSearch = useCallback(() => handleSearchSubmit(), [handleSearchSubmit]);
 
@@ -182,6 +183,7 @@ export default function HeroSearch({ subTitle }: { subTitle?: string }) {
     value: searchTerm,
     setValue: setSearchTerm,
     context: "hero_search",
+    placeSlug: place || undefined,
     onSubmit: submitTypedSearch,
     onSelect: handleSearchSubmit,
   });

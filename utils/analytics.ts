@@ -115,8 +115,9 @@ export const sendPlaceRedirectGA = (
     context,
     search_term: toSearchTermParam(term),
     matched_place: placeSlug,
+    place_slug: placeSlug,
   });
-  sendSearchOutcomeGA(context, "place");
+  sendSearchOutcomeGA(context, "place", { placeSlug });
 };
 
 /**
@@ -140,24 +141,45 @@ export const sendSuggestionSelectGA = (
 export const sendSearchOutcomeGA = (
   context: SearchContext,
   outcome: SearchOutcome,
+  slugs?: { placeSlug?: string; categorySlug?: string },
 ): void => {
   pendingAbandon = null;
-  sendGoogleEvent("search_outcome", { context, outcome });
+  const placeSlug = slugs?.placeSlug || undefined;
+  const categorySlug = slugs?.categorySlug || undefined;
+  sendGoogleEvent("search_outcome", {
+    context,
+    outcome,
+    ...(placeSlug ? { place: placeSlug, place_slug: placeSlug } : {}),
+    ...(categorySlug ? { category_slug: categorySlug } : {}),
+  });
 };
 
 // Set while a suggestion list has been shown and no search followed. Closing
 // the list isn't giving up (Esc then Enter still searches), so `abandoned` is
 // sent only when the user leaves. Any outcome or submit clears it, from any
 // component (the hero CTA submits outside the search box).
-let pendingAbandon: SearchContext | null = null;
+let pendingAbandon: {
+  context: SearchContext;
+  placeSlug?: string;
+  categorySlug?: string;
+} | null = null;
 
-export const markSuggestionsShown = (context: SearchContext): void => {
-  pendingAbandon = context;
+export const markSuggestionsShown = (
+  context: SearchContext,
+  placeSlug?: string,
+  categorySlug?: string,
+): void => {
+  pendingAbandon = { context, placeSlug, categorySlug };
 };
 
 /** Sends `abandoned` if a shown list got no search; call when the user leaves. */
 export const flushAbandonedSearch = (): void => {
-  if (pendingAbandon) sendSearchOutcomeGA(pendingAbandon, "abandoned");
+  if (pendingAbandon) {
+    sendSearchOutcomeGA(pendingAbandon.context, "abandoned", {
+      placeSlug: pendingAbandon.placeSlug,
+      categorySlug: pendingAbandon.categorySlug,
+    });
+  }
 };
 
 // A submitted text search waits here until its listing loads, so only searches
@@ -179,11 +201,14 @@ export const markTextSearchSubmitted = (
 export const sendTextSearchOutcomeGA = (
   search: string,
   resultsCount: number,
+  placeSlug?: string,
+  categorySlug?: string,
 ): void => {
   if (pendingTextSearch?.term !== toSearchTermParam(search)) return;
   sendSearchOutcomeGA(
     pendingTextSearch.context,
     resultsCount > 0 ? "events_results" : "events_zero",
+    { placeSlug, categorySlug },
   );
   pendingTextSearch = null;
 };

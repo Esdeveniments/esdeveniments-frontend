@@ -262,6 +262,8 @@ export interface ShareKitEvent {
   dateText: string;
   placeText: string;
   imageUrl: string | null;
+  categorySlug?: string;
+  placeSlug?: string;
 }
 
 /** Where the share kit was opened; sent as utm_campaign and GA `source`. */

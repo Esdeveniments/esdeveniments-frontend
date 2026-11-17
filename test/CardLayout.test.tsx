@@ -136,16 +136,25 @@ describe("CardLayout link", () => {
     expect(html).toContain('data-analytics-event-slug="concert-de-nadal"');
   });
 
-  it("tags the click with the card's category and place", () => {
+  it("tags the click with the card's category, place and slot without visible numbering", () => {
     const html = renderToStaticMarkup(
       <CardLayout
-        card={{ ...baseCard, categorySlug: "concerts", placeSlug: "cardedeu" }}
+        card={{
+          ...baseCard,
+          categorySlug: "concerts",
+          placeSlug: "cardedeu",
+          analyticsPosition: 5,
+        }}
+        analyticsEventName="related_event_click"
         isPriority={false}
         renderLink={renderLink}
       />
     );
+    expect(html).toContain('data-analytics-event-name="related_event_click"');
     expect(html).toContain('data-analytics-event-category-slug="concerts"');
     expect(html).toContain('data-analytics-event-place-slug="cardedeu"');
+    expect(html).toContain('data-analytics-position="5"');
+    expect(html).not.toContain("5. ");
   });
 
   it("puts the title before the date in the DOM", () => {

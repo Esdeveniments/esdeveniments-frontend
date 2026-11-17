@@ -34,6 +34,8 @@ export function useSearchCombobox({
   value,
   setValue,
   context,
+  placeSlug,
+  categorySlug,
   onSubmit,
   onSelect,
 }: UseSearchComboboxOptions): SearchCombobox {
@@ -73,8 +75,8 @@ export function useSearchCombobox({
     : null;
 
   useEffect(() => {
-    if (isOpen) markSuggestionsShown(context);
-  }, [isOpen, context]);
+    if (isOpen) markSuggestionsShown(context, placeSlug, categorySlug);
+  }, [isOpen, context, placeSlug, categorySlug]);
   useEffect(() => {
     window.addEventListener("pagehide", flushAbandonedSearch);
     return () => {
@@ -108,7 +110,10 @@ export function useSearchCombobox({
       onSelect(suggestion);
       return;
     }
-    sendSearchOutcomeGA(context, suggestion.type);
+    sendSearchOutcomeGA(context, suggestion.type, {
+      placeSlug: suggestion.type === "place" ? suggestion.place.value : placeSlug,
+      categorySlug: suggestion.type === "place" ? undefined : categorySlug,
+    });
     if (suggestion.type === "place") {
       onSelect(suggestion);
       return;

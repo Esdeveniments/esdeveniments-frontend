@@ -9,6 +9,7 @@ import SearchRecoveryLinks from "./SearchRecoveryLinks";
 import { EventSummaryResponseDTO, ListEvent } from "types/api/event";
 import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import { useEvents } from "@components/hooks/useEvents";
+import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { HybridEventsListClientProps } from "types/props";
 import { appendSearchQuery } from "@utils/notFoundMessaging";
 import { useSharedUrlFilters } from "@components/context/UrlFiltersContext";
@@ -84,6 +85,8 @@ function HybridEventsListClientContent({
 
   // Check if client-side filters are active
   const hasClientFilters = hasActiveClientFilters(parsed.queryParams);
+  const { isLoading: isPlacesLoading, isError: isPlacesError } =
+    useGetRegionsWithCities(Boolean(search) && !profileSlug);
 
   const { events, totalEvents, hasMore, loadMore, retry, isLoading, isLoadingMore, error } =
     useEvents({
@@ -149,10 +152,12 @@ function HybridEventsListClientContent({
         search_term: toSearchTermParam(search),
         results_count: displayedEvents.length,
         place: place || undefined,
+        place_slug: place || undefined,
         category: category || undefined,
+        category_slug: category || undefined,
         date: date || undefined,
       });
-      sendTextSearchOutcomeGA(search, displayedEvents.length);
+      sendTextSearchOutcomeGA(search, displayedEvents.length, place, category);
     }
   }, [search, isLoading, error, hasClientFilters, displayedEvents.length, place, category, date]);
 
@@ -173,7 +178,9 @@ function HybridEventsListClientContent({
       sendGoogleEvent("zero_results", {
         search_term: search ? toSearchTermParam(search) : undefined,
         place: place || undefined,
+        place_slug: place || undefined,
         category: category || undefined,
+        category_slug: category || undefined,
         date: date || undefined,
         distance: distance || undefined,
         price: price || undefined,
@@ -239,8 +246,14 @@ function HybridEventsListClientContent({
           ? t("resultsCount", { count: totalEvents })
           : ""}
       </p>
-      {isLoading ? (
-        // Show skeleton immediately while fetching filtered events
+      {isLoading ||
+      (showNoEventsFound &&
+        Boolean(search) &&
+        !profileSlug &&
+        isPlacesLoading &&
+        !isPlacesError) ? (
+        // Keep skeleton until place options settle on zero-result searches so
+        // SearchRecoveryLinks never shifts NoEventsFound or fallback cards down.
         <EventsGridSkeleton />
       ) : showNoEventsFound ? (
         // Show no events found message when filters return no results
@@ -267,7 +280,10 @@ function HybridEventsListClientContent({
               // in (styles/globals.css). Filtered results replace a skeleton.
               className={hasClientFilters ? undefined : "list-appended"}
             >
-              <ClientCardsList events={displayedEvents} />
+              <ClientCardsList
+                events={displayedEvents}
+                slotOffset={hasClientFilters ? 0 : initialEvents.length}
+              />
             </div>
           ) : null}
           <LoadMoreButton
@@ -275,7 +291,9 @@ function HybridEventsListClientContent({
               sendGoogleEvent("load_more", {
                 context: "hybrid_events_list",
                 place: place || undefined,
+                place_slug: place || undefined,
                 category: category || undefined,
+                category_slug: category || undefined,
                 date: date || undefined,
                 has_client_filters: hasClientFilters,
                 search_present: Boolean(search),

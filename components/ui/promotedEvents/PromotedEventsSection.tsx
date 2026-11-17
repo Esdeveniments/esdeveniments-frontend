@@ -54,6 +54,8 @@ export async function PromotedEventsRow({
           usePriority={false}
           title={t("title")}
           jsonLdId={`promoted-events-${key}`}
+          analyticsListName="promoted_carousel"
+          analyticsContext={{ placeSlug: key }}
         />
       </PromotedEventsTracker>
     </section>

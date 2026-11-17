@@ -19,6 +19,8 @@ const SHARE_BUTTON_CLASS = "flex-center h-button w-button rounded-full hover:bg-
 export default function CardShareButton({
   slug,
   url,
+  categorySlug,
+  placeSlug,
 }: CardShareButtonProps): JSX.Element {
   const eventUrl = url || `${siteUrl}/e/${slug}`;
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("card_share");
@@ -32,7 +34,13 @@ export default function CardShareButton({
 
   const handleShareClick = (method: string) => {
     trackClick();
-    sendGoogleEvent("share", { method, content_type: "event", item_id: slug });
+    sendGoogleEvent("share", {
+      method,
+      content_type: "event",
+      item_id: slug,
+      ...(categorySlug ? { category_slug: categorySlug } : {}),
+      ...(placeSlug ? { place_slug: placeSlug } : {}),
+    });
   };
 
   return (
