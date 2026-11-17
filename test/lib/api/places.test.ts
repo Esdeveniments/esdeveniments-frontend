@@ -129,17 +129,15 @@ describe("lib/api/places", () => {
   });
 
   it("fetchPlaces returns empty array on fetch error", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-      }),
-    );
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    vi.stubGlobal("fetch", fetchMock);
 
     const { fetchPlaces } = await import("lib/api/places");
     const result = await fetchPlaces();
     expect(result).toEqual([]);
+    // fetchPlaces returns on the first failure while the other request is
+    // still being signed; wait for it to reach this stub, not the next test's.
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
   it("clearPlacesCaches runs without error", async () => {
