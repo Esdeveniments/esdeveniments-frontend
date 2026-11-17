@@ -2,7 +2,10 @@ import { getTranslations } from "next-intl/server";
 import { formatCardDate, formatEventTimeDisplay } from "@utils/date-helpers";
 import { formatPriceText, getEventPriceText, isFreePriceText } from "@utils/event-price";
 import { getEventLinkUrl } from "@utils/event-url";
-import { buildCalendarEventData } from "@utils/event-helpers";
+import {
+  buildCalendarEventData,
+  getEventAnalyticsSlugs,
+} from "@utils/event-helpers";
 import type { EventActionBarProps } from "types/props";
 import EventActionBarActions from "./EventActionBarActions";
 
@@ -46,7 +49,9 @@ export default async function EventActionBar({ event, locale }: EventActionBarPr
           )}
         </div>
         <EventActionBarActions
+          eventId={event.id ? String(event.id) : undefined}
           eventSlug={event.slug}
+          {...getEventAnalyticsSlugs(event)}
           eventUrl={getEventLinkUrl(event.url)}
           moreInfoLabel={t("moreInfo")}
           calendar={buildCalendarEventData(event, locale)}

@@ -508,7 +508,12 @@ export async function ServerEventsCategorizedContent({
       {/* Popular Now Section — derived from existing data, zero extra API calls */}
       {popularEvents.length > 0 && (
         <div className="container content-auto-section">
-          <section className="py-section-y border-b">
+          <section
+            className="py-section-y border-b"
+            data-analytics-container="true"
+            data-analytics-context="home_popular"
+            data-analytics-place-slug="catalunya"
+          >
             <SectionHeading
               title={tCta("popularTitle")}
               titleClassName="heading-2 text-foreground"
@@ -519,6 +524,8 @@ export async function ServerEventsCategorizedContent({
               showJsonLd
               title={tCta("popularTitle")}
               jsonLdId="popular-events"
+              analyticsListName="home_popular"
+              analyticsContext={{ placeSlug: "catalunya" }}
             />
           </section>
         </div>

@@ -19,7 +19,13 @@ export function CategoryEventsSection({
   badgeLabels,
 }: CategoryEventsSectionProps) {
   return (
-    <section className="py-section-y border-b">
+    <section
+      className="py-section-y border-b"
+      data-analytics-container="true"
+      data-analytics-context="home_category"
+      data-analytics-category-slug={categorySlug}
+      data-analytics-place-slug="catalunya"
+    >
       <div className="flex justify-between items-center">
         <h2 className="heading-2">{labels.heading}</h2>
         <PressableAnchor
@@ -53,6 +59,8 @@ export function CategoryEventsSection({
         showJsonLd
         title={categoryName}
         jsonLdId={`category-events-${categorySlug}`}
+        analyticsListName="home_category"
+        analyticsContext={{ placeSlug: "catalunya", categorySlug }}
       />
 
       {showAd && (

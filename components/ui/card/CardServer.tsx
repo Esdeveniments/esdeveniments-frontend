@@ -12,6 +12,7 @@ export default function CardServer({
   isPriority = false,
   initialIsFavorite,
   headingLevel,
+  analyticsPosition,
 }: CardServerProps): ReactElement {
   if (isLoading) return <EventCardSkeleton />;
   if (event.isAd) return <AdCardClient />;
@@ -25,6 +26,7 @@ export default function CardServer({
       isPriority={isPriority}
       initialIsFavorite={initialIsFavoriteSafe}
       headingLevel={headingLevel}
+      analyticsPosition={analyticsPosition}
     />
   );
 }

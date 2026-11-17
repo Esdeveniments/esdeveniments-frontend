@@ -74,15 +74,18 @@ hold the listing page's filters (set on the list container), and those stay.
 | GA4 event | Before | Now |
 | --- | --- | --- |
 | `view_event_page` | `category_slug`, `place_slug` of the event | same, from the helper |
-| `select_event` (listing and home cards) | event id and slug; on listings also the page's `category_slug`, `place_slug` | + `event_category_slug`, `event_place_slug` |
+| `select_event` (listing and home cards) | event id and slug; on listings also the page's `category_slug`, `place_slug` | + `event_category_slug`, `event_place_slug`, numeric `position` (slot), and home row `context` (`home_popular`, `home_featured_place`, `home_category`) |
 | `related_event_click` | event id, slug, position, source event id and slug | + `event_category_slug`, `event_place_slug`, and the viewed event's `category_slug`, `place_slug` |
 | `map_event_click` | event id, slug, position | + `event_category_slug`, `event_place_slug` |
 | `favorite_add`, `favorite_remove` | event id and slug | + `category_slug`, `place_slug` of the event |
-| `view_item_list` (new, listings) | `card_impression_batch` sent only how many cards were seen | which events were seen: one item per card with `item_id` (event id), `item_category` (category), `item_category2` (town, else region) and `index` (slot in the grid) |
+| `share`, `add_to_calendar`, `sticky_cta_click`, event `outbound_click` | method or link target | + `category_slug`, `place_slug` (and `event_id`, `event_slug` where applicable) |
+| `search_outcome`, `zero_results`, `search_results_loaded` | `zero_results` sent `place` and `category`; `search_outcome` sent no place | + `place_slug` and `category_slug` across all three (`place` kept for dashboards) |
+| `view_item_list` (listings and carousels) | `card_impression_batch` sent only how many cards were seen | which events were seen across listings (`listing`), home rows (`home_*`), promoted rows (`promoted_*`) and the related row (`related_events`): one item per card with `item_id`, `item_category`, `item_category2` and `index` |
+| `card_stop_batch` (listings and carousels) | none | one batch on page hide or unmount with the cards whose active-tab dwell beat the visitor's page median (`1.75x`, at least `2.5 s` across 4+ seen cards across the listing or across all carousels on the page), carrying `dwell_ms` in `items` |
 
 `view_item_list` is GA4's standard event for "items shown in a list". Its item
 fields are built-in dimensions (Item ID, Item category, Item category 2, Item
-list position), so it uses none of the 50 custom dimension slots. It goes out
+list position, Item list name), so it uses none of the 50 custom dimension slots. On listings it goes out
 in the same 2 s batch as `card_impression_batch`, which stays for the
 dashboards (`scripts/ga-dashboard.py`). Ad slots have no event, so they are
 skipped. Both now watch the whole listing: before this change the observer
@@ -91,21 +94,22 @@ only got the load-more wrapper, which exists after "load more", so
 out every server-rendered card. Expect those numbers to jump from the release
 day. A card's `index` counts across the server grid and the load-more grid;
 a grid hidden by client filters is skipped. GA4's own "item list click-through rate" stays empty, because card
-clicks are `select_event`, not `select_item`: join the two on the event id in
+clicks are `select_event` or `related_event_click`, not `select_item`: join on the event id in
 BigQuery instead.
 
-Manual step (needs GA4 edit access; the local credentials are read-only):
-register `category_slug`, `event_category_slug` and `event_place_slug` as
-event-scoped custom dimensions in GA4 Admin → Custom definitions.
-`place_slug` is already registered. That makes 47 of the 50 event-scoped
-dimensions. GA4 only fills a dimension from the day it is registered, so do
-it before the four weeks start.
+Registered in GA4 Admin on 2026-11-15:
+`category_slug`, `event_category_slug` and `event_place_slug` as
+event-scoped custom dimensions (`place_slug` and `place` were already registered). That uses 47 of the 50 event-scoped
+dimensions.
 
-Left for later, on purpose: `share` and `add_to_calendar` (14 events in four
-weeks, and their buttons don't receive the event's category today), the
-position of a clicked card (`view_item_list` has the slot of seen cards), seen
-cards on home rows and the related row (only listings report them), and
-"stops" (how long a card stayed on screen).
+Known upstream gap (checked 2026-11-17): municipal `RSS` sources in
+`esdeveniments-backend` currently run with `categorizationEnabled` off because
+builder-made `RSS` events had `categories == null` (`Esdeveniments/esdeveniments-backend#115`),
+so 44% of `view_event_page` hits on 2026-11-16 arrived with an empty
+`category_slug` (0% empty in Barcelona, Lleida and Tarragona; 58% empty in
+Maresme). Once `Esdeveniments/esdeveniments-backend#115` is deployed, enable
+`categorizationEnabled` on active `RSS` sources so town events carry categories
+too.
 
 ### BigQuery export (free)
 

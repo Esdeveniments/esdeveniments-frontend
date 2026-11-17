@@ -563,6 +563,8 @@ async function EventPageBody({
                             text: buildShareText(shareEvent),
                           }}
                           contentType="event"
+                          categorySlug={clientEvent.categorySlug}
+                          placeSlug={clientEvent.placeSlug}
                         />
                         {shouldShowFavoriteButton && (
                           <FavoriteButton

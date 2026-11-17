@@ -20,6 +20,7 @@ import {
   sendPlaceRedirectGA,
   toSearchTermParam,
 } from "@utils/analytics";
+import { extractPlaceDateCategorySlugsFromHref } from "@utils/analytics-url";
 import { placeForSearch } from "@utils/search-query";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
@@ -28,11 +29,12 @@ import { useSearchPlaces } from "@components/hooks/useSearchPlaces";
 import SearchSuggestions from "./SearchSuggestionsLazy";
 import type { SearchBoxSuggestion } from "types/search";
 
-const sendSearchTermGA = (searchTerm: string): void => {
+const sendSearchTermGA = (searchTerm: string, placeSlug?: string): void => {
   if (searchTerm && searchTerm.length > 0) {
     sendGoogleEvent("search", {
       context: "search",
       search_term: toSearchTermParam(searchTerm),
+      ...(placeSlug ? { place_slug: placeSlug } : {}),
     });
   }
 };
@@ -43,6 +45,9 @@ export default function Search(): JSX.Element {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const activePlaceSlug = isHomePage
+    ? "catalunya"
+    : extractPlaceDateCategorySlugsFromHref(pathname || "/").placeSlug;
   const { setLoading } = useFilterLoading();
 
   // Get current search term from URL
@@ -92,7 +97,7 @@ export default function Search(): JSX.Element {
     // Avoid redundant searches if the term hasn't changed
     if (suggestion?.type !== "place" && value === urlSearchTerm) return;
 
-    sendSearchTermGA(value);
+    sendSearchTermGA(value, activePlaceSlug);
 
     const matchedPlace = placeForSearch(value, places, suggestion);
     if (matchedPlace) {
@@ -106,7 +111,7 @@ export default function Search(): JSX.Element {
 
     markTextSearchSubmitted("search", value);
     updateSearchUrl(value);
-  }, [inputValue, updateSearchUrl, urlSearchTerm, places, setLoading, router]);
+  }, [inputValue, updateSearchUrl, urlSearchTerm, places, setLoading, router, activePlaceSlug]);
 
   const submitSearch = useCallback(() => triggerSearch(), [triggerSearch]);
 
@@ -114,6 +119,7 @@ export default function Search(): JSX.Element {
     value: inputValue,
     setValue: setInputValue,
     context: "search",
+    placeSlug: activePlaceSlug,
     onSubmit: submitSearch,
     onSelect: triggerSearch,
   });

@@ -27,7 +27,12 @@ export async function FeaturedPlaceSection({
   ]);
   const badgeLabels = createDateFilterBadgeLabels(tDateFilters, locale);
   return (
-    <section className="py-section-y border-b">
+    <section
+      className="py-section-y border-b"
+      data-analytics-container="true"
+      data-analytics-context="home_featured_place"
+      data-analytics-place-slug={section.placeSlug}
+    >
       <div className="flex-between gap-element-gap">
         <div className="stack gap-1">
           <h2 className="heading-2">{section.title}</h2>
@@ -60,6 +65,8 @@ export async function FeaturedPlaceSection({
         showJsonLd
         title={section.title}
         jsonLdId={`featured-events-${section.slug}`}
+        analyticsListName="home_featured_place"
+        analyticsContext={{ placeSlug: section.placeSlug }}
       />
     </section>
   );

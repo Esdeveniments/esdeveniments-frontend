@@ -86,6 +86,33 @@ describe("ShareKit", () => {
     expect(mockSendGoogleEvent).not.toHaveBeenCalled();
   });
 
+  it("includes category_slug and place_slug when sharing an event", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    render(
+      <ShareKit
+        event={{ ...SHARE_KIT_EVENT, categorySlug: "musica", placeSlug: "cardedeu" }}
+        source="owner_actions"
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("share-kit-copy"));
+    });
+
+    expect(mockSendGoogleEvent).toHaveBeenCalledWith("share", {
+      method: "copy",
+      content_type: "event",
+      item_id: SHARE_KIT_EVENT.slug,
+      source: "owner_actions",
+      category_slug: "musica",
+      place_slug: "cardedeu",
+    });
+  });
+
   describe("poster on a phone", () => {
     const originalMatchMedia = window.matchMedia;
     const originalCanShare = navigator.canShare;

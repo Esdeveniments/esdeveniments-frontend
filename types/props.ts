@@ -155,6 +155,10 @@ export interface CardContentProps {
   isPriority?: boolean;
   initialIsFavorite?: boolean;
   headingLevel?: CardLayoutProps["headingLevel"];
+  /** GA4 event sent on card click (defaults to `select_event`). */
+  analyticsEventName?: string;
+  /** 1-based slot in the list/carousel for click analytics (no visible number). */
+  analyticsPosition?: number;
 }
 
 /** Card text in one locale. Lists read it once (`getCardLabels`) so each card renders synchronously. */
@@ -199,6 +203,8 @@ export interface CardData {
   categorySlug?: string;
   /** Town (else region) slug, for analytics ("" or absent when none) */
   placeSlug?: string;
+  /** 1-based slot in the list/carousel for click analytics */
+  analyticsPosition?: number;
   title: string;
   /** Image URL ("" when the event has none) */
   image: string;
@@ -264,8 +270,28 @@ export interface CardLayoutProps {
     "data-analytics-event-slug": string;
     "data-analytics-event-category-slug": string;
     "data-analytics-event-place-slug": string;
+    "data-analytics-position"?: string;
     children: ReactNode;
   }) => ReactNode;
+}
+
+export interface ClientCardsListProps {
+  events: ListEvent[];
+  /** Number of visible SSR grid slots preceding this appended list. */
+  slotOffset?: number;
+}
+
+export interface CardCarouselAnalyticsProps {
+  listName: string;
+  placeSlug?: string;
+  categorySlug?: string;
+  children: ReactNode;
+}
+
+export interface ListingAnalyticsTrackerProps {
+  place?: string;
+  category?: string;
+  date?: string;
 }
 
 export interface CompactCardProps {
@@ -317,6 +343,8 @@ export interface NativeShareButtonProps {
   date: string;
   location: string;
   subLocation: string;
+  categorySlug?: string;
+  placeSlug?: string;
   onShareClick?: (e: MouseEvent<HTMLButtonElement>) => void;
   hideText?: boolean;
 }
@@ -1141,7 +1169,10 @@ export interface EventActionBarProps {
 }
 
 export interface EventActionBarActionsProps {
+  eventId?: string;
   eventSlug: string;
+  categorySlug?: string;
+  placeSlug?: string;
   /** http(s) website; null makes "Add to calendar" the filled main action. */
   eventUrl: string | null;
   moreInfoLabel: string;
@@ -1160,6 +1191,8 @@ export interface ShareButtonProps {
   target: ShareTarget;
   /** GA `share` content_type. */
   contentType: "event" | "profile";
+  categorySlug?: string;
+  placeSlug?: string;
 }
 
 export interface ShareMenuProps {
@@ -1315,6 +1348,7 @@ export interface PromotedEventsRowProps extends PromotedEventsSectionProps {
 export interface EventPagePromotedEventsProps {
   events: EventSummaryResponseDTO[];
   citySlug?: string;
+  fallbackPlaceSlug?: string;
 }
 
 export interface EventRelatedEventsProps {

@@ -14,6 +14,7 @@ import { hasCardImage } from "@utils/event-helpers";
 import { buildEventMapPoints } from "@utils/event-map";
 import { ListingEventsProvider } from "@components/context/ListingEventsContext";
 import EventsMapToggle from "@components/ui/eventsMap/EventsMapToggle";
+import ListingAnalyticsTracker from "@components/analytics/ListingAnalyticsTracker";
 
 async function HybridEventsList({
   initialEvents = [],
@@ -99,6 +100,13 @@ async function HybridEventsList({
           priorityIndex={priorityIndex}
           headingLevel="h2"
         />
+        {initialEvents.length > 0 ? (
+          <ListingAnalyticsTracker
+            place={place}
+            category={category}
+            date={date}
+          />
+        ) : null}
       </div>
     );
   }

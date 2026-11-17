@@ -131,6 +131,11 @@ export const buildCalendarEventData = (
   startDate: event.startDate,
   endDate: event.endDate,
   canonical: toLocalizedUrl(`/e/${event.slug}`, locale),
+  analytics: {
+    eventId: event.id ? String(event.id) : undefined,
+    eventSlug: event.slug || undefined,
+    ...getEventAnalyticsSlugs(event),
+  },
 });
 
 /**

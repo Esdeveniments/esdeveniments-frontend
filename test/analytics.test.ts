@@ -171,4 +171,26 @@ describe("text search outcome", () => {
     flushAbandonedSearch();
     expect(outcomes()).toEqual([{ context: "search", outcome: "place" }]);
   });
+
+  it("attaches place_slug and category_slug to search_outcome when known", () => {
+    markTextSearchSubmitted("search", "jazz");
+    sendTextSearchOutcomeGA("jazz", 0, "arenys-de-mar", "musica");
+    markSuggestionsShown("hero_search", "girona");
+    flushAbandonedSearch();
+    expect(outcomes()).toEqual([
+      {
+        context: "search",
+        outcome: "events_zero",
+        place: "arenys-de-mar",
+        place_slug: "arenys-de-mar",
+        category_slug: "musica",
+      },
+      {
+        context: "hero_search",
+        outcome: "abandoned",
+        place: "girona",
+        place_slug: "girona",
+      },
+    ]);
+  });
 });

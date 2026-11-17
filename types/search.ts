@@ -38,6 +38,8 @@ export interface UseSearchComboboxOptions {
   value: string;
   setValue: (value: string) => void;
   context: Exclude<SearchContext, "hero_cta">;
+  /** Active place slug where the search box sits, for `search_outcome`. */
+  placeSlug?: string;
   /** Enter with no active option: the search box's own submit. */
   onSubmit: () => void;
   /** Open a picked events or place suggestion (GA and closing are handled). */

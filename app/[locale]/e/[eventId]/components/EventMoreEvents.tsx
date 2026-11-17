@@ -34,7 +34,11 @@ export default async function EventMoreEvents({
 
   return (
     <>
-      <EventPagePromotedEvents events={promoted} citySlug={citySlug} />
+      <EventPagePromotedEvents
+        events={promoted}
+        citySlug={citySlug}
+        fallbackPlaceSlug={sourceSlugs?.placeSlug}
+      />
       <EventRelatedEvents
         events={relatedEvents.filter((event) => !promotedIds.has(event.id))}
         sourceEventId={eventId}

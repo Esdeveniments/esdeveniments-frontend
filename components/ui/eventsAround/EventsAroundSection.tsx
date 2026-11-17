@@ -9,6 +9,9 @@ export default async function EventsAroundSection({
   events,
   title,
   bleed = false,
+  analyticsEventName,
+  analyticsListName,
+  analyticsContext,
 }: EventsAroundSectionProps) {
   if (!events || events.length === 0) return null;
 
@@ -26,6 +29,9 @@ export default async function EventsAroundSection({
           events={events}
           showJsonLd={false} // JSON-LD handled server-side for SEO
           title={displayTitle}
+          analyticsEventName={analyticsEventName}
+          analyticsListName={analyticsListName}
+          analyticsContext={analyticsContext}
         />
       </div>
     </div>

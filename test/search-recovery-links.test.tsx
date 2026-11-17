@@ -61,13 +61,22 @@ describe("SearchRecoveryLinks", () => {
   });
 
   it("renders both place suggestion and filter widening when scoped to another town", () => {
-    mocks.segments = { place: "cardedeu", date: "avui", category: "tots" };
+    mocks.segments = { place: "cardedeu", date: "avui", category: "musica" };
     render(<SearchRecoveryLinks />);
 
     expect(screen.getByRole("link", { name: "Blanes" })).toHaveAttribute(
       "href",
-      "/blanes/avui",
+      "/blanes/avui/musica",
     );
-    expect(screen.getAllByRole("link")).toHaveLength(3);
+    const allLinks = screen.getAllByRole("link");
+    expect(allLinks).toHaveLength(4);
+    fireEvent.click(allLinks[1]);
+    expect(mocks.sendGoogleEvent).toHaveBeenCalledWith(
+      "zero_results_recovery",
+      expect.objectContaining({
+        place_slug: "cardedeu",
+        category_slug: "musica",
+      }),
+    );
   });
 });

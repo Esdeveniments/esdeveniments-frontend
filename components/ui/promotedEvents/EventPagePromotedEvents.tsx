@@ -9,19 +9,27 @@ import type { EventPagePromotedEventsProps } from "types/props";
 export default async function EventPagePromotedEvents({
   events,
   citySlug,
+  fallbackPlaceSlug,
 }: EventPagePromotedEventsProps): Promise<JSX.Element | null> {
   if (events.length === 0) return null;
 
   const locale = await getLocaleSafely();
   const t = await getTranslations({ locale, namespace: "Components.PromotedEvents" });
+  const placeSlug = citySlug || fallbackPlaceSlug;
 
   return (
     <PromotedEventsTracker
       context="promoted_event_page"
-      placeSlug={citySlug}
+      placeSlug={placeSlug}
       eventCount={events.length}
     >
-      <EventsAroundSection events={events} title={t("title")} bleed />
+      <EventsAroundSection
+        events={events}
+        title={t("title")}
+        bleed
+        analyticsListName="promoted_event_page"
+        analyticsContext={{ placeSlug }}
+      />
     </PromotedEventsTracker>
   );
 }
