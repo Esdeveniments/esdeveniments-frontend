@@ -119,6 +119,10 @@ export default function GoogleScriptsHeavy({
           ...(analyticsEl.dataset || {}),
         };
 
+        const parsedPosition = dataset.analyticsPosition
+          ? Number(dataset.analyticsPosition)
+          : NaN;
+
         win.gtag("event", analyticsEventName, {
           context: dataset.analyticsContext || undefined,
           target: dataset.analyticsTarget || undefined,
@@ -133,7 +137,7 @@ export default function GoogleScriptsHeavy({
           event_category_slug: dataset.analyticsEventCategorySlug || undefined,
           event_place_slug: dataset.analyticsEventPlaceSlug || undefined,
           date_slug: dataset.analyticsDateSlug || undefined,
-          position: dataset.analyticsPosition || undefined,
+          position: Number.isFinite(parsedPosition) ? parsedPosition : undefined,
           source_event_id: dataset.analyticsSourceEventId || undefined,
           source_event_slug: dataset.analyticsSourceEventSlug || undefined,
           // Sponsor tracking
@@ -182,6 +186,8 @@ export default function GoogleScriptsHeavy({
         context: outboundDataset.analyticsContext || undefined,
         event_id: outboundDataset.analyticsEventId || undefined,
         event_slug: outboundDataset.analyticsEventSlug || undefined,
+        category_slug: outboundDataset.analyticsCategorySlug || undefined,
+        place_slug: outboundDataset.analyticsPlaceSlug || undefined,
         place_id: outboundDataset.analyticsPlaceId || undefined,
         place_name: outboundDataset.analyticsPlaceName || undefined,
       });

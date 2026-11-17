@@ -26,23 +26,36 @@ import { useFilterLoading } from "@components/context/FilterLoadingContext";
 import { useSearchCombobox } from "@components/hooks/useSearchCombobox";
 import { useSearchPlaces } from "@components/hooks/useSearchPlaces";
 import SearchSuggestions from "./SearchSuggestionsLazy";
+import type { SearchProps } from "types/props";
 import type { SearchBoxSuggestion } from "types/search";
 
-const sendSearchTermGA = (searchTerm: string): void => {
+const sendSearchTermGA = (
+  searchTerm: string,
+  placeSlug?: string,
+  categorySlug?: string,
+): void => {
   if (searchTerm && searchTerm.length > 0) {
     sendGoogleEvent("search", {
       context: "search",
       search_term: toSearchTermParam(searchTerm),
+      ...(placeSlug ? { place_slug: placeSlug } : {}),
+      ...(categorySlug ? { category_slug: categorySlug } : {}),
     });
   }
 };
 
-export default function Search(): JSX.Element {
+export default function Search({
+  placeSlug,
+  categorySlug,
+}: SearchProps = {}): JSX.Element {
   const t = useTranslations("Components.SearchBar");
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  const activePlaceSlug = placeSlug || (isHomePage ? "catalunya" : undefined);
+  const activeCategorySlug =
+    categorySlug && categorySlug !== "tots" ? categorySlug : undefined;
   const { setLoading } = useFilterLoading();
 
   // Get current search term from URL
@@ -92,7 +105,7 @@ export default function Search(): JSX.Element {
     // Avoid redundant searches if the term hasn't changed
     if (suggestion?.type !== "place" && value === urlSearchTerm) return;
 
-    sendSearchTermGA(value);
+    sendSearchTermGA(value, activePlaceSlug, activeCategorySlug);
 
     const matchedPlace = placeForSearch(value, places, suggestion);
     if (matchedPlace) {
@@ -106,7 +119,16 @@ export default function Search(): JSX.Element {
 
     markTextSearchSubmitted("search", value);
     updateSearchUrl(value);
-  }, [inputValue, updateSearchUrl, urlSearchTerm, places, setLoading, router]);
+  }, [
+    inputValue,
+    updateSearchUrl,
+    urlSearchTerm,
+    places,
+    setLoading,
+    router,
+    activePlaceSlug,
+    activeCategorySlug,
+  ]);
 
   const submitSearch = useCallback(() => triggerSearch(), [triggerSearch]);
 
@@ -114,6 +136,8 @@ export default function Search(): JSX.Element {
     value: inputValue,
     setValue: setInputValue,
     context: "search",
+    placeSlug: activePlaceSlug,
+    categorySlug: activeCategorySlug,
     onSubmit: submitSearch,
     onSelect: triggerSearch,
   });

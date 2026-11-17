@@ -20,7 +20,13 @@ export default function EventRelatedEvents({
         data-analytics-category-slug={sourceSlugs?.categorySlug}
         data-analytics-place-slug={sourceSlugs?.placeSlug}
       >
-        <EventsAroundSection events={events} bleed />
+        <EventsAroundSection
+          events={events}
+          bleed
+          analyticsEventName="related_event_click"
+          analyticsListName="related_events"
+          analyticsContext={sourceSlugs}
+        />
       </div>
     </DetailSectionTracker>
   );

@@ -45,6 +45,7 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
   startDate,
   endDate,
   canonical,
+  analytics,
   variant = "neutral",
   iconOnly = false,
   shortLabel = false,
@@ -125,6 +126,7 @@ const AddToCalendar: React.FC<AddToCalendarProps> = ({
             labels={providerLabels}
             placement={placement}
             source={source}
+            analytics={analytics}
           />
         </Suspense>
       )}

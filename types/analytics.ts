@@ -69,6 +69,49 @@ export interface ListingImpressionItem {
   index: number;
 }
 
+/** A listing card where the visitor paused well above their page median. */
+export interface CardStopItem extends ListingImpressionItem {
+  dwell_ms: number;
+}
+
+/** Accumulated visible dwell for one carousel card on the current page. */
+export interface CarouselDwellEntry {
+  listName: string;
+  placeSlug?: string;
+  categorySlug?: string;
+  item: ListingImpressionItem;
+  dwellMs: number;
+}
+
+/** Callbacks for `observeCardVisibility`. */
+export interface CardVisibilityCallbacks {
+  /** Fired right when cards are newly seen (e.g. scroll-depth milestones). */
+  onSeenProgress?: (seenCards: ReadonlySet<Element>, visibleCards: Element[]) => void;
+  /** Fired after the 2s debounce (or on hide/unmount) with newly seen cards. */
+  onFlushImpressions: (
+    seenCardCount: number,
+    items: ListingImpressionItem[],
+    totalVisibleCards: number,
+  ) => void;
+  /** Fired whenever an active-tab visibility span ends on an event card. */
+  onCardDwell: (item: ListingImpressionItem, elapsedMs: number) => void;
+  /** Fired after dwell timers pause on tab hide, pagehide, or unmount. */
+  onFlushStops?: () => void;
+}
+
+export interface ObservedCardController {
+  pauseAll: (now: number) => void;
+  disconnect: () => void;
+}
+
+/** Per-URL state for carousel impressions and pooled card stops. */
+export interface CarouselPageBucket {
+  seenItemIdsByList: Map<string, Set<string>>;
+  dwellPoolByKey: Map<string, CarouselDwellEntry>;
+  reportedStopKeys: Set<string>;
+  activePauseHandlers: Set<(now: number) => void>;
+}
+
 /** Amount Stripe actually charged, in currency units (after promotion codes). */
 export interface CheckoutAmount {
   value: number;

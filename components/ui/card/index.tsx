@@ -8,6 +8,7 @@ export default function Card({
   isLoading = false,
   isPriority = false,
   headingLevel,
+  analyticsPosition,
 }: CardProps) {
   if (isLoading) return <EventCardSkeleton />;
   if (event.isAd) return <AdCardClient />;
@@ -16,6 +17,7 @@ export default function Card({
       event={event}
       isPriority={isPriority}
       headingLevel={headingLevel}
+      analyticsPosition={analyticsPosition}
     />
   );
 }

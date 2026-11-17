@@ -15,6 +15,8 @@ function CardContentServer({
   compact = false,
   labels: { locale, tCard, tCategories },
   headingLevel,
+  analyticsEventName,
+  analyticsPosition,
 }: CardContentServerProps) {
   const card = prepareCardContentData({
     event,
@@ -24,22 +26,25 @@ function CardContentServer({
     tCategories,
     isFavorite: initialIsFavorite,
   });
+  const cardWithSlot =
+    analyticsPosition !== undefined ? { ...card, analyticsPosition } : card;
 
   return (
     <CardLayout
       card={
         variant === "row"
           ? {
-              ...card,
+              ...cardWithSlot,
               primaryLocation: buildEventVenueLabel({
                 location: event.location,
                 cityName: event.city?.name,
               }),
             }
-          : card
+          : cardWithSlot
       }
       layout={variant}
       compact={compact}
+      analyticsEventName={analyticsEventName}
       position={position}
       description={description}
       isPriority={isPriority}

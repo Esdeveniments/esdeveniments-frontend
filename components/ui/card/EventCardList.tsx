@@ -21,6 +21,7 @@ export default async function EventCardList({
           isPriority={index === priorityIndex}
           initialIsFavorite={initialIsFavorite}
           headingLevel={headingLevel}
+          analyticsPosition={index + 1}
         />
       )}
     </List>

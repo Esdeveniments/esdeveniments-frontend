@@ -42,7 +42,14 @@ export default function ShareKit({ event, source, description }: ShareKitProps) 
   const displayUrl = event.url.replace(/^https?:\/\/(www\.)?/, "");
 
   const track = (method: ShareKitChannel) =>
-    sendGoogleEvent("share", { method, content_type: "event", item_id: event.slug, source });
+    sendGoogleEvent("share", {
+      method,
+      content_type: "event",
+      item_id: event.slug,
+      source,
+      ...(event.categorySlug ? { category_slug: event.categorySlug } : {}),
+      ...(event.placeSlug ? { place_slug: event.placeSlug } : {}),
+    });
   const trackError = (method: ShareKitChannel, error: unknown) =>
     sendGoogleEvent("share_error", {
       method,

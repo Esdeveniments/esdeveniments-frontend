@@ -252,7 +252,7 @@ export default function HorizontalScroll({
           "[scrollbar-width:thin] [-webkit-overflow-scrolling:touch]",
         ].join(" ")}
       >
-        <ul aria-label={ariaLabel} className={listClassName}>
+        <ul data-card-carousel aria-label={ariaLabel} className={listClassName}>
           {children}
         </ul>
       </div>

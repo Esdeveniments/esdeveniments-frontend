@@ -71,17 +71,28 @@ export function descriptionToPlainText(description: string): string {
 }
 
 /**
- * Plain-text excerpt of an event description for list rows: no HTML or
- * markdown, no leading heading line that repeats the title, cut at a word
- * boundary.
+ * An event description as one line of plain text, for snippets: no HTML or
+ * markdown, no leading heading line that repeats the title, whitespace
+ * collapsed. Not truncated.
+ */
+export function descriptionToPlainLine(
+  description: string | null | undefined,
+  title: string,
+): string {
+  if (!description) return "";
+  return dropTitleEcho(descriptionToPlainText(description), title)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Plain-text excerpt of an event description for list rows: one plain line
+ * (`descriptionToPlainLine`) cut at a word boundary.
  */
 export function buildEventExcerpt(
   description: string | null | undefined,
   title: string,
   maxLength: number = NEWS_EVENT_EXCERPT_MAX_LENGTH,
 ): string {
-  if (!description) return "";
-  const text = descriptionToPlainText(description);
-  const body = dropTitleEcho(text, title).replace(/\s+/g, " ").trim();
-  return truncateAtWord(body, maxLength);
+  return truncateAtWord(descriptionToPlainLine(description, title), maxLength);
 }

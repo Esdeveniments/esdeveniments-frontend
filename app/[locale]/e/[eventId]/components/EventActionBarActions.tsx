@@ -8,7 +8,10 @@ import type { EventActionBarActionsProps } from "types/props";
 
 /** "Més info" is the filled main action; without a website the calendar takes its place. */
 export default function EventActionBarActions({
+  eventId,
   eventSlug,
+  categorySlug,
+  placeSlug,
   eventUrl,
   moreInfoLabel,
   calendar,
@@ -16,7 +19,13 @@ export default function EventActionBarActions({
   const { ref, trackClick } = useTrackedCta<HTMLDivElement>("sticky_cta");
   const track = (action: "more_info" | "add_to_calendar") => {
     trackClick();
-    sendGoogleEvent("sticky_cta_click", { action, event_slug: eventSlug });
+    sendGoogleEvent("sticky_cta_click", {
+      action,
+      event_slug: eventSlug,
+      ...(eventId ? { event_id: eventId } : {}),
+      ...(categorySlug ? { category_slug: categorySlug } : {}),
+      ...(placeSlug ? { place_slug: placeSlug } : {}),
+    });
   };
 
   return (
@@ -37,6 +46,11 @@ export default function EventActionBarActions({
           rel="noopener noreferrer"
           className="btn-primary whitespace-nowrap"
           data-analytics-link-type="sticky_cta_more_info"
+          data-analytics-context="sticky_cta"
+          data-analytics-event-id={eventId || ""}
+          data-analytics-event-slug={eventSlug || ""}
+          data-analytics-category-slug={categorySlug || undefined}
+          data-analytics-place-slug={placeSlug || undefined}
           onClick={() => track("more_info")}
         >
           {moreInfoLabel}

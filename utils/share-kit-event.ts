@@ -1,4 +1,5 @@
 import { formatEventDateLabel } from "@utils/date-helpers";
+import { getEventAnalyticsSlugs } from "@utils/event-helpers";
 import { toLocalizedUrl } from "@utils/i18n-seo";
 import type { EventDetailResponseDTO } from "types/api/event";
 import type { ShareKitEvent } from "types/event";
@@ -23,5 +24,6 @@ export function buildShareKitEvent(
     ),
     placeText,
     imageUrl: event.imageUrl || null,
+    ...getEventAnalyticsSlugs(event),
   };
 }

@@ -250,6 +250,13 @@ export interface PastEventBannerProps {
   primaryCategorySlug?: string | null;
 }
 
+export interface CalendarAnalyticsContext {
+  eventId?: string;
+  eventSlug?: string;
+  categorySlug?: string;
+  placeSlug?: string;
+}
+
 export interface AddToCalendarProps {
   title: string;
   description: string;
@@ -257,6 +264,8 @@ export interface AddToCalendarProps {
   startDate: DateString;
   endDate?: DateString | null;
   canonical: string;
+  /** Event identifiers for add_to_calendar GA4 tracking. */
+  analytics?: CalendarAnalyticsContext;
   /** Button style; the page's main action uses "primary". */
   variant?: CalendarButtonVariant;
   /** 44 px icon button; the label becomes its accessible name. */
@@ -275,7 +284,13 @@ export interface AddToCalendarProps {
 /** Event data the calendar menu needs; built by `buildCalendarEventData`. */
 export type CalendarEventData = Pick<
   AddToCalendarProps,
-  "title" | "description" | "location" | "startDate" | "endDate" | "canonical"
+  | "title"
+  | "description"
+  | "location"
+  | "startDate"
+  | "endDate"
+  | "canonical"
+  | "analytics"
 >;
 
 export type CalendarButtonVariant = "primary" | "outline" | "neutral";
@@ -399,6 +414,7 @@ export interface CalendarListProps {
   labels: CalendarProviderLabels;
   placement?: CalendarListPlacement;
   source?: string;
+  analytics?: CalendarAnalyticsContext;
 }
 
 export interface CardProps {
@@ -408,11 +424,15 @@ export interface CardProps {
   initialIsFavorite?: boolean;
   /** Card title level: `h2` directly under the page `<h1>`, else `h3` */
   headingLevel?: "h2" | "h3";
+  /** 1-based slot in the list for click analytics (no visible number). */
+  analyticsPosition?: number;
 }
 
 export interface CardShareButtonProps {
   slug: string;
   url?: string; // If provided, used as share URL. Otherwise defaults to `${siteUrl}/e/${slug}`.
+  categorySlug?: string;
+  placeSlug?: string;
 }
 
 export interface CustomIconProps {
@@ -423,9 +443,20 @@ export interface CustomIconProps {
   className?: string;
 }
 
+export interface EventsAroundAnalyticsContext {
+  placeSlug?: string;
+  categorySlug?: string;
+}
+
 export interface EventsAroundProps {
   events: EventSummaryResponseDTO[];
   title?: string;
+  /** GA4 click event for cards in this row (defaults to `select_event`). */
+  analyticsEventName?: string;
+  /** When set, seen cards in this carousel report `view_item_list` under this list name. */
+  analyticsListName?: string;
+  /** Page/section place and category slugs attached to `view_item_list`. */
+  analyticsContext?: EventsAroundAnalyticsContext;
 }
 
 export interface EventsAroundSectionProps extends EventsAroundProps {

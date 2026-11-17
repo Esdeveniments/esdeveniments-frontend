@@ -1,3 +1,4 @@
+import CardCarouselAnalytics from "@components/analytics/CardCarouselAnalytics";
 import CardContentServer from "@components/ui/common/cardContent/CardContentServer";
 import { getCardLabels } from "@components/ui/common/cardContent/getCardLabels";
 import HorizontalScroll from "@components/ui/common/HorizontalScroll";
@@ -27,6 +28,9 @@ async function EventsAroundServer({
   showJsonLd = false,
   jsonLdId,
   title,
+  analyticsEventName,
+  analyticsListName,
+  analyticsContext,
 }: EventsAroundServerProps) {
   const locale = (await rootLocale()) as AppLocale;
   const uniqueEvents = dedupeEvents(events);
@@ -71,32 +75,48 @@ async function EventsAroundServer({
     />
   ) : null;
 
+  const scroller = (
+    <HorizontalScroll
+      className="py-element-gap px-section-x"
+      ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
+      nudgeOnFirstLoad
+      showDesktopArrows
+      hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
+      labels={{ previous: tScroll("previous"), next: tScroll("next") }}
+      listClassName="flex gap-element-gap"
+    >
+      {uniqueEvents.map((event, index) => (
+        <li
+          key={event.id ?? event.slug ?? index}
+          className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
+        >
+          <CardContentServer
+            event={event}
+            compact
+            labels={cardLabels}
+            isPriority={usePriority && index <= 2}
+            analyticsEventName={analyticsEventName}
+            analyticsPosition={index + 1}
+          />
+        </li>
+      ))}
+    </HorizontalScroll>
+  );
+
   return (
     <>
       {jsonLdBlock}
-      <HorizontalScroll
-        className="py-element-gap px-section-x"
-        ariaLabel={title ? `${title} - ${carouselSuffix}` : undefined}
-        nudgeOnFirstLoad
-        showDesktopArrows
-        hintStorageKey={jsonLdId || (title ? `carousel-${title}` : undefined)}
-        labels={{ previous: tScroll("previous"), next: tScroll("next") }}
-        listClassName="flex gap-element-gap"
-      >
-        {uniqueEvents.map((event, index) => (
-          <li
-            key={event.id ?? event.slug ?? index}
-            className="snap-start flex-none w-[75vw] min-w-[75vw] sm:w-64 sm:min-w-[16rem]"
-          >
-            <CardContentServer
-              event={event}
-              compact
-              labels={cardLabels}
-              isPriority={usePriority && index <= 2}
-            />
-          </li>
-        ))}
-      </HorizontalScroll>
+      {analyticsListName ? (
+        <CardCarouselAnalytics
+          listName={analyticsListName}
+          placeSlug={analyticsContext?.placeSlug}
+          categorySlug={analyticsContext?.categorySlug}
+        >
+          {scroller}
+        </CardCarouselAnalytics>
+      ) : (
+        scroller
+      )}
     </>
   );
 }

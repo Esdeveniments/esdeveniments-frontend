@@ -46,8 +46,17 @@ export default function SearchRecoveryLinks(): JSX.Element | null {
   };
 
   const handleRecoveryClick = (e: MouseEvent, action: SearchRecoveryAction) => {
+    const placeSlug = segments.place || undefined;
+    const categorySlug =
+      segments.category && segments.category !== "tots"
+        ? segments.category
+        : undefined;
     scheduleIdleCallback(() =>
-      sendGoogleEvent("zero_results_recovery", { action }),
+      sendGoogleEvent("zero_results_recovery", {
+        action,
+        ...(placeSlug ? { place_slug: placeSlug } : {}),
+        ...(categorySlug ? { category_slug: categorySlug } : {}),
+      }),
     );
     handleNavigate(e);
   };

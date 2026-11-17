@@ -13,18 +13,30 @@ const CalendarList: FC<CalendarListProps> = ({
   labels,
   placement = "below",
   source,
+  analytics,
 }) => {
   const urls = getUrls();
   const { ref: ctaRef, trackClick } = useTrackedCta<HTMLDivElement>("add_to_calendar");
+  const eventId = analytics?.eventId;
+  const eventSlug = analytics?.eventSlug;
+  const categorySlug = analytics?.categorySlug;
+  const placeSlug = analytics?.placeSlug;
 
   const handleCalendarClick = useCallback(
     (calendarType: string): void => {
       trackClick();
       // The event itself is in page_location; titles are free text.
-      sendGoogleEvent("add_to_calendar", { method: calendarType, ...(source && { source }) });
+      sendGoogleEvent("add_to_calendar", {
+        method: calendarType,
+        ...(source ? { source } : {}),
+        ...(eventId ? { event_id: eventId } : {}),
+        ...(eventSlug ? { event_slug: eventSlug } : {}),
+        ...(categorySlug ? { category_slug: categorySlug } : {}),
+        ...(placeSlug ? { place_slug: placeSlug } : {}),
+      });
       setTimeout(onClick, 500);
     },
-    [onClick, trackClick, source]
+    [onClick, trackClick, source, eventId, eventSlug, categorySlug, placeSlug]
   );
 
   const calendarOptions: CalendarOption[] = [
@@ -50,8 +62,14 @@ const CalendarList: FC<CalendarListProps> = ({
     "flex items-center gap-2 min-h-button px-3 rounded-button body-small text-foreground-strong hover:bg-muted transition-colors focus-ring";
 
   useEffect(() => {
-    sendGoogleEvent("add_to_calendar_view", source ? { source } : {});
-  }, [source]);
+    sendGoogleEvent("add_to_calendar_view", {
+      ...(source ? { source } : {}),
+      ...(eventId ? { event_id: eventId } : {}),
+      ...(eventSlug ? { event_slug: eventSlug } : {}),
+      ...(categorySlug ? { category_slug: categorySlug } : {}),
+      ...(placeSlug ? { place_slug: placeSlug } : {}),
+    });
+  }, [source, eventId, eventSlug, categorySlug, placeSlug]);
 
   const position =
     placement === "above-end" ? "bottom-full right-0 mb-2" : "top-full left-0 mt-2";

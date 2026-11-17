@@ -6,7 +6,10 @@ import AddToCalendar from "@components/ui/addToCalendar";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import EventOrganizerCard from "./EventOrganizerCard";
-import { buildCalendarEventData } from "@utils/event-helpers";
+import {
+  buildCalendarEventData,
+  getEventAnalyticsSlugs,
+} from "@utils/event-helpers";
 import { getEventLinkUrl } from "@utils/event-url";
 import { getEventVenue } from "@utils/location-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
@@ -32,6 +35,7 @@ export default async function EventSidebar({
     getTranslations({ locale, namespace: "Components.Weather" }),
   ]);
   const eventUrl = getEventLinkUrl(event.url);
+  const { categorySlug, placeSlug } = getEventAnalyticsSlugs(event);
 
   return (
     <aside
@@ -54,6 +58,8 @@ export default async function EventSidebar({
                   data-analytics-context="event_sidebar"
                   data-analytics-event-id={event.id ? String(event.id) : ""}
                   data-analytics-event-slug={event.slug || ""}
+                  data-analytics-category-slug={categorySlug || undefined}
+                  data-analytics-place-slug={placeSlug || undefined}
                 >
                   {t("moreInfo")}
                   <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />

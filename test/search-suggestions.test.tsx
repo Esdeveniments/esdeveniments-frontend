@@ -164,7 +164,9 @@ describe("search suggestions (profiles off)", () => {
     key("Enter");
     expect(h.push).toHaveBeenCalledWith("/cardedeu");
     expect(h.selectGA).toHaveBeenCalledWith("search", "place", 2, 8);
-    expect(h.outcomeGA).toHaveBeenCalledWith("search", "place");
+    expect(h.outcomeGA).toHaveBeenCalledWith("search", "place", {
+      placeSlug: "cardedeu",
+    });
     expect(input).toHaveValue("");
   });
 
@@ -201,7 +203,7 @@ describe("search suggestions (profiles off)", () => {
   it("marks the shown list and checks for abandoned only when the user leaves", () => {
     const { type, key, unmount } = setup();
     type("Castell");
-    expect(h.markShown).toHaveBeenCalledWith("search");
+    expect(h.markShown).toHaveBeenCalledWith("search", "catalunya", undefined);
     key("Escape");
     fireEvent.pointerDown(document.body);
     expect(h.flushAbandoned).not.toHaveBeenCalled();
@@ -274,7 +276,10 @@ describe("search suggestions (profiles on)", () => {
     key("ArrowUp");
     key("Enter");
     expect(h.push).toHaveBeenCalledWith("/perfil/begudes");
-    expect(h.outcomeGA).toHaveBeenCalledWith("search", "profile");
+    expect(h.outcomeGA).toHaveBeenCalledWith("search", "profile", {
+      placeSlug: "catalunya",
+      categorySlug: undefined,
+    });
   });
 
   it("never shows a late answer for older text", async () => {
