@@ -20,6 +20,7 @@ export default async function EventMoreEvents({
   relatedEvents,
   sourceEventSlug,
   sourceSlugs,
+  relatedRow,
 }: EventMoreEventsProps) {
   const [inTown, inRegion] = await Promise.all([
     cityId ? fetchPromotedEvents({ placement: "CITY", cityId }) : [],
@@ -31,6 +32,7 @@ export default async function EventMoreEvents({
     MAX_PROMOTED_ON_EVENT_PAGE,
   );
   const promotedIds = new Set(promoted.map((event) => event.id));
+  const unpromoted = relatedEvents.filter((event) => !promotedIds.has(event.id));
 
   return (
     <>
@@ -39,12 +41,16 @@ export default async function EventMoreEvents({
         citySlug={citySlug}
         fallbackPlaceSlug={sourceSlugs?.placeSlug}
       />
-      <EventRelatedEvents
-        events={relatedEvents.filter((event) => !promotedIds.has(event.id))}
-        sourceEventId={eventId}
-        sourceEventSlug={sourceEventSlug}
-        sourceSlugs={sourceSlugs}
-      />
+      {relatedRow && unpromoted.length === relatedEvents.length ? (
+        relatedRow
+      ) : (
+        <EventRelatedEvents
+          events={unpromoted}
+          sourceEventId={eventId}
+          sourceEventSlug={sourceEventSlug}
+          sourceSlugs={sourceSlugs}
+        />
+      )}
     </>
   );
 }

@@ -7,7 +7,9 @@ import {
   CLIENT_UTILS_KEYS,
   CLIENT_FULL_TOP_LEVEL,
   CLIENT_PARTIAL_PATHS,
+  ROUTE_CLIENT_PATHS,
 } from "../lib/i18n/client-namespaces";
+import type { RouteMessagesScope } from "../types/i18n";
 
 // Directories that can contain client-rendered code. The Provider `messages`
 // prop only needs entries for namespaces consumed by these files.
@@ -244,9 +246,12 @@ function isPartialNamespace(namespace: string): boolean {
 
 // A key is shipped when a path is a segment-wise prefix of it. A "*" path
 // segment matches any key segment; a dynamic key segment ("*") needs one.
-function isShippedPath(path: string): boolean {
+function isShippedPath(
+  path: string,
+  paths: readonly string[] = CLIENT_PARTIAL_PATHS,
+): boolean {
   const keySegments = path.split(".");
-  return CLIENT_PARTIAL_PATHS.some((p) => {
+  return paths.some((p) => {
     const pathSegments = p.split(".");
     return (
       pathSegments.length <= keySegments.length &&
@@ -285,6 +290,61 @@ function readKeys(source: string, namespace: string): (string | null)[] | null {
     const id = arg.match(/^\s*(\w+)\s*$/)?.[1];
     const decl = id && source.match(new RegExp(`const\\s+${id}\\s*=([^;]*)`));
     return decl ? literal(decl[1]) : null;
+  });
+}
+
+// Where each route scope is mounted, and the files that may read its paths.
+// A file listed here must only render below those layouts.
+const ROUTE_SCOPES: Record<
+  RouteMessagesScope,
+  { layouts: string[]; files: string[] }
+> = {
+  publish: {
+    layouts: ["app/[locale]/publica/layout.tsx"],
+    files: ["app/[locale]/publica/", "components/ui/EventForm/", "components/ui/publish/"],
+  },
+  eventEdit: {
+    layouts: ["app/[locale]/e/[eventId]/edita/layout.tsx"],
+    files: ["app/[locale]/e/[eventId]/edita/", "components/ui/EventForm/"],
+  },
+  eventPromote: {
+    layouts: ["app/[locale]/e/[eventId]/promote/layout.tsx"],
+    files: ["app/[locale]/e/[eventId]/promote/"],
+  },
+  editProfile: {
+    layouts: ["app/[locale]/perfil/edita/layout.tsx"],
+    files: ["app/[locale]/perfil/edita/"],
+  },
+  sponsorship: {
+    layouts: ["app/[locale]/patrocina/layout.tsx"],
+    files: [
+      "components/ui/sponsor/CheckoutButton.tsx",
+      "components/ui/sponsor/PlaceSelector.tsx",
+      "components/ui/sponsor/PricingSectionClient.tsx",
+      "components/ui/sponsor/SponsorImageUpload.tsx",
+      "components/ui/sponsor/SponsorUploadPageClient.tsx",
+    ],
+  },
+};
+
+// True when every route scope the file renders under ships what this call
+// reads (the root provider's partial paths count too).
+function isRouteScoped(cs: Callsite): boolean {
+  if (cs.namespace === null) return false;
+  const file = relPath(cs.file);
+  const scopes = (Object.keys(ROUTE_SCOPES) as RouteMessagesScope[]).filter(
+    (scope) => ROUTE_SCOPES[scope].files.some((prefix) => file.startsWith(prefix)),
+  );
+  if (scopes.length === 0) return false;
+  return scopes.every((scope) => {
+    const paths = [...ROUTE_CLIENT_PATHS[scope], ...CLIENT_PARTIAL_PATHS];
+    if (isShippedPath(cs.namespace!, paths)) return true;
+    const keys = readKeys(readFileSync(cs.file, "utf8"), cs.namespace!);
+    return (
+      keys !== null &&
+      keys.length > 0 &&
+      keys.every((key) => key !== null && isShippedPath(`${cs.namespace}.${key}`, paths))
+    );
   });
 }
 
@@ -336,6 +396,7 @@ describe("i18n client namespace whitelist", () => {
 
     for (const cs of callsites) {
       if (cs.namespace === null) continue; // already reported
+      if (isRouteScoped(cs)) continue;
       const [top, sub] = cs.namespace.split(".", 2);
 
       if (fullTopLevel.has(top)) continue; // whole namespace shipped
@@ -389,6 +450,7 @@ describe("i18n client namespace whitelist", () => {
 
     for (const cs of callsites) {
       if (cs.namespace === null || !isPartialNamespace(cs.namespace)) continue;
+      if (isRouteScoped(cs)) continue;
       const keys = readKeys(readFileSync(cs.file, "utf8"), cs.namespace);
       const where = `  ${relPath(cs.file)}:${cs.line}  namespace="${cs.namespace}"`;
       if (keys === null) {
@@ -504,6 +566,16 @@ describe("i18n client namespace whitelist", () => {
         }
       }
 
+      for (const [scope, paths] of Object.entries(ROUTE_CLIENT_PATHS)) {
+        for (const path of paths) {
+          if (!resolves(messages, path.split("."))) {
+            problems.push(
+              `  ${locale}.json: missing "${path}" (listed in ROUTE_CLIENT_PATHS.${scope})`,
+            );
+          }
+        }
+      }
+
       for (const top of CLIENT_FULL_TOP_LEVEL) {
         if (!(top in messages)) {
           problems.push(
@@ -519,5 +591,16 @@ describe("i18n client namespace whitelist", () => {
         `Fix by updating lib/i18n/client-namespaces.ts or the messages files:\n` +
         problems.join("\n"),
     ).toEqual([]);
+  });
+
+  it("mounts every route scope in its layouts", () => {
+    for (const [scope, { layouts }] of Object.entries(ROUTE_SCOPES)) {
+      for (const layout of layouts) {
+        const source = readFileSync(join(process.cwd(), layout), "utf8");
+        expect(source, `${layout} must mount scope "${scope}"`).toContain(
+          `<RouteClientMessages scope="${scope}">`,
+        );
+      }
+    }
   });
 });

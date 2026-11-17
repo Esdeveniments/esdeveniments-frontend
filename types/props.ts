@@ -1373,6 +1373,11 @@ export interface EventMoreEventsProps {
   relatedEvents: EventSummaryResponseDTO[];
   sourceEventSlug: string;
   sourceSlugs?: EventAnalyticsSlugs;
+  /**
+   * The page's Suspense fallback row (all related events). Reused as is when
+   * no related event is promoted, so the RSC payload sends that row once.
+   */
+  relatedRow?: ReactNode;
 }
 
 export interface PromotedEventsTrackerProps {

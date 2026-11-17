@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export const SUPPORTED_LOCALES = ["ca", "es", "en"] as const;
 
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
@@ -32,3 +34,21 @@ export const localeToHrefLang: Record<AppLocale, string> = {
   es: "es",
   en: "en",
 };
+
+/** Routes whose client components need messages the root provider leaves out. */
+export type RouteMessagesScope =
+  | "publish"
+  | "eventEdit"
+  | "eventPromote"
+  | "editProfile"
+  | "sponsorship";
+
+export interface RouteClientMessagesProps {
+  scope: RouteMessagesScope;
+  children: ReactNode;
+}
+
+export interface ScopedMessagesProviderProps {
+  messages: Record<string, unknown>;
+  children: ReactNode;
+}

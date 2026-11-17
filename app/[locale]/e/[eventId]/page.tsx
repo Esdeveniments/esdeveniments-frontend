@@ -212,6 +212,15 @@ async function EventPageContent({
   const { primaryPlaceSlug, sponsorFallbackPlaces, placeLabel, placeType, newsHref } =
     getPlaceContext(event, locale);
   const analyticsSlugs = getEventAnalyticsSlugs(event);
+  // One element for the fallback and the streamed row: React sends it once.
+  const relatedRow = (
+    <EventRelatedEvents
+      events={event.relatedEvents ?? []}
+      sourceEventId={event.id}
+      sourceEventSlug={event.slug || slug}
+      sourceSlugs={analyticsSlugs}
+    />
+  );
   // Request-time parts stay outside the cached body and pass through it.
   const sponsorSlot = (
     <SponsorBannerSlot
@@ -242,14 +251,7 @@ async function EventPageContent({
       moreEventsSlot={
         <Suspense
           key="more-events"
-          fallback={
-            <EventRelatedEvents
-              events={event.relatedEvents ?? []}
-              sourceEventId={event.id}
-              sourceEventSlug={event.slug || slug}
-              sourceSlugs={analyticsSlugs}
-            />
-          }
+          fallback={relatedRow}
         >
           <EventMoreEvents
             eventId={event.id}
@@ -259,6 +261,7 @@ async function EventPageContent({
             relatedEvents={event.relatedEvents ?? []}
             sourceEventSlug={event.slug || slug}
             sourceSlugs={analyticsSlugs}
+            relatedRow={relatedRow}
           />
         </Suspense>
       }

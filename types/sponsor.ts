@@ -94,6 +94,16 @@ export interface SponsorConfig {
 export type ActiveSponsor = SponsorConfig;
 
 /**
+ * The sponsor fields the client banner needs. Pick them on the server: the
+ * full config carries a `places` list (hundreds of slugs for a country-wide
+ * sponsor) that would otherwise be serialized into every page's RSC payload.
+ */
+export type SponsorBannerData = Pick<
+  ActiveSponsor,
+  "businessName" | "imageUrl" | "targetUrl" | "geoScope"
+>;
+
+/**
  * Configuration for a self-promotional house ad.
  * Shown when no paid sponsor exists to demonstrate the ad slot.
  *
@@ -149,7 +159,7 @@ export interface TextHouseAdProps {
  * Used for both paid sponsors and venue house ads (visually identical).
  */
 export interface SponsorBannerProps {
-  sponsor: ActiveSponsor;
+  sponsor: SponsorBannerData;
   /** Current place where banner is displayed (for accurate analytics) */
   place: string;
 }

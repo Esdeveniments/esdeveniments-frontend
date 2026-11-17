@@ -11,7 +11,9 @@
  * namespace is missing from these lists. Update both places together.
  */
 
-export const CLIENT_APP_KEYS = ["EditProfile", "Error", "EventEdit", "EventPromote", "NotFound", "Publish"] as const;
+import type { RouteMessagesScope } from "types/i18n";
+
+export const CLIENT_APP_KEYS = ["Error", "NotFound"] as const;
 
 export const CLIENT_COMPONENT_KEYS = [
   "AdBoard",
@@ -20,7 +22,6 @@ export const CLIENT_COMPONENT_KEYS = [
   "DateRangeCalendar",
   "Description",
   "EditModal",
-  "EventForm",
   "EventLocation",
   "EventPage",
   "EventsMap",
@@ -66,12 +67,30 @@ export const CLIENT_FULL_TOP_LEVEL = ["Config", "Sponsor"] as const;
 // where a "*" segment matches every key at that level. The guard test checks that every key a client file reads from these
 // namespaces resolves under one of the paths.
 export const CLIENT_PARTIAL_PATHS = [
-  "Sponsorship.checkout",
-  "Sponsorship.placeSelector",
-  "Sponsorship.pricing",
-  "Sponsorship.upload",
-  "Sponsorship.uploadPage",
+  // The publish and promote upsell modal on event pages.
+  "App.EventPromote.benefit1",
+  "App.EventPromote.benefit2",
+  "App.EventPromote.benefit3",
+  "App.Publish.promoteUpsell",
 ] as const;
+
+// Paths only one route's client components read. Its layout mounts
+// <RouteClientMessages scope="..."> to add them on top of the root messages,
+// so every other page (event, listing, home) doesn't carry them in its RSC
+// payload. The guard test checks which files may read each scope.
+export const ROUTE_CLIENT_PATHS: Record<RouteMessagesScope, readonly string[]> = {
+  publish: ["App.Publish", "Components.EventForm"],
+  eventEdit: ["App.EventEdit", "Components.EventForm"],
+  eventPromote: ["App.EventPromote"],
+  editProfile: ["App.EditProfile"],
+  sponsorship: [
+    "Sponsorship.checkout",
+    "Sponsorship.placeSelector",
+    "Sponsorship.pricing",
+    "Sponsorship.upload",
+    "Sponsorship.uploadPage",
+  ],
+};
 
 // Copies the value at `keys` from source into target. "*" matches every child.
 export function pickPath(
@@ -87,4 +106,24 @@ export function pickPath(
     if (rest.length === 0) target[name] = value;
     else pickPath(value, (target[name] ??= {}) as Record<string, unknown>, rest);
   }
+}
+
+// Deep-merges `extra` into a copy of `base`; `extra` wins on conflicts.
+export function mergeMessages(
+  base: Record<string, unknown>,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(extra)) {
+    const current = out[key];
+    out[key] =
+      isPlainObject(current) && isPlainObject(value)
+        ? mergeMessages(current, value)
+        : value;
+  }
+  return out;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
