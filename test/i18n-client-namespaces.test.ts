@@ -301,11 +301,26 @@ const ROUTE_SCOPES: Record<
 > = {
   publish: {
     layouts: ["app/[locale]/publica/layout.tsx"],
-    files: ["app/[locale]/publica/", "components/ui/EventForm/", "components/ui/publish/"],
+    files: [
+      "app/[locale]/publica/",
+      "components/ui/EventForm/",
+      "components/ui/common/form/datePicker/",
+      "components/ui/common/form/imageUpload/",
+      "components/ui/common/form/multiSelect/",
+      "components/ui/common/form/textarea/",
+      "components/ui/publish/",
+    ],
   },
   eventEdit: {
     layouts: ["app/[locale]/e/[eventId]/edita/layout.tsx"],
-    files: ["app/[locale]/e/[eventId]/edita/", "components/ui/EventForm/"],
+    files: [
+      "app/[locale]/e/[eventId]/edita/",
+      "components/ui/EventForm/",
+      "components/ui/common/form/datePicker/",
+      "components/ui/common/form/imageUpload/",
+      "components/ui/common/form/multiSelect/",
+      "components/ui/common/form/textarea/",
+    ],
   },
   eventPromote: {
     layouts: ["app/[locale]/e/[eventId]/promote/layout.tsx"],

@@ -18,17 +18,14 @@ export const CLIENT_APP_KEYS = ["Error", "NotFound"] as const;
 export const CLIENT_COMPONENT_KEYS = [
   "AdBoard",
   "CardContent",
-  "DatePicker",
   "DateRangeCalendar",
   "FavoriteButton",
   "FavoritesLoginNudge",
   "HeroCTA",
   "HeroFilters",
   "HeroSearch",
-  "ImageUploader",
   "LoadMoreButton",
   "Modal",
-  "MultiSelect",
   "Navbar",
   "NoEventsFound",
   "Notification",
@@ -37,13 +34,11 @@ export const CLIENT_COMPONENT_KEYS = [
   "Select",
   "ShareKit",
   "SocialFollowPopup",
-  "TextArea",
 ] as const;
 
 export const CLIENT_UTILS_KEYS = [
   "Calendar",
   "EventStatus",
-  "Validation",
 ] as const;
 
 // Top-level namespaces that are shipped to the client in full (no sub-key pick).
@@ -66,13 +61,23 @@ export const CLIENT_PARTIAL_PATHS = [
   "Components.Profile.verifiedOrganizer",
 ] as const;
 
+// What EventForm and its form fields read, on publish and event edit.
+const EVENT_FORM_PATHS = [
+  "Components.DatePicker",
+  "Components.EventForm",
+  "Components.ImageUploader",
+  "Components.MultiSelect",
+  "Components.TextArea",
+  "Utils.Validation",
+];
+
 // Paths only one route's client components read. Its layout mounts
 // <RouteClientMessages scope="..."> to add them on top of the root messages,
 // so other pages don't carry them in their RSC payload. A nested route gets
 // its parents' scopes too. The guard test checks which files may read each.
 export const ROUTE_CLIENT_PATHS: Record<RouteMessagesScope, readonly string[]> = {
-  publish: ["App.Publish", "Components.EventForm"],
-  eventEdit: ["App.EventEdit", "Components.EventForm"],
+  publish: ["App.Publish", ...EVENT_FORM_PATHS],
+  eventEdit: ["App.EventEdit", ...EVENT_FORM_PATHS],
   eventPromote: ["App.EventPromote"],
   editProfile: ["App.EditProfile"],
   event: [
@@ -92,6 +97,7 @@ export const ROUTE_CLIENT_PATHS: Record<RouteMessagesScope, readonly string[]> =
   ],
   profile: ["Components.Profile"],
   sponsorship: [
+    "Components.ImageUploader",
     "Sponsorship.checkout",
     "Sponsorship.placeSelector",
     "Sponsorship.pricing",
@@ -114,24 +120,4 @@ export function pickPath(
     if (rest.length === 0) target[name] = value;
     else pickPath(value, (target[name] ??= {}) as Record<string, unknown>, rest);
   }
-}
-
-// Deep-merges `extra` into a copy of `base`; `extra` wins on conflicts.
-export function mergeMessages(
-  base: Record<string, unknown>,
-  extra: Record<string, unknown>,
-): Record<string, unknown> {
-  const out: Record<string, unknown> = { ...base };
-  for (const [key, value] of Object.entries(extra)) {
-    const current = out[key];
-    out[key] =
-      isPlainObject(current) && isPlainObject(value)
-        ? mergeMessages(current, value)
-        : value;
-  }
-  return out;
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { NextIntlClientProvider, useLocale, useMessages } from "next-intl";
-import { mergeMessages } from "@lib/i18n/client-namespaces";
+import { mergeMessages } from "@lib/i18n/merge-messages";
 import type { ScopedMessagesProviderProps } from "types/i18n";
 
 // A nested provider's `messages` replace the parent's, so merge them here.
