@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { connection } from "next/server";
 import { cacheLife, cacheTag } from "next/cache";
-import { captureException, captureMessage } from "@sentry/nextjs";
+import { captureMessage } from "@sentry/nextjs";
 import type {
   FestaMajorCalendar,
   FestaMajorPageData,
@@ -17,6 +17,7 @@ import { getPlaceTypeAndLabelCached } from "@utils/location-helpers";
 import { madridTodayYmd } from "@lib/dates";
 import { eventsTag, placeTag } from "@lib/cache/tags";
 import { fetchAllEventPagesExternal } from "./events-external";
+import { reportCachedReadFailure } from "./report-cached-read";
 
 // Festa major acts are events whose title says "festa major". A town needs a
 // request or a few a year, the biggest regions (Maresme, Vallès Oriental, ~245
@@ -60,7 +61,10 @@ async function getPlaceActs(
   "use cache";
   cacheTag(eventsTag, placeTag(place));
   cacheLife({ stale: 300, revalidate: 3600, expire: 86400 });
-  return fetchYearActs(place, year, MAX_PLACE_REQUESTS);
+  return reportCachedReadFailure(
+    () => fetchYearActs(place, year, MAX_PLACE_REQUESTS),
+    { tags: { section: "festes-majors" }, extra: { place, year } },
+  );
 }
 
 // About 150 backend calls per rebuild, so it isn't tagged with `events` (every
@@ -70,17 +74,30 @@ async function getCataloniaCalendar(
   currentYear: number,
 ): Promise<FestaMajorCalendar> {
   "use cache";
-  const [current, previous] = await Promise.all([
-    fetchYearActs(undefined, currentYear, MAX_CATALONIA_REQUESTS),
-    fetchYearActs(undefined, currentYear - 1, MAX_CATALONIA_REQUESTS),
-  ]);
-  const complete = current.complete && previous.complete;
+  const calendar = await reportCachedReadFailure(
+    async () => {
+      const [current, previous] = await Promise.all([
+        fetchYearActs(undefined, currentYear, MAX_CATALONIA_REQUESTS),
+        fetchYearActs(undefined, currentYear - 1, MAX_CATALONIA_REQUESTS),
+      ]);
+      return summarizeTowns(
+        current.acts,
+        previous.acts,
+        currentYear,
+        current.complete && previous.complete,
+      );
+    },
+    {
+      tags: { section: "festes-majors" },
+      extra: { place: "catalunya", year: currentYear },
+    },
+  );
   cacheLife(
-    complete
+    calendar.complete
       ? { stale: 3600, revalidate: 21600, expire: 172800 }
       : { stale: 300, revalidate: 3600, expire: 86400 },
   );
-  return summarizeTowns(current.acts, previous.acts, currentYear, complete);
+  return calendar;
 }
 
 /** The Madrid year. Callers render by it, so read it after connection(). */
@@ -88,11 +105,6 @@ async function currentYear(): Promise<number> {
   await connection();
   return Number(madridTodayYmd().slice(0, 4));
 }
-
-const report = (error: unknown, extra: Record<string, unknown>): null => {
-  captureException(error, { tags: { section: "festes-majors" }, extra });
-  return null;
-};
 
 /**
  * This and last year's acts of a town or region; build views with
@@ -113,8 +125,9 @@ export const fetchFestaMajorPlace = cache(
         previous: previous.acts,
         complete: current.complete && previous.complete,
       };
-    } catch (error) {
-      return report(error, { place, year });
+    } catch {
+      // Reported where it was thrown (getPlaceActs); here it has lost its message.
+      return null;
     }
   },
 );
@@ -125,8 +138,9 @@ export const fetchFestaMajorCalendar = cache(
     const year = await currentYear();
     try {
       return await getCataloniaCalendar(year);
-    } catch (error) {
-      return report(error, { year });
+    } catch {
+      // Reported where it was thrown (getCataloniaCalendar); here it has lost its message.
+      return null;
     }
   },
 );

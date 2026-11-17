@@ -46,4 +46,5 @@ Use `Link`, `redirect`, `useRouter`, `usePathname`, `getPathname` from `@i18n/ro
 | `i18n/locale-labels.generated.json` | Generated labels for shared utils |
 | `lib/i18n/client-namespaces.ts` | Namespaces sent to client components |
 | `utils/i18n-seo.ts` | `toLocalizedUrl`, `getLocaleSafely` |
+| `lib/i18n/require-locale.ts` | `requireLocale`: the locale or a 404, for a page that looks something up by locale |
 | `proxy.ts` | Sets `x-next-intl-locale` |

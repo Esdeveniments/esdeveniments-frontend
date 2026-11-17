@@ -46,6 +46,11 @@ export const SENTRY_IGNORE_ERRORS: Array<string | RegExp> = [
   // Ad blocker interference
   /adblock/i,
   /advertisement/i,
+  // Duplicate ad pushes, raised from inside Google's adsbygoogle.js (a second
+  // page-level ads push, a slot that already has an ad). The stack has no frame
+  // of ours. Other `adsbygoogle.push() error` messages (a zero-width slot, a
+  // missing client) point at our layout or config, so they stay reported.
+  /adsbygoogle\.push\(\) error: (?:Only one 'enable_page_level_ads'|All 'ins' elements)/,
   // Next.js rolling deployment mismatch — old client hits new server. Not actionable.
   "Failed to find Server Action",
   // React PPR resumption mismatch — happens during deployment transitions when

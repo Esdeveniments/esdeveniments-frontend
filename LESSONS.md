@@ -46,6 +46,38 @@ event many times as "missing organizer". Lists use `buildEventListItems`
 Europe/Madrid offset (`withMadridOffset`, `@date-fns/tz`, DST-aware); date-only
 values stay plain dates.
 
+## Event meta descriptions: clean the text, cut it once, keep the facts in front
+
+`generateEventMetadata` pasted the backend description, which often holds
+Markdown and line breaks, straight after the title, cut it with
+`smartTruncate`, and then appended the date and place. On the 4,242 current
+and upcoming events in the public API on 2026-11-17, 2,285 (54%) of the
+Catalan descriptions had a defect such as Markdown, line breaks or a doubled
+"...", and only 34% still showed the date. Google cuts a snippet to the
+device width, so the end is what a phone loses
+([Search Central: snippets](https://developers.google.com/search/docs/appearance/snippet)).
+The description is now title, date and place, then the text from
+`descriptionToPlainLine` (the helper the news rows use), cut once with
+`truncateAtWord`. That leaves 37 defects (0.9%), all typed by organizers in a
+title or place, and the date shows in at least 99.7% in all three locales. The
+13 Catalan descriptions without it have a title of 120 characters or more.
+Catalan has 54 identical descriptions instead of 215. Never put raw description
+text in a meta tag, and never move the date and place behind it.
+`test/meta-helpers.test.ts` covers both.
+
+The date is the whole range, not `formattedStart`. For a same-month range
+`getFormattedDate` returns a bare day ("21") in ca and es, because it is made
+to sit next to `formattedEnd`; the old Spanish description used it alone on 391
+events (9%). It also ignored the year, so a range from December 2024 to
+December 2026 read as 9 to 31 December 2026 (21 events). One-day unit tests
+missed both; a production build against real events found them.
+`test/date-helpers.test.ts` and the multi-day rows in `test/meta-helpers.test.ts`
+pin the range. A third defect sat in the same function: `isMultipleDays`
+compared only the day of the month, so 6 December to 6 January, or the same day
+a year later, read as one date (50 of 4,488 events, 1.1%). It now compares the
+whole date. When you test a range check, give the end the same day number as the
+start.
+
 ## Event start and end come from one place, in Madrid time
 
 The "Finalitzat" bug fixed in #761 came from a rule written for one combination of
@@ -1143,3 +1175,80 @@ but `useEvents` passed the `category` prop through, so "Carregar més" on every
 (likely since backend contract v2 reached production on 2026-11-04).
 `buildEventsQuery` (`utils/api-helpers.ts`), which builds every events query,
 now drops `tots` from `category` and `byDate`.
+
+## A path Proxy skips becomes the `[locale]` segment
+
+`/sitemap_index.xml`, `/sitemap-index.xml`, `/staticfoo` and 16 more single-segment
+URLs I tried (Nov 2026) answered 500 instead of 404. Proxy's matcher skipped any
+path that started with `sitemap`, `server-`, `static`, `mcp` and so on, nothing
+routed them, and Next matched `app/[locale]` with that text as the locale. The
+layout answers an unsupported locale with `notFound()`, yet the home page still
+ran and threw a TypeError first (`PLACE_RELATION_PREPOSITIONS[locale]` in
+`formatPlacePrepositionParts`). Sentry logged `JAVASCRIPT-NEXTJS-4Q` and `4R`, and
+a crawler probing `/sitemap_index.xml` got a 5xx.
+
+Fixing only the page leaves a cost. Next caches the 404 of a new `[locale]` value
+(`x-nextjs-cache: HIT`, `s-maxage=31536000`), one entry per URL, so a scanner
+walking `/sitemap-1.xml`, `/sitemap-2.xml` and so on would fill the page cache.
+The matcher's entries are now anchored (`$` or a trailing `/`), and Proxy answers
+those paths like any unknown place. `requireLocale` (`lib/i18n/require-locale.ts`)
+stays as the net for a path that slips through: the layout and the home page
+start with it. `dynamicParams = false` is not
+available with `cacheComponents`, and its docs say to call `notFound()` in the
+page. `test/proxy-matcher.test.ts` lists the real routes that must skip Proxy and
+the look-alikes that must not.
+
+`static/` and `_next/` hold real asset folders. They stay prefixes. An unknown
+path under them (`/static/css`, `/static/barcelona/avui`) still reaches a page with
+the folder name as the locale. The layout answers 404 and that response is not
+cached. A page used to throw the same TypeError on the way, so the preposition
+helpers in `utils/string-helpers.ts` now read a value that is not a locale as
+Catalan, the default locale, like the rest of the code does.
+`/sitemap_index.xml`, the name WordPress and Yoast use, 301s to `/sitemap.xml` in
+`next.config.js`.
+
+## A "use cache" function's error reaches its caller without a message
+
+In production, what a `"use cache"` function throws mostly arrives in its
+caller as "An error occurred in the Server Components render": no message, no
+stack, only a digest. The festa major, festivity and cached events readers
+reported the failure from the caller, so on 17 Nov, with the backend answering
+503s and timeouts, 32 events landed under one Sentry title
+(`JAVASCRIPT-NEXTJS-30`). Of the 7 cached events failures that day, 6 carried
+the generic text and 1 carried the real one (`getCachedEventsPage: HTTP 503`).
+
+`reportCachedReadFailure` (`lib/api/report-cached-read.ts`) wraps the body of
+the cached function, reports the original error and rethrows it, so nothing is
+cached and the caller still falls back. The caller does not report.
+
+## Sentry never received a source map
+
+Server stack traces in Sentry showed minified chunks
+(`utils_string-helpers_ts_…js:2:2552`) with "Source code was not found". The
+debug IDs of a live client chunk and of two server chunks matched no uploaded
+bundle (`GET /api/0/projects/<org>/<project>/artifact-lookup/?debug_id=<id>`
+returned `[]`), and the latest release had 0 files. `next.config.js` set
+`sourcemaps.assets` to a glob of source files and ignored `.next/**`. The SDK
+hands `assets` to the CLI as directories to upload, so the glob was read as a
+directory name and nothing was uploaded. Every CI build printed it (`Sentry
+source map upload warning: Directory '**/*.{js,jsx,ts,tsx}' does not exist.`),
+but the Docker build never sets `CI`, and everything that prints an upload
+problem keyed on it: `silent`, and the `errorHandler` (once a handler is set,
+the plugin logs nothing itself).
+
+`assets` is now `[".next/server"]` and `ignore` is gone. Only the server has
+maps, because `productionBrowserSourceMaps` is off. The SDK's default list also
+names `.next/static/chunks`, where the CLI fails on JS without maps right after
+it uploaded the server directory, so every build warned and never printed
+"Successfully uploaded source maps". `silent` and the `errorHandler` warning
+follow `SENTRY_AUTH_TOKEN`, so the deploy build prints the upload and any
+failure. Against a local server that speaks the artifact bundle protocol, the
+build sends one bundle with 864 JS and map pairs, each with a debug ID. After a
+deploy, take a `//# debugId=` from a `.next/server` chunk and check that
+`artifact-lookup` returns a bundle, then check that the next server error shows
+frames from `lib/` and `utils/`.
+
+Client maps are still off, so add `.next/static/chunks` to `assets` when they
+come back. `productionBrowserSourceMaps: false` stops the SDK from enabling
+them, and turning it on adds map generation to every build, so it needs its own
+measurement.

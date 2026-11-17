@@ -137,6 +137,7 @@ Rules:
 - No `headers()`, `cookies()` or `connection()` inside. Read the locale outside (`rootLocale()`) and pass it in, then call `setRequestLocale(locale)` inside so next-intl doesn't fall back to `headers()`.
 - Request-time parts (sponsor banner, latest news) are rendered outside and passed in as slot props; the cache stores them as holes.
 - Always set `cacheLife`; add `cacheTag` when something revalidates it.
+- Report a failure inside the function: `reportCachedReadFailure` (`lib/api/report-cached-read.ts`) wraps the body, reports and rethrows. In production the caller receives "An error occurred in the Server Components render" without the message, so a `captureException` in the caller groups every failure under that title.
 - The store is `use-cache-handler.mjs` (registered as `cacheHandlers.default` in `next.config.js`, in-memory, per process). Don't remove it: `cacheMaxMemorySize: 0` disables the built-in store (AGENTS.md › Hard rules).
 
 ## No local barrel files

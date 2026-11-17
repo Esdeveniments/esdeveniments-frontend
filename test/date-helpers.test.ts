@@ -510,6 +510,81 @@ describe("getFormattedDate", () => {
     expect(result.formattedEnd).toBe("31 de diciembre de 2025");
   });
 
+  it.each([
+    ["ca", "9 de desembre del 2024", "31 de desembre del 2026"],
+    ["es", "9 de diciembre de 2024", "31 de diciembre de 2026"],
+    ["en", "December 9, 2024", "December 31, 2026"],
+  ] as const)(
+    "keeps both years when a %s range spans the same month of different years",
+    (locale, formattedStart, formattedEnd) => {
+      const result = getFormattedDate(
+        "2024-12-09T12:00:00.000Z",
+        "2026-12-31T12:00:00.000Z",
+        locale
+      );
+
+      expect(result.isMultipleDays).toBe(true);
+      expect(result.formattedStart).toBe(formattedStart);
+      expect(result.formattedEnd).toBe(formattedEnd);
+    }
+  );
+
+  it.each([
+    ["ca", "6 de desembre del 2026", "6 de gener del 2027"],
+    ["es", "6 de diciembre de 2026", "6 de enero de 2027"],
+    ["en", "December 6, 2026", "January 6, 2027"],
+  ] as const)(
+    "shows a %s range whose end has the same day number in the next month",
+    (locale, formattedStart, formattedEnd) => {
+      const result = getFormattedDate(
+        "2026-12-06T12:00:00.000Z",
+        "2027-01-06T12:00:00.000Z",
+        locale
+      );
+
+      expect(result.isMultipleDays).toBe(true);
+      expect(result.formattedStart).toBe(formattedStart);
+      expect(result.formattedEnd).toBe(formattedEnd);
+    }
+  );
+
+  it.each([
+    [
+      "month of the same year",
+      "2026-11-05T12:00:00.000Z",
+      "2026-12-05T12:00:00.000Z",
+      "5 de novembre",
+      "5 de desembre del 2026",
+    ],
+    [
+      "year",
+      "2025-11-05T12:00:00.000Z",
+      "2026-11-05T12:00:00.000Z",
+      "5 de novembre del 2025",
+      "5 de novembre del 2026",
+    ],
+  ] as const)(
+    "shows a range whose end has the same day number in another %s",
+    (_label, start, end, formattedStart, formattedEnd) => {
+      const result = getFormattedDate(start, end, "ca");
+
+      expect(result.isMultipleDays).toBe(true);
+      expect(result.formattedStart).toBe(formattedStart);
+      expect(result.formattedEnd).toBe(formattedEnd);
+    }
+  );
+
+  it("keeps one date when the start and end are on the same day at different times", () => {
+    const result = getFormattedDate(
+      "2026-12-06T08:00:00.000Z",
+      "2026-12-06T20:00:00.000Z",
+      "ca"
+    );
+
+    expect(result.isMultipleDays).toBe(false);
+    expect(result.formattedEnd).toBe(null);
+  });
+
   it("includes year for single-day dates in English", () => {
     const result = getFormattedDate("2025-12-19T12:00:00.000Z", undefined, "en");
 

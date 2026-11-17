@@ -1,13 +1,12 @@
 import "../../styles/globals.css";
 import { Suspense, type ReactNode } from "react";
 import { locale as rootLocale } from "next/root-params";
-import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { NextIntlClientProvider } from "next-intl";
 import {
   getMessages,
   setRequestLocale,
   getTranslations,
 } from "next-intl/server";
-import { notFound } from "next/navigation";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { routing } from "@i18n/routing";
@@ -34,6 +33,7 @@ import {
   CLIENT_PARTIAL_PATHS,
   pickPath,
 } from "@lib/i18n/client-namespaces";
+import { requireLocale } from "@lib/i18n/require-locale";
 
 async function I18nProvider({
   locale,
@@ -132,12 +132,7 @@ export default async function LocaleLayout({
 }: {
   children: ReactNode;
 }) {
-  const locale = (await rootLocale()) as AppLocale;
-
-  // Validate that the incoming locale is supported
-  if (!hasLocale(routing.locales, locale)) {
-    notFound();
-  }
+  const locale = requireLocale(await rootLocale());
 
   // Distribute the locale to all server components in this request
   setRequestLocale(locale);

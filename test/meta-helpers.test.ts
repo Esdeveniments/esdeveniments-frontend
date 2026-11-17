@@ -310,6 +310,77 @@ describe("meta helpers (black-box)", () => {
       );
       expect(long.description).not.toContain(suffix);
     });
+
+    it.each([
+      ["ca", "7 d’octubre del 2099"],
+      ["en", "October 7, 2099"],
+    ] as const)(
+      "writes the %s description as one plain line: facts first, then the text without markdown",
+      (locale, date) => {
+        const messy = {
+          ...event,
+          description:
+            "**6a Castaween** – La Llagosta\n\nUna *nit* de [castanyes](https://example.com) i disfresses.\n\nEntrada lliure.",
+        };
+        expect(
+          generateEventMetadata(messy, undefined, undefined, locale).description,
+        ).toBe(
+          `6a Castaween - ${date} - La Llagosta - Una nit de castanyes i disfresses. Entrada lliure.`,
+        );
+      },
+    );
+
+    it("cuts a long description once, at its own end, so the date and place are kept", () => {
+      const sentence =
+        "Una jornada plena d'activitats culturals, tallers infantils, música en directe i degustació de productes artesans. ";
+      const description = generateEventMetadata(
+        { ...event, description: sentence.repeat(4) },
+        undefined,
+        undefined,
+        "ca",
+        "Consulta l'horari.",
+      ).description as string;
+      expect(
+        description.startsWith(
+          "6a Castaween - 7 d’octubre del 2099 - La Llagosta - Una jornada plena",
+        ),
+      ).toBe(true);
+      expect(description.match(/…|\.\.\./g)).toHaveLength(1);
+      expect(description.endsWith("…")).toBe(true);
+      expect(description.length).toBeLessThanOrEqual(157);
+      expect(description).not.toContain("Consulta l'horari");
+    });
+
+    it("collapses stray whitespace and line breaks in the title and place", () => {
+      const spaced = { ...event, title: "Festa\u00a0Major \n 2099", location: "Plaça   Major\n" };
+      expect(generateEventMetadata(spaced, undefined, undefined, "ca").description).toBe(
+        "Festa Major 2099 - 7 d’octubre del 2099 - Plaça Major",
+      );
+    });
+
+    it("does not repeat the title when the description only restates it", () => {
+      const echo = { ...event, description: "6a Castaween." };
+      expect(generateEventMetadata(echo, undefined, undefined, "ca").description).toBe(
+        "6a Castaween - 7 d’octubre del 2099 - La Llagosta",
+      );
+    });
+
+    it.each([
+      ["ca", "2099-10-09", "7 – 9 d’octubre del 2099"],
+      ["es", "2099-10-09", "7 – 9 de octubre de 2099"],
+      ["en", "2099-10-09", "October 7 – 9, 2099"],
+      ["ca", "2099-11-02", "7 d’octubre – 2 de novembre del 2099"],
+      ["en", "2099-11-02", "October 7 – November 2, 2099"],
+      ["ca", "2101-10-09", "7 d’octubre del 2099 – 9 d’octubre del 2101"],
+    ] as const)(
+      "writes a multi-day date as a range with its month and year (%s, until %s)",
+      (locale, endDate, range) => {
+        expect(
+          generateEventMetadata({ ...event, endDate }, undefined, undefined, locale)
+            .description,
+        ).toBe(`6a Castaween - ${range} - La Llagosta`);
+      },
+    );
   });
 });
 

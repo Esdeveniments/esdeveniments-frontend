@@ -18,6 +18,7 @@ import type { InternalOriginOptions } from "types/api/internal";
 import { cacheLife, cacheTag } from "next/cache";
 import { getErrorStatus } from "@utils/error-status";
 import { markEventReadFailed } from "./event-outage";
+import { reportCachedReadFailure } from "./report-cached-read";
 import {
   parseEventDetail,
   parsePagedEvents,
@@ -115,14 +116,22 @@ async function getCachedEventsPage(
   "use cache";
   cacheTag(eventsTag);
   cacheLife({ stale: 300, revalidate: 600, expire: 3600 });
-  const res = await fetchWithHmac(`${getApiUrl()}/events?${query}`, {
-    skipConnection: true,
-    timeout: CACHED_EVENTS_TIMEOUT_MS,
-  });
-  if (!res.ok) throw new Error(`getCachedEventsPage: HTTP ${res.status}`);
-  const page = parsePagedEvents(await res.json());
-  if (!page) throw new Error("getCachedEventsPage: invalid payload");
-  return page;
+  return reportCachedReadFailure(
+    async () => {
+      const res = await fetchWithHmac(`${getApiUrl()}/events?${query}`, {
+        skipConnection: true,
+        timeout: CACHED_EVENTS_TIMEOUT_MS,
+      });
+      if (!res.ok) throw new Error(`getCachedEventsPage: HTTP ${res.status}`);
+      const page = parsePagedEvents(await res.json());
+      if (!page) throw new Error("getCachedEventsPage: invalid payload");
+      return page;
+    },
+    {
+      tags: { section: "events-fetch", fallback: "cached-read-failed" },
+      extra: { query },
+    },
+  );
 }
 
 export async function fetchEventsCached(
@@ -133,14 +142,11 @@ export async function fetchEventsCached(
   const startedAt = performance.now();
   try {
     return await getCachedEventsPage(buildEventsQuery(params).toString());
-  } catch (error) {
-    captureException(error, {
-      tags: { section: "events-fetch", fallback: "cached-read-failed" },
-      extra: { params },
-    });
-    // Errors thrown inside "use cache" reach us without their type in
-    // production, so detect a timeout by the time spent. A retry would only
-    // time out again and double the wait on each fallback stage.
+  } catch {
+    // The failure is reported in getCachedEventsPage; here it has lost its
+    // message. Errors thrown inside "use cache" also reach us without their
+    // type in production, so detect a timeout by the time spent. A retry would
+    // only time out again and double the wait on each fallback stage.
     if (performance.now() - startedAt >= CACHED_EVENTS_TIMEOUT_MS) {
       return emptyPagedResponse(params.page ?? 0, params.size ?? 12);
     }

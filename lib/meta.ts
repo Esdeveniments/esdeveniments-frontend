@@ -19,6 +19,8 @@ import { formatShortDateRange } from "@utils/date-helpers";
 import { isProductionSiteUrl } from "@utils/production-host";
 import { isMalformedEventSlug } from "@utils/event-slug-quality";
 import { isExpiredEventDates } from "@utils/event-helpers";
+import { descriptionToPlainLine } from "@utils/event-excerpt";
+import { truncateAtWord } from "@utils/string-helpers";
 
 // --- Default robots policy for indexable pages ---
 export const DEFAULT_ROBOTS_POLICY = {
@@ -30,12 +32,8 @@ export const DEFAULT_ROBOTS_POLICY = {
 };
 
 // --- Sanitization/Truncation helpers ---
-function sanitizeInput(str: string = ""): string {
-  return str.replace(/<[^>]*>/g, "").trim();
-}
-
 function sanitizeAndTrim(str: string = ""): string {
-  return sanitizeInput(str).replace(/\s+/g, " ").trim();
+  return str.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 
 function smartTruncate(str: string, maxLength: number): string {
@@ -92,22 +90,6 @@ export function generateMetaTitle(
   return metaTitle;
 }
 
-export function generateMetaDescription(
-  title: string,
-  description?: string,
-): string {
-  const titleSanitized = sanitizeInput(title);
-  let metaDescription = titleSanitized;
-
-  // Category information is handled via structured data (article:tag, article:section)
-  // Keep description natural and benefit-driven per 2025 SEO best practices
-  if (metaDescription.length < 120 && description) {
-    const descriptionSanitized = sanitizeInput(description);
-    metaDescription += ` - ${descriptionSanitized}`;
-  }
-  return smartTruncate(metaDescription, META_DESCRIPTION_MAX);
-}
-
 // Pads a short description with a generic sentence, only when it fits whole.
 function appendSentenceIfShort(base: string, sentence?: string): string {
   const addition = sentence?.trim();
@@ -156,52 +138,43 @@ export function generateEventMetadata(
       descriptionSuffix,
     );
   } else {
-    const { formattedStart } = getFormattedDate(
+    const { formattedStart, formattedEnd } = getFormattedDate(
       event.startDate,
       event.endDate,
       localeToUse,
     );
+    // The start is built to pair with the end: in ca/es a same-month range
+    // starts with just the day number, so it is never used alone.
+    const dateLabel = formattedEnd
+      ? `${formattedStart} – ${formattedEnd}`
+      : formattedStart;
     const placePart =
       event.location?.trim() ||
       event.city?.name?.trim() ||
       event.region?.name?.trim() ||
       "";
+    // Facts first (title, date, place), then the description as plain text:
+    // a long description only loses its own tail, cut once, so the date and
+    // place that tell similar events apart are never cut.
+    const lead = truncateAtWord(
+      [event.title, dateLabel, placePart]
+        .map(sanitizeAndTrim)
+        .filter(Boolean)
+        .join(" - "),
+      META_DESCRIPTION_MAX,
+    );
+    const teaser = descriptionToPlainLine(event.description, event.title);
+    const withTeaser =
+      lead.length < META_DESCRIPTION_SHORT && teaser
+        ? truncateAtWord(`${lead} - ${teaser}`, META_DESCRIPTION_MAX)
+        : lead;
     if (isDefaultLocale) {
-      const enhancedDescription = generateMetaDescription(
-        event.title,
-        event.description,
-      );
-      const descriptionParts = [enhancedDescription];
-      if (formattedStart && formattedStart.trim().length > 0) {
-        descriptionParts.push(formattedStart);
-      }
-      if (placePart) {
-        descriptionParts.push(placePart);
-      }
-      finalDescription = appendSentenceIfShort(
-        smartTruncate(descriptionParts.join(" - "), META_DESCRIPTION_MAX),
-        descriptionSuffix,
-      );
+      finalDescription = appendSentenceIfShort(withTeaser, descriptionSuffix);
     } else {
-      // On non-default locales, prefer the localized suffix sentence over
-      // appending Catalan prose; use the Catalan tail only when no suffix fits.
-      const leadParts = [
-        sanitizeInput(event.title),
-        formattedStart?.trim() || "",
-        placePart,
-      ].filter(Boolean);
-      const lead = smartTruncate(leadParts.join(" - "), META_DESCRIPTION_MAX);
+      // The description is Catalan: on non-default locales prefer the
+      // localized suffix sentence and use the teaser only when no suffix fits.
       const withSuffix = appendSentenceIfShort(lead, descriptionSuffix);
-      if (withSuffix !== lead) {
-        finalDescription = withSuffix;
-      } else {
-        const bodyTail = sanitizeInput(event.description);
-        const combined =
-          lead.length < META_DESCRIPTION_SHORT && bodyTail
-            ? `${lead} - ${bodyTail}`
-            : lead;
-        finalDescription = smartTruncate(combined, META_DESCRIPTION_MAX);
-      }
+      finalDescription = withSuffix !== lead ? withSuffix : withTeaser;
     }
   }
 

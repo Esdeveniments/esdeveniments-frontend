@@ -1,7 +1,6 @@
 import { cache } from "react";
 import { connection } from "next/server";
 import { cacheLife } from "next/cache";
-import { captureException } from "@sentry/nextjs";
 import type { EventSummaryResponseDTO } from "types/api/event";
 import type {
   FestivityPageData,
@@ -16,6 +15,7 @@ import {
   selectSeasonEvents,
 } from "@utils/festivity";
 import { fetchAllEventPagesExternal } from "./events-external";
+import { reportCachedReadFailure } from "./report-cached-read";
 
 // A broad term ("fira") needs about 10 date windows a season; 30 is far above that.
 const MAX_REQUESTS_PER_TERM = 30;
@@ -53,19 +53,24 @@ async function getFestivitySeasons(
 ): Promise<FestivitySeasons> {
   "use cache";
   cacheLife({ stale: 300, revalidate: 3600, expire: 86400 });
-  const type = getFestivityType(slug);
-  const [current, previous] = await Promise.all([
-    fetchSeason(slug, seasonYear),
-    fetchSeason(slug, seasonYear - 1),
-  ]);
-  return {
-    current: selectSeasonEvents(type, current, seasonYear).map(
-      ({ event }) => event,
-    ),
-    previous: selectSeasonEvents(type, previous, seasonYear - 1).map(
-      ({ act }) => act,
-    ),
-  };
+  return reportCachedReadFailure(
+    async () => {
+      const type = getFestivityType(slug);
+      const [current, previous] = await Promise.all([
+        fetchSeason(slug, seasonYear),
+        fetchSeason(slug, seasonYear - 1),
+      ]);
+      return {
+        current: selectSeasonEvents(type, current, seasonYear).map(
+          ({ event }) => event,
+        ),
+        previous: selectSeasonEvents(type, previous, seasonYear - 1).map(
+          ({ act }) => act,
+        ),
+      };
+    },
+    { tags: { section: "festivities" }, extra: { slug, seasonYear } },
+  );
 }
 
 /** A /<festivity> page. Deduped per request (metadata, page and sitemap). */
@@ -78,11 +83,8 @@ export const fetchFestivityPage = cache(
     let seasons: FestivitySeasons | null = null;
     try {
       seasons = await getFestivitySeasons(slug, seasonYear);
-    } catch (error) {
-      captureException(error, {
-        tags: { section: "festivities" },
-        extra: { slug, seasonYear },
-      });
+    } catch {
+      // Reported in getFestivitySeasons; here the error has lost its message.
     }
     return buildFestivityPageData({ slug, seasons, seasonYear, today });
   },

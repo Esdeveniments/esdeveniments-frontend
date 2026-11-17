@@ -23,6 +23,7 @@ import { buildTopAgendaLinks } from "@config/top-agenda-links";
 import { connection } from "next/server";
 import { HERO_IMAGE } from "@config/hero-image";
 import { madridTodayYmd } from "@lib/dates";
+import { requireLocale } from "@lib/i18n/require-locale";
 import { FESTES_MAJORS_SEGMENT } from "@utils/constants";
 import {
   inSeasonFestivities,
@@ -32,7 +33,7 @@ import HomePageSkeleton from "@components/ui/common/skeletons/HomePageSkeleton";
 import { getHeroSkeletonCopy } from "@components/ui/hero/HeroSectionSkeleton";
 
 export async function generateMetadata() {
-  const locale = (await rootLocale()) as AppLocale;
+  const locale = requireLocale(await rootLocale());
   const pageData: PageData = await generatePagesData({
     place: "",
     byDate: "",
@@ -114,8 +115,7 @@ function HomeStaticFallback({ locale }: { locale: AppLocale }) {
 export default async function Page({
   params,
 }: PageProps<"/[locale]">) {
-  const { locale } = await params;
-  const appLocale = locale as AppLocale;
+  const appLocale = requireLocale((await params).locale);
   const heroCopy = await getHeroSkeletonCopy(appLocale);
 
   return (
