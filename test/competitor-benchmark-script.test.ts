@@ -22,6 +22,7 @@ def serve():
         def do_GET(self):
             log.append({"path": self.path, "host": self.headers.get("Host"), "agent": self.headers.get("User-Agent"), "at": time.monotonic()})
             status, headers, body = routes.get(self.path, (404, {}, b""))
+            time.sleep(float(headers.get("X-Delay", 0)))  # a slow answer
             self.send_response(status)
             for key, value in headers.items():
                 self.send_header(key, value)
@@ -459,6 +460,34 @@ print(json.dumps({
     expect(out.requests).toBe(out.paths.length);
     // and each one waited for the Crawl-delay (0.1 s) since the one before
     expect(out.min_gap).toBeGreaterThanOrEqual(0.09);
+  }, 30_000);
+
+  it("reads a sitemap with its own timeout, since sitemaps are built on request and can be slow", () => {
+    const out = runPython<{
+      tooSlow: { catalogue: unknown; notes: string[] };
+      patient: { catalogue: { urls: number; fetched: number; complete: boolean }; notes: string[] };
+    }>(String.raw`
+base, routes, log = serve()
+routes["/robots.txt"] = OPEN
+routes["/sitemap.xml"] = (200, {"Content-Type": "application/xml", "X-Delay": "0.6"}, urlset([(base + "/e/a", "2026-11-15")]).encode())
+site = site_at(base, event_url=r"^/e/")
+
+def read(sitemap_timeout):
+    bench.SITEMAP_TIMEOUT = sitemap_timeout
+    notes = []
+    client = bench.Client({"127.0.0.1"}, 0)
+    catalogue, _ = bench.crawl_catalogue(client, bench.load_robots(client, site), site, TODAY, 5, notes)
+    return {"catalogue": catalogue, "notes": notes}
+
+sys.stderr = open("/dev/null", "w")  # the server logs the connection the client gives up on
+print(json.dumps({"tooSlow": read(0.2), "patient": read(5)}))
+`);
+
+    expect(out.tooSlow.catalogue).toBeNull();
+    expect(out.tooSlow.notes).toHaveLength(1);
+    expect(out.tooSlow.notes[0]).toContain("sitemap");
+    expect(out.patient.catalogue).toMatchObject({ urls: 1, fetched: 1, complete: true });
+    expect(out.patient.notes).toEqual([]);
   }, 30_000);
 
   it("leaves a site that refuses us alone and keeps what it already read", () => {
