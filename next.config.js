@@ -224,7 +224,8 @@ const nextConfig = {
 
   // --- Redirects ---
   // Run before proxy.ts. Conventional English trust-page URLs (used by AI
-  // agents and site scanners) → the Catalan pages.
+  // agents and site scanners) → the Catalan pages, and the WordPress/Yoast
+  // sitemap index crawlers probe → ours.
   async redirects() {
     return [
       { source: "/about", destination: "/qui-som", statusCode: 301 },
@@ -235,6 +236,11 @@ const nextConfig = {
         statusCode: 301,
       },
       { source: "/terms", destination: "/termes-servei", statusCode: 301 },
+      {
+        source: "/sitemap_index.xml",
+        destination: "/sitemap.xml",
+        statusCode: 301,
+      },
     ];
   },
 
@@ -263,8 +269,10 @@ module.exports = withSentryConfig(
     org: "esdeveniments-fw",
     project: "javascript-nextjs",
 
-    // Only print logs for uploading source maps in CI
-    silent: !process.env.CI,
+    // Log the upload wherever there is a token to upload with (the deploy
+    // build). It was `!process.env.CI`, which the Docker build never sets, so an
+    // upload that found nothing stayed invisible.
+    silent: !sentryUploadsEnabled,
 
     // Tracing is off in the browser, so there is no navigation hook to export.
     suppressOnRouterTransitionStartWarning: true,
@@ -284,25 +292,12 @@ module.exports = withSentryConfig(
     // Prevent original sources from appearing in devtools in production
     hideSourceMaps: true,
 
-    // Exclude patterns from source map uploads to reduce upload time and size
-    // Excludes node_modules, .next build artifacts, and other non-source files
+    // Leave `assets` and `ignore` unset: the SDK then uploads what the build
+    // wrote (.next/server and .next/static/chunks) and skips Next's own
+    // manifests. A glob of source files here replaced that and `.next/**` was
+    // ignored, so no map was ever uploaded and server stack traces stayed
+    // minified ("Source code was not found").
     sourcemaps: {
-      ignore: [
-        "node_modules/**",
-        ".next/**",
-        ".sentry/**",
-        "**/*.test.{js,ts,tsx}",
-        "**/*.spec.{js,ts,tsx}",
-        "**/test/**",
-        "**/tests/**",
-        "**/__tests__/**",
-        "**/e2e/**",
-        "**/*.config.{js,ts}",
-        "**/scripts/**",
-      ],
-      // Upload source maps for all JavaScript/TypeScript files
-      // This provides better stack traces but increases upload time
-      assets: "**/*.{js,jsx,ts,tsx}",
       // Delete source maps after upload to prevent exposing them in production
       deleteSourcemapsAfterUpload: true,
     },
@@ -348,8 +343,11 @@ module.exports = withSentryConfig(
 
     // Error handling: log errors during source map upload but don't fail the build
     errorHandler: (err) => {
-      // Only log errors in CI, silently fail otherwise to avoid build noise
-      if (process.env.CI) {
+      // With a handler set the plugin logs nothing itself, so this warning is the
+      // only trace of a failed upload. It used to need `CI`, which the Docker
+      // build never sets, so the deploy build failed silently. Without a token
+      // nothing is uploaded and there is nothing to warn about.
+      if (sentryUploadsEnabled) {
         console.warn("Sentry source map upload warning:", err.message);
       }
       // Don't throw - allow build to continue even if source map upload fails

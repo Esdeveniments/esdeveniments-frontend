@@ -8,8 +8,21 @@ import {
   formatPlacePrepositionParts,
 } from "../utils/string-helpers";
 import { getProfileDisplayName } from "../utils/profile-name";
+import type { AppLocale } from "types/i18n";
 
 describe("formatPlacePreposition", () => {
+  it("reads a value that is not a locale as English instead of throwing", () => {
+    // /static/<place> skips Proxy, so Next passes "static" as the locale.
+    const notALocale = "static" as unknown as AppLocale;
+    expect(
+      formatPlacePrepositionParts("Barcelona", "town", notALocale).preposition
+    ).toBe("in");
+    expect(formatNamePrepositionParts("Òmnium", notALocale, "by")).toEqual({
+      preposition: "by",
+      place: "Òmnium",
+    });
+  });
+
   it("uses Catalan a/al forms for ca locale", () => {
     expect(formatPlacePreposition("Barcelona", "town", "ca", false)).toBe(
       "a Barcelona"

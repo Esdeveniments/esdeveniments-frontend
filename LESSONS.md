@@ -1172,3 +1172,72 @@ but `useEvents` passed the `category` prop through, so "Carregar més" on every
 (likely since backend contract v2 reached production on 2026-11-04).
 `buildEventsQuery` (`utils/api-helpers.ts`), which builds every events query,
 now drops `tots` from `category` and `byDate`.
+
+## A path Proxy skips becomes the `[locale]` segment
+
+`/sitemap_index.xml`, `/sitemap-index.xml`, `/staticfoo` and 16 more single-segment
+URLs I tried (Nov 2026) answered 500 instead of 404. Proxy's matcher skipped any
+path that started with `sitemap`, `server-`, `static`, `mcp` and so on, nothing
+routed them, and Next matched `app/[locale]` with that text as the locale. The
+layout answers an unsupported locale with `notFound()`, yet the home page still
+ran and threw a TypeError first (`PLACE_RELATION_PREPOSITIONS[locale]` in
+`formatPlacePrepositionParts`). Sentry logged `JAVASCRIPT-NEXTJS-4Q` and `4R`, and
+a crawler probing `/sitemap_index.xml` got a 5xx.
+
+Fixing only the page leaves a cost. Next caches the 404 of a new `[locale]` value
+(`x-nextjs-cache: HIT`, `s-maxage=31536000`), one entry per URL, so a scanner
+walking `/sitemap-1.xml`, `/sitemap-2.xml` and so on would fill the page cache.
+The matcher's entries are now anchored (`$` or a trailing `/`), and Proxy answers
+those paths like any unknown place. `requireLocale` (`lib/i18n/require-locale.ts`)
+stays as the net for names that still match, such as `/server-foo-sitemap.xml`:
+the layout and the home page start with it. `dynamicParams = false` is not
+available with `cacheComponents`, and its docs say to call `notFound()` in the
+page. `test/proxy-matcher.test.ts` lists the real routes that must skip Proxy and
+the look-alikes that must not.
+
+`static/` and `_next/` hold real asset folders. They stay prefixes. An unknown
+path under them (`/static/css`, `/static/barcelona/avui`) still reaches a page with
+the folder name as the locale. The layout answers 404 and that response is not
+cached. A page used to throw the same TypeError on the way, so the preposition
+tables in `utils/string-helpers.ts` now read an unsupported locale as English.
+`/sitemap_index.xml`, the name WordPress and Yoast use, 301s to `/sitemap.xml` in
+`next.config.js`.
+
+## A "use cache" function's error reaches its caller without a message
+
+In production, what a `"use cache"` function throws mostly arrives in its
+caller as "An error occurred in the Server Components render": no message, no
+stack, only a digest. The festa major, festivity and cached events readers
+reported the failure from the caller, so on 17 Nov, with the backend answering
+503s and timeouts, 32 events landed under one Sentry title
+(`JAVASCRIPT-NEXTJS-30`). Of the 7 cached events failures that day, 6 carried
+the generic text and 1 carried the real one (`getCachedEventsPage: HTTP 503`).
+
+`reportCachedReadFailure` (`lib/api/report-cached-read.ts`) wraps the body of
+the cached function, reports the original error and rethrows it, so nothing is
+cached and the caller still falls back. The caller does not report.
+
+## Sentry never received a source map
+
+Server stack traces in Sentry showed minified chunks
+(`utils_string-helpers_ts_…js:2:2552`) with "Source code was not found". The
+debug IDs of a live client chunk and of two server chunks matched no uploaded
+bundle (`GET /api/0/projects/<org>/<project>/artifact-lookup/?debug_id=<id>`
+returned `[]`), and the latest release had 0 files. `next.config.js` set
+`sourcemaps.assets` to a glob of source files and ignored `.next/**`. The SDK
+hands `assets` to the CLI as the paths to upload, so the glob replaced
+`.next/server` and `.next/static/chunks`, and nothing was uploaded. Every CI
+build printed it (`Sentry source map upload warning: Directory
+'**/*.{js,jsx,ts,tsx}' does not exist.`), but the Docker build never sets `CI`,
+and everything that prints an upload problem keyed on it: `silent`, and the
+`errorHandler` (once a handler is set, the plugin logs nothing itself).
+
+Both options are gone. `silent` and the `errorHandler` warning now follow
+`SENTRY_AUTH_TOKEN`, so the deploy build prints the upload and any failure.
+After a deploy, take a `//# debugId=` from a `.next/server` chunk and check that
+`artifact-lookup` returns a bundle, then check that the next server error shows
+frames from `lib/` and `utils/`.
+
+Client maps are still off. `productionBrowserSourceMaps: false` stops the SDK
+from enabling them, and turning it on adds map generation to every build, so it
+needs its own measurement.

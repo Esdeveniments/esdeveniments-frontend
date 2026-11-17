@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { config } from "../proxy";
+import { INDEXNOW_KEY } from "../utils/constants";
 
 const runsProxy = (path: string) =>
   unstable_doesMiddlewareMatch({ config, url: `https://example.com${path}` });
@@ -15,15 +18,35 @@ describe("proxy matcher", () => {
     "/docs/llms.txt",
     "/.well-known/mcp",
     "/mcp",
+    "/agent-view",
     "/llms.txt",
+    "/agent.txt",
+    "/pricing.md",
+    "/ads.txt",
     "/webmcp.js",
     "/robots.txt",
-    // IndexNow key file (INDEXNOW_KEY)
-    "/f47260be292a3281b5da5b89815e6ed4.txt",
+    "/rss.xml",
+    "/manifest.webmanifest",
+    "/sitemap.xml",
+    "/sitemap-events/1.xml",
+    "/sitemap-places/1.xml",
+    // IndexNow key file: the matcher spells the key out, so a rotation fails here
+    `/${INDEXNOW_KEY}.txt`,
     "/favicon.ico",
+    "/static/maplibre-v6.17.0/maplibre-gl-csp-worker.js",
     "/_next/static/chunks/app.js",
+    "/_next/image",
   ])("skips %s", (path) => {
     expect(runsProxy(path)).toBe(false);
+  });
+
+  it("skips every server-*.xml route in app/", () => {
+    const routes = readdirSync(join(process.cwd(), "app")).filter((name) =>
+      /^server-.+\.xml$/.test(name),
+    );
+
+    expect(routes.length).toBeGreaterThan(0);
+    expect(routes.filter((name) => runsProxy(`/${name}`))).toEqual([]);
   });
 
   it.each([
@@ -38,9 +61,29 @@ describe("proxy matcher", () => {
     "/askatasuna",
     "/openapi-events",
     "/docs",
+    "/docs/barcelona",
+    "/docs/llms.txt.bak",
     "/webmcp.js-guide",
     "/developers",
     "/barcelona.txt",
+    // Nothing routes these, so a bare-prefix exclusion sent them to
+    // app/[locale] with the text as the locale. Next caches that 404 for a
+    // year per URL; Proxy must see them to answer.
+    "/sitemap_index.xml",
+    "/sitemap-index.xml",
+    "/sitemap.xml.gz",
+    "/server-foo.xml",
+    "/server-sitemap-index.xml",
+    "/rss.xmlx",
+    "/ads.txt.bak",
+    "/pricing.mdx",
+    `/${INDEXNOW_KEY}.txt.bak`,
+    "/00000000000000000000000000000000.txt",
+    "/mcp-foo",
+    "/agent-viewer",
+    "/staticfoo",
+    "/static",
+    "/_nextfoo",
   ])("runs on %s", (path) => {
     expect(runsProxy(path)).toBe(true);
   });

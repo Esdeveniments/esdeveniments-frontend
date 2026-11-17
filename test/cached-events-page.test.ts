@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { cacheLife, cacheTag, connection } = vi.hoisted(() => ({
+const { cacheLife, cacheTag, connection, captureException } = vi.hoisted(() => ({
   cacheLife: vi.fn(),
   cacheTag: vi.fn(),
   connection: vi.fn(async () => {}),
+  captureException: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ cacheLife, cacheTag }));
+vi.mock("@sentry/nextjs", () => ({ captureException }));
 vi.mock("next/server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("next/server")>()),
   connection,
@@ -41,6 +43,7 @@ describe("fetchEventsCached", () => {
     cacheLife.mockReset();
     cacheTag.mockReset();
     connection.mockClear();
+    captureException.mockReset();
   });
 
   it("reads the events page inside the cache without connection()", async () => {
@@ -52,6 +55,7 @@ describe("fetchEventsCached", () => {
     expect(cacheTag).toHaveBeenCalledWith("events");
     expect(cacheLife).toHaveBeenCalledWith({ stale: 300, revalidate: 600, expire: 3600 });
     expect(connection).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/events\?page=0&size=10&place=cardedeu$/);
   });
@@ -65,6 +69,23 @@ describe("fetchEventsCached", () => {
 
     expect(result.content[0]).toMatchObject({ title: "Fresh" });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports a failed cached read once, inside the cache, with its own message", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("boom", { status: 503 }))
+      .mockResolvedValue(new Response(JSON.stringify(page("Fresh")), { status: 200 }));
+
+    await fetchEventsCached({ page: 0, size: 10, place: "cardedeu" });
+
+    expect(captureException).toHaveBeenCalledTimes(1);
+    expect(captureException).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "getCachedEventsPage: HTTP 503" }),
+      {
+        tags: { section: "events-fetch", fallback: "cached-read-failed" },
+        extra: { query: "page=0&size=10&place=cardedeu" },
+      },
+    );
   });
 
   it("returns an empty page after a timeout instead of waiting for a second one", async () => {
