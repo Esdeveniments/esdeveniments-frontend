@@ -52,6 +52,7 @@ PRODUCT_TOKEN = "esdevenimentsbenchmark"  # what robots.txt groups are matched a
 MIN_DELAY = 1.0  # seconds between requests to one host
 MAX_CRAWL_DELAY = 30.0  # a site asking for more gets this much
 REQUEST_TIMEOUT = 20
+SITEMAP_TIMEOUT = 60  # sitemaps are built on request: our festa major one takes about 26 s on a cold origin
 SITE_SECONDS = 900  # wall-clock budget per site
 MAX_SITEMAPS = 200  # sitemap files read per site
 MAX_SITEMAP_BYTES = 60_000_000  # decoded; the sitemap protocol allows 50 MB
@@ -171,7 +172,7 @@ class Client:
         self._finished = float("-inf")  # when the last request ended
         self._opener = urllib.request.build_opener(_NoRedirects)
 
-    def get(self, url, limit):
+    def get(self, url, limit, timeout=REQUEST_TIMEOUT):
         parts = urlparse(url)
         if parts.scheme not in ("http", "https") or parts.hostname not in self.hosts:
             raise FetchError(f"not one of the site's own URLs: {url}")
@@ -179,7 +180,7 @@ class Client:
         for attempt in range(2):  # one retry, for a failed request or a 5xx
             self._wait()
             try:
-                response = self._request(_ascii_url(url), limit)
+                response = self._request(_ascii_url(url), limit, timeout)
             except FetchError:
                 if attempt:
                     raise
@@ -201,7 +202,7 @@ class Client:
         if pause > 0:
             time.sleep(pause)
 
-    def _request(self, url, limit):
+    def _request(self, url, limit, timeout):
         request = urllib.request.Request(url, headers={
             "User-Agent": USER_AGENT,
             "Accept": "text/html,application/xml;q=0.9,*/*;q=0.8",
@@ -211,7 +212,7 @@ class Client:
         started = time.monotonic()
         try:
             try:
-                handle = self._opener.open(request, timeout=REQUEST_TIMEOUT)
+                handle = self._opener.open(request, timeout=timeout)
             except urllib.error.HTTPError as error:
                 handle = error  # a status line is still an answer
             seconds = time.monotonic() - started
@@ -298,11 +299,12 @@ def load_robots(client, site):
     return robots
 
 
-def fetch(client, robots, url, limit):
+def fetch(client, robots, url, limit, timeout=REQUEST_TIMEOUT):
     """GET `url`, following redirects one request at a time: each hop is checked
     against robots.txt (`robots` is None for robots.txt itself) and goes through
     the client, which spaces it, counts it and keeps it on the site's own hosts.
-    `seconds` adds up the hops' own time, not the waits between them."""
+    `timeout` is for each hop. `seconds` adds up the hops' own time, not the
+    waits between them."""
     seconds = 0.0
     for _ in range(MAX_REDIRECTS + 1):
         if robots is not None:
@@ -310,7 +312,7 @@ def fetch(client, robots, url, limit):
             path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
             if not robots.allowed(path):
                 raise FetchError(f"robots.txt disallows {path}")
-        response = client.get(url, limit)
+        response = client.get(url, limit, timeout)
         seconds += response.seconds
         location = response.headers.get("location")
         if response.status not in REDIRECT_STATUSES or not location:
@@ -584,7 +586,7 @@ def crawl_catalogue(client, robots, site, today, sample_size, notes):
     while queue:
         sitemap = queue.popleft()
         try:
-            response = fetch(client, robots, sitemap, MAX_SITEMAP_BYTES)
+            response = fetch(client, robots, sitemap, MAX_SITEMAP_BYTES, SITEMAP_TIMEOUT)
             if response.status != 200:
                 raise FetchError(f"answered {response.status}")
             if response.truncated:
