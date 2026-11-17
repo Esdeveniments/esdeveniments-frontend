@@ -315,6 +315,14 @@ const ROUTE_SCOPES: Record<
     layouts: ["app/[locale]/perfil/edita/layout.tsx"],
     files: ["app/[locale]/perfil/edita/"],
   },
+  profile: {
+    layouts: ["app/[locale]/perfil/[username]/layout.tsx"],
+    files: [
+      "app/[locale]/perfil/[username]/",
+      "components/partials/ProfileEventsLoadMore.tsx",
+      "components/ui/profile/ProfileOwnerActions.tsx",
+    ],
+  },
   sponsorship: {
     layouts: ["app/[locale]/patrocina/layout.tsx"],
     files: [

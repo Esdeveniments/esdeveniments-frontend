@@ -41,6 +41,7 @@ export type RouteMessagesScope =
   | "eventEdit"
   | "eventPromote"
   | "editProfile"
+  | "profile"
   | "sponsorship";
 
 export interface RouteClientMessagesProps {

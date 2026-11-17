@@ -29,7 +29,6 @@ export const CLIENT_COMPONENT_KEYS = [
   "FavoritesLoginNudge",
   "Filters",
   "FiltersModal",
-  "Footer",
   "HeroCTA",
   "HeroFilters",
   "HeroSearch",
@@ -43,7 +42,6 @@ export const CLIENT_COMPONENT_KEYS = [
   "Notification",
   "PwaBackButton",
   "PromotionInfoModal",
-  "Profile",
   "RestaurantPromotionForm",
   "SearchBar",
   "Select",
@@ -72,6 +70,9 @@ export const CLIENT_PARTIAL_PATHS = [
   "App.EventPromote.benefit2",
   "App.EventPromote.benefit3",
   "App.Publish.promoteUpsell",
+  // VerifiedBadge, on event pages and in search suggestions.
+  "Components.Profile.verified",
+  "Components.Profile.verifiedOrganizer",
 ] as const;
 
 // Paths only one route's client components read. Its layout mounts
@@ -83,6 +84,7 @@ export const ROUTE_CLIENT_PATHS: Record<RouteMessagesScope, readonly string[]> =
   eventEdit: ["App.EventEdit", "Components.EventForm"],
   eventPromote: ["App.EventPromote"],
   editProfile: ["App.EditProfile"],
+  profile: ["Components.Profile"],
   sponsorship: [
     "Sponsorship.checkout",
     "Sponsorship.placeSelector",
