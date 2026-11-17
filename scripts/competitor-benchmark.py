@@ -530,9 +530,9 @@ def _day(lastmod):
 
 
 def pick_sample(candidates, size, today):
-    """The `size` event pages with the smallest URL hashes, so the sample stays
-    the same from day to day until a page leaves the sitemap. Pages modified in
-    the last RECENT_DAYS are preferred when there are enough of them."""
+    """The `size` event pages with the smallest URL hashes, so the sample changes
+    only when a page enters or leaves the pool. The pool is the pages modified in
+    the last RECENT_DAYS when there are enough of them, otherwise every event page."""
     since = (today - timedelta(days=RECENT_DAYS)).isoformat()
     recent = [url for url, day in candidates if day and day >= since]
     pool = recent if len(recent) >= size else [url for url, _ in candidates]
