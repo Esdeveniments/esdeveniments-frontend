@@ -92,6 +92,13 @@ describe("AdContext consent detection", () => {
     });
   }
 
+  // A user's choice is applied after the next frame (see setConsentAfterPaint)
+  function flushNextFrame() {
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+  }
+
   describe("CMP available on mount", () => {
     it("should set adsAllowed=true when consent is granted", () => {
       installMockCmp(true);
@@ -268,6 +275,7 @@ describe("AdContext consent detection", () => {
       act(() => {
         simulateConsentChange(false);
       });
+      flushNextFrame();
 
       expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
       expect(window.__adsConsentGranted).toBe(false);
@@ -289,6 +297,7 @@ describe("AdContext consent detection", () => {
       act(() => {
         simulateConsentChange(true);
       });
+      flushNextFrame();
 
       expect(screen.getByTestId("ads-allowed").textContent).toBe("true");
     });
@@ -313,6 +322,7 @@ describe("AdContext consent detection", () => {
       act(() => {
         simulateConsentChange(true);
       });
+      flushNextFrame();
 
       // Should not dispatch another event
       const finalDispatchCount = dispatchSpy.mock.calls.filter(
@@ -320,6 +330,49 @@ describe("AdContext consent detection", () => {
       ).length;
 
       expect(finalDispatchCount).toBe(initialDispatchCount);
+    });
+  });
+
+  describe("user choice inside the CMP click", () => {
+    it("applies the choice after the next frame, not inside the click", () => {
+      installMockCmp(false);
+
+      render(
+        <AdProvider>
+          <TestConsumer />
+        </AdProvider>
+      );
+
+      act(() => {
+        simulateConsentChange(true);
+      });
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
+
+      flushNextFrame();
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("true");
+      expect(window.__adsConsentGranted).toBe(true);
+    });
+
+    it("keeps only the latest choice when the user changes it twice", () => {
+      installMockCmp(false);
+
+      render(
+        <AdProvider>
+          <TestConsumer />
+        </AdProvider>
+      );
+
+      act(() => {
+        simulateConsentChange(true);
+        simulateConsentChange(false);
+      });
+      flushNextFrame();
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
     });
   });
 
@@ -404,6 +457,7 @@ describe("AdContext consent detection", () => {
       act(() => {
         simulateConsentChange(false);
       });
+      flushNextFrame();
 
       // Should not cause any React warnings about state updates on unmounted components
       expect(consoleErrorSpy).not.toHaveBeenCalledWith(
