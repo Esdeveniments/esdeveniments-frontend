@@ -50,8 +50,8 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     let listenerId: number | undefined;
     let pollIntervalId: ReturnType<typeof setInterval> | undefined;
     let cmpListenerRegistered = false;
-    let pendingFrame: number | undefined;
-    let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
+    let pendingConsent: boolean | undefined;
+    let consentTimer: ReturnType<typeof setTimeout> | undefined;
 
     const setConsent = (allowed: boolean) => {
       if (!isMounted) return;
@@ -77,24 +77,19 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       return Boolean(purposeConsent["1"] && vendorConsent["755"]);
     };
 
-    const cancelPendingConsent = () => {
-      if (pendingFrame !== undefined) cancelAnimationFrame(pendingFrame);
-      if (pendingTimeout !== undefined) clearTimeout(pendingTimeout);
-      pendingFrame = undefined;
-      pendingTimeout = undefined;
-    };
-
     // Funding Choices calls TCF listeners inside its consent button's click
     // handler. The store update re-renders every consumer synchronously and
     // runs the gtag consent update, which delayed that click's paint by ~80 ms
-    // (INP, 4x CPU). Apply the user's choice right after the next frame.
+    // (INP, 4x CPU). Apply the user's latest choice right after the next frame.
     const setConsentAfterPaint = (allowed: boolean) => {
-      cancelPendingConsent();
-      pendingFrame = requestAnimationFrame(() => {
-        pendingFrame = undefined;
-        pendingTimeout = setTimeout(() => {
-          pendingTimeout = undefined;
-          setConsent(allowed);
+      const scheduled = pendingConsent !== undefined;
+      pendingConsent = allowed;
+      if (scheduled) return;
+      requestAnimationFrame(() => {
+        consentTimer = setTimeout(() => {
+          const latest = pendingConsent;
+          pendingConsent = undefined;
+          if (latest !== undefined) setConsent(latest);
         }, 0);
       });
     };
@@ -172,7 +167,7 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       isMounted = false;
-      cancelPendingConsent();
+      clearTimeout(consentTimer);
       if (pollIntervalId) clearInterval(pollIntervalId);
       if (
         listenerId &&
