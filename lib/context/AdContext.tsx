@@ -80,8 +80,14 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     // Funding Choices calls TCF listeners inside its consent button's click
     // handler. The store update re-renders every consumer synchronously and
     // runs the gtag consent update, which delayed that click's paint by ~80 ms
-    // (INP, 4x CPU). Apply the user's latest choice right after the next frame.
+    // (INP, 4x CPU). Apply a grant right after the next frame. A revocation
+    // applies at once and drops any queued grant: hidden tabs run no frames.
     const setConsentAfterPaint = (allowed: boolean) => {
+      if (!allowed) {
+        pendingConsent = undefined;
+        setConsent(false);
+        return;
+      }
       const scheduled = pendingConsent !== undefined;
       pendingConsent = allowed;
       if (scheduled) return;

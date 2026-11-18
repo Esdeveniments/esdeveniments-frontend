@@ -271,11 +271,10 @@ describe("AdContext consent detection", () => {
       // Initially granted
       expect(screen.getByTestId("ads-allowed").textContent).toBe("true");
 
-      // User revokes consent via CMP banner
+      // User revokes consent via CMP banner: applied at once, no frame wait
       act(() => {
         simulateConsentChange(false);
       });
-      flushNextFrame();
 
       expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
       expect(window.__adsConsentGranted).toBe(false);
@@ -356,7 +355,7 @@ describe("AdContext consent detection", () => {
       expect(window.__adsConsentGranted).toBe(true);
     });
 
-    it("keeps only the latest choice when the user changes it twice", () => {
+    it("drops a queued grant when the user revokes before the next frame", () => {
       installMockCmp(false);
 
       render(
@@ -369,6 +368,7 @@ describe("AdContext consent detection", () => {
         simulateConsentChange(true);
         simulateConsentChange(false);
       });
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
       flushNextFrame();
 
       expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
