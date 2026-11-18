@@ -28,15 +28,19 @@ import {
   SENTRY_DATA_COLLECTION,
   SENTRY_IGNORE_ERRORS,
   SENTRY_DENY_URLS,
+  sentryEnvironment,
   sentryTunnelFor,
 } from "@utils/sentry-helpers";
 
-if (process.env.NODE_ENV === "production") {
+const environment = sentryEnvironment();
+
+// Only our production and staging builds report (see sentryEnvironment).
+if (process.env.NODE_ENV === "production" && environment !== "preview") {
   const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
   const client = new BrowserClient({
     dsn,
     tunnel: sentryTunnelFor(dsn, process.env._sentryRewritesTunnelPath),
-    environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
+    environment,
     release: process.env._sentryRelease,
     transport: makeFetchTransport,
     stackParser: defaultStackParser,

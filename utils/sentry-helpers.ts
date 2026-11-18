@@ -4,6 +4,94 @@ import type {
   ErrorEvent,
   NodeOptions,
 } from "@sentry/nextjs";
+import { isProductionSiteUrl } from "@utils/production-host";
+
+/**
+ * Sentry environment from the site URL each Docker build inlines. Staging used
+ * to report "production": NEXT_PUBLIC_VERCEL_ENV is a Vercel variable our
+ * builds never set, so Sentry fell back to its default. Builds for any other
+ * host ("preview") don't report at all: an outside deploy with the DSN but no
+ * backend secrets (an old AWS Amplify app) sent 63% of the Oct-Nov 2026 quota.
+ */
+export function sentryEnvironment(
+  siteUrl: string | undefined = process.env.NEXT_PUBLIC_SITE_URL,
+): string {
+  if (isProductionSiteUrl(siteUrl)) return "production";
+  try {
+    if (siteUrl && new URL(siteUrl).hostname.startsWith("staging.")) {
+      return "staging";
+    }
+  } catch {
+    // Invalid URL: falls through to "preview".
+  }
+  return "preview";
+}
+
+// The free plan has 5k errors a month and no per-key rate limits, and one
+// backend outage sent 206 errors in 10 minutes. Per process and per window,
+// keep the first few of each error and a few overall; the next one sent for
+// that error carries how many were dropped.
+const THROTTLE_WINDOW_MS = 10 * 60_000;
+const THROTTLE_PER_ERROR = 5;
+const THROTTLE_TOTAL = 20;
+const THROTTLE_MAX_KEYS = 500;
+let throttleTotal = { start: 0, sent: 0 };
+const throttleByError = new Map<
+  string,
+  { start: number; sent: number; dropped: number }
+>();
+
+function throttleWindow(key: string, now: number) {
+  let window = throttleByError.get(key);
+  if (window) {
+    if (now - window.start >= THROTTLE_WINDOW_MS) {
+      window.start = now;
+      window.sent = 0;
+    }
+    return window;
+  }
+  if (throttleByError.size >= THROTTLE_MAX_KEYS) {
+    for (const [oldKey, old] of throttleByError) {
+      if (now - old.start >= THROTTLE_WINDOW_MS) throttleByError.delete(oldKey);
+    }
+  }
+  // Full of current errors: the total cap still holds, the count is lost.
+  if (throttleByError.size >= THROTTLE_MAX_KEYS) return undefined;
+  window = { start: now, sent: 0, dropped: 0 };
+  throttleByError.set(key, window);
+  return window;
+}
+
+/** Returns the event, or null when its error or all errors hit the window cap. */
+export function throttleEvent<T extends Event>(
+  event: T,
+  now: number = Date.now(),
+): T | null {
+  if (now - throttleTotal.start >= THROTTLE_WINDOW_MS) {
+    throttleTotal = { start: now, sent: 0 };
+  }
+  const exception = event.exception?.values?.[0];
+  const key = `${exception?.type ?? ""}:${exception?.value ?? event.message ?? ""}`.slice(
+    0,
+    200,
+  );
+  const perError = throttleWindow(key, now);
+  if (
+    throttleTotal.sent >= THROTTLE_TOTAL ||
+    (perError?.sent ?? 0) >= THROTTLE_PER_ERROR
+  ) {
+    if (perError) perError.dropped++;
+    return null;
+  }
+  throttleTotal.sent++;
+  if (!perError) return event;
+  perError.sent++;
+  if (perError.dropped > 0) {
+    event.extra = { ...event.extra, droppedSimilarEvents: perError.dropped };
+    perError.dropped = 0;
+  }
+  return event;
+}
 
 const V10_SENSITIVE_HEADERS = ["forwarded", "-ip", "remote-", "via", "-user"];
 
@@ -147,6 +235,9 @@ export function beforeSend(
       return null;
     }
   }
+
+  // Last filter, so only events that would be sent count against the caps.
+  if (!throttleEvent(event)) return null;
 
   // Scrub sensitive data from event
   const request = event.request;
