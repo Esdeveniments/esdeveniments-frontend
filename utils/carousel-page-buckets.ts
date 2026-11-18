@@ -1,4 +1,8 @@
-import { computeCardStops, sendCardStopBatch } from "@utils/card-impressions";
+import {
+  MAX_REPORTED_STOPS,
+  computeCardStops,
+  sendCardStops,
+} from "@utils/card-impressions";
 import type {
   CarouselPageBucket,
   ListingImpressionItem,
@@ -89,43 +93,25 @@ export function flushCarouselBucketStops(bucket: CarouselPageBucket): void {
   const rawStops = computeCardStops(samples, bucket.reportedStopKeys);
   if (rawStops.length === 0) return;
 
-  const grouped = new Map<
-    string,
-    {
-      listName: string;
-      placeSlug?: string;
-      categorySlug?: string;
-      stops: Array<ListingImpressionItem & { dwell_ms: number }>;
-    }
-  >();
-
   for (const stop of rawStops) {
     bucket.reportedStopKeys.add(stop.item_id);
+  }
+  const ranked = [...rawStops]
+    .sort((a, b) => b.dwell_ms - a.dwell_ms)
+    .slice(0, MAX_REPORTED_STOPS);
+
+  for (const stop of ranked) {
     const entry = bucket.dwellPoolByKey.get(stop.item_id);
     if (!entry) continue;
-    const groupKey = carouselRowIdentity(
+    sendCardStops(
       entry.listName,
-      entry.categorySlug,
-      entry.placeSlug,
+      [{ ...entry.item, dwell_ms: stop.dwell_ms }],
+      entries.length,
+      {
+        place_slug: entry.placeSlug,
+        category_slug: entry.categorySlug,
+      },
     );
-    let group = grouped.get(groupKey);
-    if (!group) {
-      group = {
-        listName: entry.listName,
-        placeSlug: entry.placeSlug,
-        categorySlug: entry.categorySlug,
-        stops: [],
-      };
-      grouped.set(groupKey, group);
-    }
-    group.stops.push({ ...entry.item, dwell_ms: stop.dwell_ms });
-  }
-
-  for (const group of grouped.values()) {
-    sendCardStopBatch(group.listName, group.stops, entries.length, {
-      place_slug: group.placeSlug,
-      category_slug: group.categorySlug,
-    });
   }
 }
 

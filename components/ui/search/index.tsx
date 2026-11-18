@@ -20,6 +20,7 @@ import {
   sendPlaceRedirectGA,
   toSearchTermParam,
 } from "@utils/analytics";
+import { omitDefaultFilterValue } from "@utils/constants";
 import { placeForSearch } from "@utils/search-query";
 import { startNavigationFeedback } from "@lib/navigation-feedback";
 import { useFilterLoading } from "@components/context/FilterLoadingContext";
@@ -34,12 +35,13 @@ const sendSearchTermGA = (
   placeSlug?: string,
   categorySlug?: string,
 ): void => {
+  const normalizedCategory = omitDefaultFilterValue(categorySlug);
   if (searchTerm && searchTerm.length > 0) {
     sendGoogleEvent("search", {
       context: "search",
       search_term: toSearchTermParam(searchTerm),
       ...(placeSlug ? { place_slug: placeSlug } : {}),
-      ...(categorySlug ? { category_slug: categorySlug } : {}),
+      ...(normalizedCategory ? { category_slug: normalizedCategory } : {}),
     });
   }
 };
@@ -54,8 +56,7 @@ export default function Search({
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const activePlaceSlug = placeSlug || (isHomePage ? "catalunya" : undefined);
-  const activeCategorySlug =
-    categorySlug && categorySlug !== "tots" ? categorySlug : undefined;
+  const activeCategorySlug = omitDefaultFilterValue(categorySlug);
   const { setLoading } = useFilterLoading();
 
   // Get current search term from URL

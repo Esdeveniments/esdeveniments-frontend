@@ -172,10 +172,12 @@ describe("text search outcome", () => {
     expect(outcomes()).toEqual([{ context: "search", outcome: "place" }]);
   });
 
-  it("attaches place_slug and category_slug to search_outcome when known", () => {
+  it("attaches place_slug and category_slug to search_outcome when known and omits 'tots'", () => {
     markTextSearchSubmitted("search", "jazz");
     sendTextSearchOutcomeGA("jazz", 0, "arenys-de-mar", "musica");
     markSuggestionsShown("hero_search", "girona", "teatre");
+    flushAbandonedSearch();
+    markSuggestionsShown("search", "barcelona", "tots");
     flushAbandonedSearch();
     expect(outcomes()).toEqual([
       {
@@ -191,6 +193,12 @@ describe("text search outcome", () => {
         place: "girona",
         place_slug: "girona",
         category_slug: "teatre",
+      },
+      {
+        context: "search",
+        outcome: "abandoned",
+        place: "barcelona",
+        place_slug: "barcelona",
       },
     ]);
   });

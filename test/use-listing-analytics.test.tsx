@@ -174,7 +174,7 @@ describe("useListingAnalytics", () => {
     nowMs += 10_000;
     Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
     document.dispatchEvent(new Event("visibilitychange"));
-    expect(sendGoogleEvent).not.toHaveBeenCalledWith("card_stop_batch", expect.anything());
+    expect(sendGoogleEvent).not.toHaveBeenCalledWith("card_stop", expect.anything());
 
     // Tab hidden for 30s -> must NOT add dwell.
     nowMs += 30_000;
@@ -188,19 +188,75 @@ describe("useListingAnalytics", () => {
     nowMs += 12_000;
     unmount();
 
-    expect(sendGoogleEvent).toHaveBeenCalledWith("card_stop_batch", {
+    expect(sendGoogleEvent).toHaveBeenCalledWith("card_stop", {
       item_list_name: "listing",
-      visible_cards: 1,
+      event_id: "c4",
+      event_category_slug: "musica",
+      event_place_slug: "girona",
+      position: 4,
+      dwell_ms: 22_000,
       total_cards: 4,
       place: "girona",
       place_slug: "girona",
+    });
+  });
+
+  it("omits internal 'tots' filter sentinel from listing impression and stop params", () => {
+    vi.useFakeTimers();
+    let onIntersect: (
+      entries: { isIntersecting: boolean; intersectionRatio: number; target: Element }[],
+    ) => void = () => {};
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(cb: typeof onIntersect) {
+          onIntersect = cb;
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+
+    const { container } = render(
+      <div data-analytics-container="true">
+        <List events={[{ id: "t1" }]}>
+          {(event) => (
+            <a
+              href="#"
+              data-analytics-event-id={event.id}
+              data-analytics-event-category-slug="fires-i-mercats"
+              data-analytics-event-place-slug="tarragona"
+            >
+              {event.id}
+            </a>
+          )}
+        </List>
+      </div>,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    renderHook(() =>
+      useListingAnalytics(root, {
+        place: "tarragones",
+        category: "tots",
+        date: "cap-de-setmana",
+      }),
+    );
+    const cards = [...root.querySelectorAll("[data-listing-grid] > *")];
+    onIntersect(cards.map((target) => ({ isIntersecting: true, intersectionRatio: 0.7, target })));
+    vi.advanceTimersByTime(2000);
+
+    expect(sendGoogleEvent).toHaveBeenCalledWith("view_item_list", {
+      item_list_name: "listing",
+      place: "tarragones",
+      place_slug: "tarragones",
+      date: "cap-de-setmana",
       items: [
         {
-          item_id: "c4",
-          item_category: "musica",
-          item_category2: "girona",
-          index: 4,
-          dwell_ms: 22_000,
+          item_id: "t1",
+          item_category: "fires-i-mercats",
+          item_category2: "tarragona",
+          index: 1,
         },
       ],
     });
@@ -309,7 +365,7 @@ describe("CardCarouselAnalytics", () => {
     });
   });
 
-  it("pools dwell across categorized home carousels and emits card_stop_batch for the paused category row", () => {
+  it("pools dwell across categorized home carousels and emits card_stop for the paused category row", () => {
     let nowMs = 1000;
     vi.spyOn(performance, "now").mockImplementation(() => nowMs);
     const callbacks: Array<
@@ -403,21 +459,16 @@ describe("CardCarouselAnalytics", () => {
         category_slug: "musica",
       }),
     );
-    expect(sendGoogleEvent).toHaveBeenCalledWith("card_stop_batch", {
+    expect(sendGoogleEvent).toHaveBeenCalledWith("card_stop", {
       item_list_name: "home_category",
-      visible_cards: 1,
+      event_id: "shared-1",
+      event_category_slug: "musica",
+      event_place_slug: "barcelona",
+      position: 1,
+      dwell_ms: 4000,
       total_cards: 4,
       place_slug: "catalunya",
       category_slug: "musica",
-      items: [
-        {
-          item_id: "shared-1",
-          item_category: "musica",
-          item_category2: "barcelona",
-          index: 1,
-          dwell_ms: 4000,
-        },
-      ],
     });
 
     // Next page starts with an empty pool and fresh seen set.
@@ -431,8 +482,80 @@ describe("CardCarouselAnalytics", () => {
       "view_item_list",
       expect.objectContaining({ item_list_name: "home_category" }),
     );
-    expect(sendGoogleEvent).not.toHaveBeenCalledWith("card_stop_batch", expect.anything());
+    expect(sendGoogleEvent).not.toHaveBeenCalledWith("card_stop", expect.anything());
     window.history.pushState({}, "", "/");
+  });
+
+  it("caps card_stop at the top 10 longest stops per flush and marks the rest reported", () => {
+    let nowMs = 1000;
+    vi.spyOn(performance, "now").mockImplementation(() => nowMs);
+    let onIntersect: (
+      entries: { isIntersecting: boolean; intersectionRatio: number; target: Element }[],
+    ) => void = () => {};
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(cb: typeof onIntersect) {
+          onIntersect = cb;
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+
+    // 14 quick skips (200ms) + 12 long pauses (3s..14s) => median is 200ms, so all 12 beat threshold.
+    const ids = Array.from({ length: 26 }, (_, idx) => `ev-${idx + 1}`);
+    const { container } = render(
+      <CardCarouselAnalytics listName="home_popular" placeSlug="catalunya">
+        <ul data-card-carousel>
+          {ids.map((id) => (
+            <li key={id}>
+              <a
+                href="#"
+                data-analytics-event-id={id}
+                data-analytics-event-category-slug="musica"
+                data-analytics-event-place-slug="barcelona"
+              >
+                {id}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </CardCarouselAnalytics>,
+    );
+    const items = [...container.querySelectorAll("[data-card-carousel] > *")];
+
+    for (let i = 0; i < 14; i++) {
+      onIntersect([{ isIntersecting: true, intersectionRatio: 0.8, target: items[i] }]);
+      nowMs += 200;
+      onIntersect([{ isIntersecting: false, intersectionRatio: 0, target: items[i] }]);
+    }
+    for (let i = 14; i < 26; i++) {
+      onIntersect([{ isIntersecting: true, intersectionRatio: 0.8, target: items[i] }]);
+      nowMs += (i - 11) * 1000; // 3000ms .. 14000ms
+      onIntersect([{ isIntersecting: false, intersectionRatio: 0, target: items[i] }]);
+    }
+
+    Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    const stopCalls = vi
+      .mocked(sendGoogleEvent)
+      .mock.calls.filter(([name]) => name === "card_stop")
+      .map(([, payload]) => payload);
+    expect(stopCalls).toHaveLength(10);
+    expect(stopCalls[0]).toMatchObject({ event_id: "ev-26", dwell_ms: 14_000 });
+    expect(stopCalls[9]).toMatchObject({ event_id: "ev-17", dwell_ms: 5_000 });
+
+    // Hiding again without new pauses must not leak #11 and #12.
+    vi.mocked(sendGoogleEvent).mockClear();
+    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+    Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(sendGoogleEvent).not.toHaveBeenCalledWith("card_stop", expect.anything());
+    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
   });
 });
 

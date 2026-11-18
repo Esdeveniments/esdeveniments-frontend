@@ -20,7 +20,7 @@ export const resetCarouselImpressionCache = resetCarouselBuckets;
 /**
  * Observes cards inside a horizontal carousel (`[data-card-carousel] > *`) and
  * reports newly seen cards (>=50% visible in an active tab) as `view_item_list`
- * and page-pooled scroll stops as `card_stop_batch`.
+ * and page-pooled scroll stops as `card_stop`.
  */
 export default function CardCarouselAnalytics({
   listName,

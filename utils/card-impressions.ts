@@ -13,6 +13,7 @@ export const IMPRESSION_DEBOUNCE_MS = 2000;
 export const MIN_CARDS_FOR_STOP_BASELINE = 4;
 export const MIN_STOP_DWELL_MS = 2500;
 export const STOP_MEDIAN_RATIO = 1.75;
+export const MAX_REPORTED_STOPS = 10;
 
 /** Reads an event card's GA4 item fields from its title link; null for ads. */
 export function toImpressionItem(
@@ -81,8 +82,14 @@ export function computeCardStops(
   return stops;
 }
 
-/** Sends one batched `card_stop_batch` event (<=200 items per chunk). */
-export function sendCardStopBatch(
+/**
+ * Sends one flat `card_stop` event per stopped card (top 10 longest per flush).
+ * GA4 BigQuery Export drops `items[]` on custom event names and caps string
+ * params at 100 chars, whereas flat `event_id`, `event_category_slug`,
+ * `event_place_slug`, `position`, and `dwell_ms` land intact in both GA4 and
+ * BigQuery `event_params`.
+ */
+export function sendCardStops(
   listName: string,
   stops: ReadonlyArray<CardStopItem>,
   totalSeen: number,
@@ -90,14 +97,23 @@ export function sendCardStopBatch(
 ): void {
   if (stops.length === 0) return;
   const context = compactAnalyticsParams(params);
-  for (let i = 0; i < stops.length; i += MAX_ITEMS_PER_EVENT) {
-    const chunk = stops.slice(i, i + MAX_ITEMS_PER_EVENT);
-    sendGoogleEvent("card_stop_batch", {
+  const ranked = [...stops]
+    .sort((a, b) => b.dwell_ms - a.dwell_ms)
+    .slice(0, MAX_REPORTED_STOPS);
+  for (const stop of ranked) {
+    sendGoogleEvent("card_stop", {
       item_list_name: listName,
-      visible_cards: chunk.length,
+      event_id: stop.item_id,
+      ...(stop.item_category
+        ? { event_category_slug: stop.item_category }
+        : {}),
+      ...(stop.item_category2
+        ? { event_place_slug: stop.item_category2 }
+        : {}),
+      position: stop.index,
+      dwell_ms: stop.dwell_ms,
       total_cards: totalSeen,
       ...context,
-      items: chunk,
     });
   }
 }

@@ -1,5 +1,6 @@
 import { GoogleAnalyticsEvent, WindowWithGtag } from "../types/common";
 import type { SearchContext, SearchOutcome, SearchSuggestion } from "../types/search";
+import { omitDefaultFilterValue } from "./constants";
 import { isE2ETestMode } from "./env";
 import { isProductionHost } from "./production-host";
 
@@ -145,7 +146,7 @@ export const sendSearchOutcomeGA = (
 ): void => {
   pendingAbandon = null;
   const placeSlug = slugs?.placeSlug || undefined;
-  const categorySlug = slugs?.categorySlug || undefined;
+  const categorySlug = omitDefaultFilterValue(slugs?.categorySlug);
   sendGoogleEvent("search_outcome", {
     context,
     outcome,
