@@ -55,4 +55,35 @@ describe("TranslateDescription", () => {
     expect(body(hidden)).toContain("Original A");
     vi.useRealTimers();
   });
+
+  it("keeps the original when 'show original' is double-clicked mid-fade", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<TwoEvents />);
+    const current = screen.getByTestId("current-event");
+    const button = () => current.querySelector("button")!;
+    const body = () => current.querySelector(`#${ID}`)!.innerHTML;
+
+    fireEvent.click(button());
+    await waitFor(() => expect(button().disabled).toBe(false));
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    // A toggle settles at once, so a second click can land before the fade.
+    const toggle = async () => {
+      fireEvent.click(button());
+      await act(async () => {});
+    };
+    await toggle();
+    await toggle();
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    await toggle();
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(body()).toContain("Original B");
+    vi.useRealTimers();
+  });
 });

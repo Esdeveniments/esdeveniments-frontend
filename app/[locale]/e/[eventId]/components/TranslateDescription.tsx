@@ -61,7 +61,7 @@ export default function TranslateDescription({
     const el = getTarget();
     if (!el) return;
     // The original isn't sent as a prop: the server already rendered it here.
-    if (!showTranslated) originalHtmlRef.current = el.innerHTML;
+    originalHtmlRef.current ??= el.innerHTML;
     startTransition(async () => {
       try {
         // If we already have a translation, just toggle in-place
