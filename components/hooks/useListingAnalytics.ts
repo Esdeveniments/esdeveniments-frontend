@@ -6,6 +6,7 @@ import { omitDefaultFilterValue } from "@utils/constants";
 import {
   compactAnalyticsParams,
   computeCardStops,
+  selectTopCardStops,
   sendCardStops,
   sendItemListImpressions,
 } from "@utils/card-impressions";
@@ -53,6 +54,7 @@ export default function useListingAnalytics(
       { item: ListingImpressionItem; dwellMs: number }
     >();
     const reportedStopIds = new Set<string>();
+    const cappedDwellById = new Map<string, number>();
 
     const controller = observeCardVisibility(root, "[data-listing-grid] > *", {
       onSeenProgress: (seen, cards) => {
@@ -94,9 +96,14 @@ export default function useListingAnalytics(
       },
       onFlushStops: () => {
         const samples = [...dwellByEventId.values()];
-        const stops = computeCardStops(samples, reportedStopIds);
+        // Top 10 stops are marked reported; capped-out stops compete again only
+        // after accruing more dwell (`selectTopCardStops`).
+        const stops = selectTopCardStops(
+          computeCardStops(samples, reportedStopIds),
+          reportedStopIds,
+          cappedDwellById,
+        );
         if (stops.length === 0) return;
-        for (const stop of stops) reportedStopIds.add(stop.item_id);
         sendCardStops(
           "listing",
           stops,

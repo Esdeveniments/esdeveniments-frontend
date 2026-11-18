@@ -251,20 +251,22 @@ first 22 hours after `#827` shipped (`2026-11-17 14:49 CET`).
 | News (`/noticies...`) | 4 | 0.9% | 2.75 | 4 (100%) |
 
 1. **Event detail and town listings are the real "Per a tu" surfaces.** Only
-   4.5% of sessions start on home, while 71.6% land straight on an event page
-   from Google or AI assistants (`ai_referrer` logged 23 hits from 21 Spain
-   users across Nov 15 to 18), and 42.9% of those event landers open a second
-   page. A recommendation block that only existed on `/` would miss 95% of
-   visitors. Rank the bottom of `/e/[eventId]` first, town and comarca
-   listings second, and home third.
+   4.5% of sessions start on home (20 of 440), and only 5.5% (24 of 440) ever
+   visit `/`, `/es` or `/en` at any point in the session, while 71.6% land
+   straight on an event page from Google or AI assistants (`ai_referrer` logged
+   23 hits from 21 Spain users across Nov 15 to 18) and 42.9% of those event
+   landers open a second page. A recommendation block that only existed on `/`
+   would miss 94.5% of sessions. Rank the bottom of `/e/[eventId]` first, town
+   and comarca listings second, and home third.
 2. **Geography stays fixed while category varies.** Across the 52 Spain
    visitors who opened 2 or more event pages (3.90 event views per person on
    average, and 32 returning for a second session within 4 days), 45 of 52
-   (86.5%) stayed inside one town and only 7 (13.5%) crossed towns. Among the
-   33 multi-event visitors whose viewed events carried categories, 10 (30.3%)
-   crossed into a second category inside that town. Filter candidates to the
-   visitor's town and comarca before scoring category affinity; never surface
-   a matching category 100 km away.
+   (86.5%) kept the same `place_slug` (town, or region when an event has no
+   town) and only 7 (13.5%) crossed places. Among the 33 multi-event visitors
+   whose viewed events carried categories, 10 (30.3%) crossed into a second
+   category inside that place. Filter candidates to the visitor's town and
+   comarca before scoring category affinity; never surface a matching category
+   100 km away.
 3. **Municipal RSS feeds hold back a third of category labels.** Across Nov 15
    to 17 in Spain, 102 of 320 `view_event_page` hits (31.9%) had an empty
    `category_slug`, concentrated in municipal RSS towns (`el-masnou`,
@@ -294,8 +296,11 @@ Run against `esdeveniments.analytics_406884331.events_*` (stay within a
 32 GiB daily quota):
 
 ```sql
--- 1. True session-joined card funnel by card category (Spain, 28 days):
---    seen in list -> scroll stop -> card click -> good click (section_view or strong action on opened event)
+-- 1. Independent session rates among seen cards by card category (Spain, 28 days):
+--    stop rate (`card_stop`), click rate (`select_event` / `related_event_click`),
+--    and good-click rate (`section_view` or strong action during the visit opened by that click).
+--    Note: `view_item_list` flushes on a 2 s debounce and `card_stop` flushes on hide/unmount,
+--    so seen-card membership is matched per session without requiring export timestamp order.
 WITH raw AS (
   SELECT
     user_pseudo_id,
@@ -317,8 +322,7 @@ seen_cards AS (
     user_pseudo_id,
     session_id,
     i.item_id AS event_id,
-    COALESCE(NULLIF(NULLIF(i.item_category, "(not set)"), ""), "(uncategorized)") AS category,
-    MIN(event_timestamp) AS first_seen_ts
+    COALESCE(NULLIF(NULLIF(i.item_category, "(not set)"), ""), "(uncategorized)") AS category
   FROM raw, UNNEST(items) AS i
   WHERE event_name = "view_item_list" AND i.item_id IS NOT NULL
   GROUP BY user_pseudo_id, session_id, event_id, category
@@ -328,79 +332,94 @@ stopped_cards AS (
     user_pseudo_id,
     session_id,
     param_event_id AS event_id,
-    MAX(dwell_ms) AS max_dwell_ms,
-    MIN(event_timestamp) AS first_stop_ts
+    MAX(dwell_ms) AS max_dwell_ms
   FROM raw
   WHERE event_name = "card_stop" AND param_event_id IS NOT NULL
   GROUP BY user_pseudo_id, session_id, event_id
 ),
-clicked_cards AS (
+card_clicks AS (
   SELECT
     user_pseudo_id,
     session_id,
     param_event_id AS event_id,
-    MIN(event_timestamp) AS first_click_ts
+    event_timestamp AS click_ts
   FROM raw
   WHERE event_name IN ("select_event", "related_event_click") AND param_event_id IS NOT NULL
-  GROUP BY user_pseudo_id, session_id, event_id
 ),
-opened_events AS (
+event_opens AS (
   SELECT
     user_pseudo_id,
     session_id,
     param_event_id AS event_id,
     page_location,
-    MIN(event_timestamp) AS open_ts
+    event_timestamp AS open_ts,
+    LEAD(event_timestamp) OVER (
+      PARTITION BY user_pseudo_id, session_id, param_event_id
+      ORDER BY event_timestamp
+    ) AS next_open_ts
   FROM raw
   WHERE event_name = "view_event_page" AND param_event_id IS NOT NULL
-  GROUP BY user_pseudo_id, session_id, event_id, page_location
 ),
-good_opens AS (
+click_matched_opens AS (
+  SELECT
+    c.user_pseudo_id,
+    c.session_id,
+    c.event_id,
+    ARRAY_AGG(STRUCT(o.open_ts, o.next_open_ts, o.page_location) ORDER BY o.open_ts ASC LIMIT 1)[OFFSET(0)] AS visit
+  FROM card_clicks c
+  JOIN event_opens o
+    ON o.user_pseudo_id = c.user_pseudo_id
+   AND o.session_id = c.session_id
+   AND o.event_id = c.event_id
+   AND o.open_ts >= c.click_ts
+  GROUP BY c.user_pseudo_id, c.session_id, c.event_id, c.click_ts
+),
+good_clicked_cards AS (
   SELECT DISTINCT
-    o.user_pseudo_id,
-    o.session_id,
-    o.event_id,
-    o.open_ts
-  FROM opened_events o
+    m.user_pseudo_id,
+    m.session_id,
+    m.event_id
+  FROM click_matched_opens m
   JOIN raw r
-    ON r.user_pseudo_id = o.user_pseudo_id
-   AND r.session_id = o.session_id
-   AND r.event_timestamp >= o.open_ts
+    ON r.user_pseudo_id = m.user_pseudo_id
+   AND r.session_id = m.session_id
+   AND r.event_timestamp >= m.visit.open_ts
+   AND (m.visit.next_open_ts IS NULL OR r.event_timestamp < m.visit.next_open_ts)
    AND (
-     (r.event_name = "section_view" AND r.page_location = o.page_location AND r.section IN ("description", "location"))
+     (r.event_name = "section_view" AND r.page_location = m.visit.page_location AND r.section IN ("description", "location"))
      OR (r.event_name IN ("outbound_click", "favorite_add", "share", "add_to_calendar")
-         AND (r.param_event_id = o.event_id OR r.page_location = o.page_location))
+         AND (r.param_event_id = m.event_id OR r.page_location = m.visit.page_location))
    )
+),
+clicked_card_set AS (
+  SELECT DISTINCT user_pseudo_id, session_id, event_id FROM card_clicks
 )
 SELECT
   s.category,
   COUNT(*) AS seen_cards,
-  COUNTIF(st.event_id IS NOT NULL AND st.first_stop_ts >= s.first_seen_ts) AS stopped_cards,
-  ROUND(AVG(IF(st.first_stop_ts >= s.first_seen_ts, st.max_dwell_ms, NULL)), 0) AS avg_stop_ms,
-  COUNTIF(c.event_id IS NOT NULL AND c.first_click_ts >= s.first_seen_ts) AS clicked_cards,
-  COUNTIF(c.first_click_ts >= s.first_seen_ts AND g.open_ts >= c.first_click_ts) AS good_clicks,
-  ROUND(100.0 * COUNTIF(c.first_click_ts >= s.first_seen_ts) / NULLIF(COUNT(*), 0), 2) AS ctr_pct,
-  ROUND(100.0 * COUNTIF(c.first_click_ts >= s.first_seen_ts AND g.open_ts >= c.first_click_ts) / NULLIF(COUNT(*), 0), 2) AS good_ctr_pct
+  COUNTIF(st.event_id IS NOT NULL) AS stopped_cards,
+  ROUND(AVG(st.max_dwell_ms), 0) AS avg_stop_ms,
+  COUNTIF(c.event_id IS NOT NULL) AS clicked_cards,
+  COUNTIF(g.event_id IS NOT NULL) AS good_clicks,
+  ROUND(100.0 * COUNTIF(c.event_id IS NOT NULL) / NULLIF(COUNT(*), 0), 2) AS ctr_pct,
+  ROUND(100.0 * COUNTIF(g.event_id IS NOT NULL) / NULLIF(COUNT(*), 0), 2) AS good_ctr_pct
 FROM seen_cards s
 LEFT JOIN stopped_cards st USING (user_pseudo_id, session_id, event_id)
-LEFT JOIN clicked_cards c USING (user_pseudo_id, session_id, event_id)
-LEFT JOIN (
-  SELECT user_pseudo_id, session_id, event_id, MAX(open_ts) AS open_ts
-  FROM good_opens
-  GROUP BY user_pseudo_id, session_id, event_id
-) g USING (user_pseudo_id, session_id, event_id)
+LEFT JOIN clicked_card_set c USING (user_pseudo_id, session_id, event_id)
+LEFT JOIN good_clicked_cards g USING (user_pseudo_id, session_id, event_id)
 GROUP BY s.category
 ORDER BY seen_cards DESC;
 ```
 
 ```sql
--- 2. Related-events town match vs category match with comparable non-null denominators (§4 Question 2)
+-- 2. Related-events place-slug match (town, or region fallback when an event has no town)
+--    vs category match with comparable non-null denominators (§4 Question 2)
 SELECT
   COUNT(*) AS related_clicks,
-  COUNTIF(event_place IS NOT NULL AND source_place IS NOT NULL) AS comparable_town_pairs,
-  COUNTIF(event_place = source_place AND source_place IS NOT NULL) AS same_town_clicks,
+  COUNTIF(event_place IS NOT NULL AND source_place IS NOT NULL) AS comparable_place_pairs,
+  COUNTIF(event_place = source_place AND source_place IS NOT NULL) AS same_place_clicks,
   ROUND(100.0 * COUNTIF(event_place = source_place AND source_place IS NOT NULL)
-        / NULLIF(COUNTIF(event_place IS NOT NULL AND source_place IS NOT NULL), 0), 1) AS same_town_pct,
+        / NULLIF(COUNTIF(event_place IS NOT NULL AND source_place IS NOT NULL), 0), 1) AS same_place_pct,
   COUNTIF(event_cat IS NOT NULL AND source_cat IS NOT NULL) AS comparable_category_pairs,
   COUNTIF(event_cat = source_cat AND source_cat IS NOT NULL) AS same_category_clicks,
   ROUND(100.0 * COUNTIF(event_cat = source_cat AND source_cat IS NOT NULL)

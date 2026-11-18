@@ -109,6 +109,7 @@ export interface CarouselPageBucket {
   seenItemIdsByList: Map<string, Set<string>>;
   dwellPoolByKey: Map<string, CarouselDwellEntry>;
   reportedStopKeys: Set<string>;
+  cappedStopDwellByKey: Map<string, number>;
   activePauseHandlers: Set<(now: number) => void>;
 }
 

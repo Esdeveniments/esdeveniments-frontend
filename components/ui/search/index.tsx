@@ -35,13 +35,12 @@ const sendSearchTermGA = (
   placeSlug?: string,
   categorySlug?: string,
 ): void => {
-  const normalizedCategory = omitDefaultFilterValue(categorySlug);
   if (searchTerm && searchTerm.length > 0) {
     sendGoogleEvent("search", {
       context: "search",
       search_term: toSearchTermParam(searchTerm),
       ...(placeSlug ? { place_slug: placeSlug } : {}),
-      ...(normalizedCategory ? { category_slug: normalizedCategory } : {}),
+      ...(categorySlug ? { category_slug: categorySlug } : {}),
     });
   }
 };

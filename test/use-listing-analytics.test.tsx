@@ -555,6 +555,19 @@ describe("CardCarouselAnalytics", () => {
     Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
     document.dispatchEvent(new Event("visibilitychange"));
     expect(sendGoogleEvent).not.toHaveBeenCalledWith("card_stop", expect.anything());
+
+    // Once a previously capped-out card (#12 = ev-15, was 3s) accrues more dwell, it competes again.
+    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+    onIntersect([{ isIntersecting: true, intersectionRatio: 0.8, target: items[14] }]);
+    nowMs += 6000; // ev-15 total dwell becomes 9,000ms (> 3,000ms capped baseline)
+    onIntersect([{ isIntersecting: false, intersectionRatio: 0, target: items[14] }]);
+    Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(sendGoogleEvent).toHaveBeenCalledWith(
+      "card_stop",
+      expect.objectContaining({ event_id: "ev-15", dwell_ms: 9_000 }),
+    );
     Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
   });
 });

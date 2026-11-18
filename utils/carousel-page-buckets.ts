@@ -1,6 +1,6 @@
 import {
-  MAX_REPORTED_STOPS,
   computeCardStops,
+  selectTopCardStops,
   sendCardStops,
 } from "@utils/card-impressions";
 import type {
@@ -38,6 +38,7 @@ export function getCarouselPageBucket(href: string): CarouselPageBucket {
       seenItemIdsByList: new Map(),
       dwellPoolByKey: new Map(),
       reportedStopKeys: new Set(),
+      cappedStopDwellByKey: new Map(),
       activePauseHandlers: new Set(),
     };
     bucketsByHref.set(href, bucket);
@@ -90,15 +91,12 @@ export function flushCarouselBucketStops(bucket: CarouselPageBucket): void {
     item: { ...entry.item, item_id: key },
     dwellMs: entry.dwellMs,
   }));
-  const rawStops = computeCardStops(samples, bucket.reportedStopKeys);
-  if (rawStops.length === 0) return;
-
-  for (const stop of rawStops) {
-    bucket.reportedStopKeys.add(stop.item_id);
-  }
-  const ranked = [...rawStops]
-    .sort((a, b) => b.dwell_ms - a.dwell_ms)
-    .slice(0, MAX_REPORTED_STOPS);
+  const ranked = selectTopCardStops(
+    computeCardStops(samples, bucket.reportedStopKeys),
+    bucket.reportedStopKeys,
+    bucket.cappedStopDwellByKey,
+  );
+  if (ranked.length === 0) return;
 
   for (const stop of ranked) {
     const entry = bucket.dwellPoolByKey.get(stop.item_id);
