@@ -5,6 +5,8 @@ import { captureException } from "@sentry/nextjs";
 import { createKeyedCache } from "@lib/api/cache";
 import { getCachedEventBySlug } from "@lib/api/events";
 import { isValidEventSlug } from "@utils/event-helpers";
+import { sanitizeHtml } from "@utils/sanitize";
+import { processDescription } from "@utils/text-processing";
 import { isNonDefaultLocale } from "@utils/i18n-routing";
 import { createRateLimiter } from "@utils/rate-limit";
 import { DEEPL_TARGET_LANG, type NonDefaultLocale } from "types/i18n";
@@ -135,7 +137,8 @@ async function fetchTranslationFromDeepL(args: {
 /**
  * Translates the stored description of the event `slug`. The text is loaded
  * on the server, never taken from the client, so the action can only spend
- * DeepL quota on real event descriptions.
+ * DeepL quota on real event descriptions. Returns sanitized HTML, ready to
+ * render in place of the description body.
  */
 export async function translateDescription({
   slug,
@@ -195,7 +198,9 @@ export async function translateDescription({
       });
     });
 
-    return { ok: true as const, translation: translatedText };
+    // Same pipeline as the server-rendered original (components/ui/common/description).
+    const translation = sanitizeHtml(processDescription(translatedText));
+    return { ok: true as const, translation };
   } catch (error) {
     // Handle errors from cache fetcher - don't cache these
     if (error instanceof Error && error.message === ERROR_API_REQUEST_FAILED) {

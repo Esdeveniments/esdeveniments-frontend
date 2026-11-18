@@ -45,6 +45,20 @@ describe("translateDescription", () => {
     expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
+  it("returns the translation sanitized like the server-rendered original", async () => {
+    getCachedEventBySlug.mockResolvedValue(eventWith(`Concert ${ipCounter}`));
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      deeplOk('<p onclick="x()">**Hola**</p><img src=x onerror="y()">\nAdiós'),
+    );
+
+    const result = await translateDescription({ slug: SLUG, targetLang: "es" });
+
+    expect(result).toEqual({
+      ok: true,
+      translation: "<p><strong>Hola</strong></p><br>Adiós",
+    });
+  });
+
   it("rejects a malformed slug without loading or translating", async () => {
     const fetchMock = vi.spyOn(global, "fetch");
 
