@@ -18,7 +18,7 @@ export function sentryEnvironment(
 ): string {
   if (isProductionSiteUrl(siteUrl)) return "production";
   try {
-    if (siteUrl && new URL(siteUrl).hostname.startsWith("staging.")) {
+    if (siteUrl && new URL(siteUrl).hostname === "staging.esdeveniments.cat") {
       return "staging";
     }
   } catch {
@@ -75,12 +75,16 @@ export function throttleEvent<T extends Event>(
     0,
     200,
   );
+  // Over the total cap, only count drops for errors already tracked, so a
+  // flood of rejected errors can't fill the map.
+  if (throttleTotal.sent >= THROTTLE_TOTAL) {
+    const tracked = throttleByError.get(key);
+    if (tracked) tracked.dropped++;
+    return null;
+  }
   const perError = throttleWindow(key, now);
-  if (
-    throttleTotal.sent >= THROTTLE_TOTAL ||
-    (perError?.sent ?? 0) >= THROTTLE_PER_ERROR
-  ) {
-    if (perError) perError.dropped++;
+  if (perError && perError.sent >= THROTTLE_PER_ERROR) {
+    perError.dropped++;
     return null;
   }
   throttleTotal.sent++;

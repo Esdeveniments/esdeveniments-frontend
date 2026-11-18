@@ -44,6 +44,16 @@ describe("throttleEvent", () => {
     ).not.toBeNull();
   });
 
+  it("keeps the per-error cap after errors rejected by the total cap", () => {
+    helpers.throttleEvent(errorEvent("first"), 0);
+    for (let i = 0; i < 499; i++) helpers.throttleEvent(errorEvent(`burst ${i}`), 1);
+    helpers.throttleEvent(errorEvent("next window"), 600_000);
+    const sent = Array.from({ length: 10 }, () =>
+      helpers.throttleEvent(errorEvent("repeated"), 600_000),
+    );
+    expect(sent.filter(Boolean)).toHaveLength(5);
+  });
+
   it("runs last in beforeSend, so filtered events don't use the cap", () => {
     const hint = { originalException: new Error("x") };
     for (let i = 0; i < 25; i++) {
@@ -61,6 +71,9 @@ describe("sentryEnvironment", () => {
     expect(helpers.sentryEnvironment("https://www.esdeveniments.cat")).toBe("production");
     expect(helpers.sentryEnvironment("https://staging.esdeveniments.cat")).toBe("staging");
     expect(helpers.sentryEnvironment("http://localhost:3000")).toBe("preview");
-    expect(helpers.sentryEnvironment(undefined)).toBe("preview");
+    expect(helpers.sentryEnvironment("https://staging.example.net")).toBe("preview");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+    expect(helpers.sentryEnvironment()).toBe("preview");
+    vi.unstubAllEnvs();
   });
 });
