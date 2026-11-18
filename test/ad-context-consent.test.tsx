@@ -375,8 +375,8 @@ describe("AdContext consent detection", () => {
       expect(window.__adsConsentGranted).toBe(false);
     });
 
-    it("drops a queued grant when a tcloaded denial arrives before the next frame", () => {
-      installMockCmp(false);
+    it("applies a tcloaded denial at once and drops a queued grant", () => {
+      installMockCmp(true);
 
       render(
         <AdProvider>
@@ -390,6 +390,8 @@ describe("AdContext consent detection", () => {
           callback(createTcfData("tcloaded", false), true);
         });
       });
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
       flushNextFrame();
 
       expect(screen.getByTestId("ads-allowed").textContent).toBe("false");

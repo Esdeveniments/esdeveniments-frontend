@@ -38,21 +38,22 @@ describe("TranslateDescription", () => {
       screen.getByTestId("current-event"),
     ];
     const body = (section: HTMLElement) => section.querySelector(`#${ID}`)!.innerHTML;
+    const [hiddenOriginal, currentOriginal] = [body(hidden), body(current)];
 
     fireEvent.click(current.querySelector("button")!);
     await waitFor(() => expect(current.querySelector("button")!.disabled).toBe(false));
     act(() => {
       vi.advanceTimersByTime(200);
     });
-    expect(body(current)).toContain("Traducido");
-    expect(body(hidden)).toContain("Original A");
+    expect(body(current)).toBe("<p>Traducido</p>");
+    expect(body(hidden)).toBe(hiddenOriginal);
 
     fireEvent.click(current.querySelector("button")!);
     act(() => {
       vi.advanceTimersByTime(200);
     });
-    expect(body(current)).toContain("Original B");
-    expect(body(hidden)).toContain("Original A");
+    expect(body(current)).toBe(currentOriginal);
+    expect(body(hidden)).toBe(hiddenOriginal);
     vi.useRealTimers();
   });
 
@@ -62,6 +63,7 @@ describe("TranslateDescription", () => {
     const current = screen.getByTestId("current-event");
     const button = () => current.querySelector("button")!;
     const body = () => current.querySelector(`#${ID}`)!.innerHTML;
+    const original = body();
 
     fireEvent.click(button());
     await waitFor(() => expect(button().disabled).toBe(false));
@@ -83,7 +85,7 @@ describe("TranslateDescription", () => {
     act(() => {
       vi.advanceTimersByTime(200);
     });
-    expect(body()).toContain("Original B");
+    expect(body()).toBe(original);
     vi.useRealTimers();
   });
 });

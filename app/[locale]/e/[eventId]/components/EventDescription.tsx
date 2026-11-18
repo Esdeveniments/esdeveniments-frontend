@@ -15,7 +15,12 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   showTranslate,
 }) => {
   return (
-    <div className="max-w-none text-foreground min-w-0">
+    <div
+      // A new description remounts the body and the button, so a stored
+      // original or a late translation never lands on the new text.
+      key={shortTagHash(description)}
+      className="max-w-none text-foreground min-w-0"
+    >
       <Description
         description={description}
         introText={introText}
@@ -23,8 +28,6 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
         headerActions={
           showTranslate && isNonDefaultLocale(locale) ? (
             <TranslateDescription
-              // A new description resets the stored original and translation.
-              key={shortTagHash(description)}
               slug={slug}
               locale={locale}
               targetId={DESCRIPTION_BODY_ID}
