@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Search from "@components/ui/search";
 import FiltersClient from "@components/ui/filters/FiltersClient";
 import NavigationFiltersModal from "@components/ui/filtersModal/NavigationFiltersModal";
+import { omitDefaultFilterValue } from "@utils/constants";
 import { debugURLParsing } from "@utils/url-parsing";
 import { followScrollLockPadding } from "@utils/browser";
 import {
@@ -72,7 +73,9 @@ function ClientInteractiveLayerContent({
                 isHomePage ? "catalunya" : parsed.segments.place || undefined
               }
               categorySlug={
-                isHomePage ? undefined : parsed.segments.category || undefined
+                isHomePage
+                  ? undefined
+                  : omitDefaultFilterValue(parsed.segments.category)
               }
             />
           </Suspense>

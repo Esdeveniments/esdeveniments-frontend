@@ -21,6 +21,7 @@ import {
   sendTextSearchOutcomeGA,
   toSearchTermParam,
 } from "@utils/analytics";
+import { omitDefaultFilterValue } from "@utils/constants";
 import useListingAnalytics from "@components/hooks/useListingAnalytics";
 import type { AppLocale } from "types/i18n";
 
@@ -70,6 +71,9 @@ function HybridEventsListClientContent({
     statusRef.current = el;
     setAnalyticsRoot(el?.closest<HTMLElement>('[data-analytics-container="true"]') ?? null);
   }, []);
+
+  const analyticsCategorySlug = omitDefaultFilterValue(category);
+  const analyticsDateSlug = omitDefaultFilterValue(date);
 
   const search = parsed.queryParams.search;
   const distance = parsed.queryParams.distance;
@@ -153,13 +157,13 @@ function HybridEventsListClientContent({
         results_count: displayedEvents.length,
         place: place || undefined,
         place_slug: place || undefined,
-        category: category || undefined,
-        category_slug: category || undefined,
-        date: date || undefined,
+        category: analyticsCategorySlug,
+        category_slug: analyticsCategorySlug,
+        date: analyticsDateSlug,
       });
-      sendTextSearchOutcomeGA(search, displayedEvents.length, place, category);
+      sendTextSearchOutcomeGA(search, displayedEvents.length, place, analyticsCategorySlug);
     }
-  }, [search, isLoading, error, hasClientFilters, displayedEvents.length, place, category, date]);
+  }, [search, isLoading, error, hasClientFilters, displayedEvents.length, place, analyticsCategorySlug, analyticsDateSlug]);
 
   // Track zero results when filters are active and loading is complete
   useEffect(() => {
@@ -179,14 +183,14 @@ function HybridEventsListClientContent({
         search_term: search ? toSearchTermParam(search) : undefined,
         place: place || undefined,
         place_slug: place || undefined,
-        category: category || undefined,
-        category_slug: category || undefined,
-        date: date || undefined,
+        category: analyticsCategorySlug,
+        category_slug: analyticsCategorySlug,
+        date: analyticsDateSlug,
         distance: distance || undefined,
         price: price || undefined,
       });
     }
-  }, [hasClientFilters, isLoading, displayedEvents.length, error, search, place, category, date, distance, price]);
+  }, [hasClientFilters, isLoading, displayedEvents.length, error, search, place, analyticsCategorySlug, analyticsDateSlug, distance, price]);
 
   // Track card impressions and scroll depth on the listing grid
   useListingAnalytics(analyticsRoot, {
@@ -292,9 +296,9 @@ function HybridEventsListClientContent({
                 context: "hybrid_events_list",
                 place: place || undefined,
                 place_slug: place || undefined,
-                category: category || undefined,
-                category_slug: category || undefined,
-                date: date || undefined,
+                category: analyticsCategorySlug,
+                category_slug: analyticsCategorySlug,
+                date: analyticsDateSlug,
                 has_client_filters: hasClientFilters,
                 search_present: Boolean(search),
                 distance_present: Boolean(distance),

@@ -81,7 +81,9 @@ hold the listing page's filters (set on the list container), and those stay.
 | `share`, `add_to_calendar`, `sticky_cta_click`, event `outbound_click` | method or link target | + `category_slug`, `place_slug` (and `event_id`, `event_slug` where applicable) |
 | `search_outcome`, `zero_results`, `search_results_loaded` | `zero_results` sent `place` and `category`; `search_outcome` sent no place | + `place_slug` and `category_slug` across all three (`place` kept for dashboards) |
 | `view_item_list` (listings and carousels) | `card_impression_batch` sent only how many cards were seen | which events were seen across listings (`listing`), home rows (`home_*`), promoted rows (`promoted_*`) and the related row (`related_events`): one item per card with `item_id`, `item_category`, `item_category2` and `index` |
-| `card_stop_batch` (listings and carousels) | none | one batch on page hide or unmount with the cards whose active-tab dwell beat the visitor's page median (`1.75x`, at least `2.5 s` across 4+ seen cards across the listing or across all carousels on the page), carrying `dwell_ms` in `items` |
+| `card_stop` (listings and carousels) | none | one flat event per stopped card on page hide or unmount (up to the 10 longest stops per flush) for cards whose active-tab dwell beat the visitor's page median (`1.75x`, at least `2.5 s` across 4+ seen cards across the listing or across all carousels on the page), carrying `event_id`, `event_category_slug`, `event_place_slug`, `position`, `dwell_ms`, `total_cards` and `item_list_name` |
+
+Listing and search helpers also strip the internal `"tots"` sentinel (`omitDefaultFilterValue` in `utils/constants.ts`) so `category_slug` and `date` stay omitted whenever no real category or date filter is active.
 
 `view_item_list` is GA4's standard event for "items shown in a list". Its item
 fields are built-in dimensions (Item ID, Item category, Item category 2, Item
@@ -222,5 +224,219 @@ What this means for us:
   event and per town: an event that makes people stop is a good candidate to
   rank higher for everyone, which also helps new events that have no clicks
   yet.
-- Sending one GA event per card stop would multiply our event volume. Send
-  one batch per page instead, with the event ids that got a stop.
+- GA4 BigQuery Export leaves `items` empty on custom event names (verified in
+  `events_20261117` when the first release sent `card_stop_batch`), and GA4
+  cuts string parameters at 100 characters. So each qualifying pause goes out
+  as one flat `card_stop` event (capped at the 10 longest pauses per flush),
+  reusing the registered `event_category_slug`, `event_place_slug`,
+  `total_cards` and `position` slots. Across the first 14 live hours, visitors
+  triggered 14 stopped cards in total, against a 1,000,000-event daily free
+  export cap.
+
+## 7. First post-deploy findings and BigQuery queries (2026-11-18)
+
+Checked on 2026-11-18 across `esdeveniments.analytics_406884331.events_20261114`
+to `events_20261117` (415 consented users in Spain, 440 sessions with a
+`page_view`, non-Spain bot traffic excluded) plus processed GA4 rows from the
+first 22 hours after `#827` shipped (`2026-11-17 14:49 CET`).
+
+### What the first 4 days of BigQuery show
+
+| Entry surface (`geo.country = "Spain"`, Nov 14 to 17) | Sessions | Share | Avg `page_view`s | Continued to 2+ pages |
+| --- | --- | --- | --- | --- |
+| Event detail (`/e/...`) | 315 | 71.6% | 1.65 | 135 (42.9%) |
+| Place or category listing (`/[place]...`) | 76 | 17.3% | 4.50 | 44 (57.9%) |
+| Festivity hub (`/fires-de-nadal`, `/carnaval`, ...) | 25 | 5.7% | 2.12 | 13 (52.0%) |
+| Home (`/`, `/es`, `/en`) | 20 | 4.5% | 4.55 | 18 (90.0%) |
+| News (`/noticies...`) | 4 | 0.9% | 2.75 | 4 (100%) |
+
+1. **Event detail and town listings are the real "Per a tu" surfaces.** Only
+   4.5% of sessions start on home (20 of 440), and only 5.5% (24 of 440) ever
+   visit `/`, `/es` or `/en` at any point in the session, while 71.6% land
+   straight on an event page from Google or AI assistants (`ai_referrer` logged
+   23 hits from 21 Spain users across Nov 15 to 18) and 42.9% of those event
+   landers open a second page. A recommendation block that only existed on `/`
+   would miss 94.5% of sessions. Rank the bottom of `/e/[eventId]` first, town
+   and comarca listings second, and home third.
+2. **Geography stays fixed while category varies.** Across the 52 Spain
+   visitors who opened 2 or more event pages (3.90 event views per person on
+   average, and 32 returning for a second session within 4 days), 45 of 52
+   (86.5%) kept the same `place_slug` (town, or region when an event has no
+   town) and only 7 (13.5%) crossed places. Among the 33 multi-event visitors
+   whose viewed events carried categories, 10 (30.3%) crossed into a second
+   category inside that place. Filter candidates to the visitor's town and
+   comarca before scoring category affinity; never surface a matching category
+   100 km away.
+3. **Municipal RSS feeds hold back a third of category labels.** Across Nov 15
+   to 17 in Spain, 102 of 320 `view_event_page` hits (31.9%) had an empty
+   `category_slug`, concentrated in municipal RSS towns (`el-masnou`,
+   `sant-andreu-de-llavaneres`, `sant-pere-de-riudebitlles`, `vallgorguina`).
+   Shipping `Esdeveniments/esdeveniments-backend#115` and enabling
+   `categorizationEnabled` in `esdeveniments-dashboard` remains the largest
+   data fix before the 4-week review.
+4. **Live Day-1 verification caught two collector quirks.** Every `#827`
+   signal fired in production within hours (`related_event_click` with
+   `position`, 49 `related_events` carousel impressions across 10 categories,
+   empty-town fallback impressions on `/garrigoles`, and full slugs on search,
+   sticky CTA, calendar and ticket clicks). Two edge cases showed up in raw
+   rows and are fixed in the follow-up PR:
+   - `card_stop_batch` fired 6 batches (`1/5` cards in Barcelona, `1/5` and
+     `1/6` in Vilanova, `3/12` on `/catalunya`, and `4/36` on home's
+     `fires-i-mercats` and `familia-i-infants` rows), proving the `1.75x`
+     median threshold holds in real browsing, while BigQuery showed Google
+     dropped `items` on custom event names (replaced by flat `card_stop`).
+   - Date-filtered place routes (`/[place]/[byDate]`) and the sticky search
+     layer passed the internal `"tots"` default as `category_slug`
+     (replaced by `omitDefaultFilterValue`).
+
+### Reusable BigQuery queries for the 4-week checkpoint
+
+Run against `esdeveniments.analytics_406884331.events_*` (stay within a
+28-day `_TABLE_SUFFIX` window so each query scans a few megabytes under the
+32 GiB daily quota):
+
+```sql
+-- 1. Independent session rates among seen cards by card category (Spain, 28 days):
+--    stop rate (`card_stop`), click rate (`select_event` / `related_event_click`),
+--    and good-click rate (`section_view` or strong action during the visit opened by that click).
+--    Note: `view_item_list` flushes on a 2 s debounce and `card_stop` flushes on hide/unmount,
+--    so seen-card membership is matched per session without requiring export timestamp order.
+WITH raw AS (
+  SELECT
+    user_pseudo_id,
+    (SELECT value.int_value FROM UNNEST(event_params) WHERE key = "ga_session_id") AS session_id,
+    event_timestamp,
+    event_name,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = "event_id") AS param_event_id,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = "section") AS section,
+    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = "page_location") AS page_location,
+    (SELECT value.int_value FROM UNNEST(event_params) WHERE key = "dwell_ms") AS dwell_ms,
+    items
+  FROM `esdeveniments.analytics_406884331.events_*`
+  WHERE _TABLE_SUFFIX BETWEEN FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 28 DAY))
+                          AND FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
+    AND geo.country = "Spain"
+),
+seen_cards AS (
+  SELECT
+    user_pseudo_id,
+    session_id,
+    i.item_id AS event_id,
+    COALESCE(NULLIF(NULLIF(i.item_category, "(not set)"), ""), "(uncategorized)") AS category
+  FROM raw, UNNEST(items) AS i
+  WHERE event_name = "view_item_list" AND i.item_id IS NOT NULL
+  GROUP BY user_pseudo_id, session_id, event_id, category
+),
+stopped_cards AS (
+  SELECT
+    user_pseudo_id,
+    session_id,
+    param_event_id AS event_id,
+    MAX(dwell_ms) AS max_dwell_ms
+  FROM raw
+  WHERE event_name = "card_stop" AND param_event_id IS NOT NULL
+  GROUP BY user_pseudo_id, session_id, event_id
+),
+card_clicks AS (
+  SELECT
+    user_pseudo_id,
+    session_id,
+    param_event_id AS event_id,
+    event_timestamp AS click_ts
+  FROM raw
+  WHERE event_name IN ("select_event", "related_event_click") AND param_event_id IS NOT NULL
+),
+event_opens AS (
+  SELECT
+    user_pseudo_id,
+    session_id,
+    param_event_id AS event_id,
+    page_location,
+    event_timestamp AS open_ts,
+    LEAD(event_timestamp) OVER (
+      PARTITION BY user_pseudo_id, session_id, param_event_id
+      ORDER BY event_timestamp
+    ) AS next_open_ts
+  FROM raw
+  WHERE event_name = "view_event_page" AND param_event_id IS NOT NULL
+),
+click_matched_opens AS (
+  SELECT
+    c.user_pseudo_id,
+    c.session_id,
+    c.event_id,
+    ARRAY_AGG(STRUCT(o.open_ts, o.next_open_ts, o.page_location) ORDER BY o.open_ts ASC LIMIT 1)[OFFSET(0)] AS visit
+  FROM card_clicks c
+  JOIN event_opens o
+    ON o.user_pseudo_id = c.user_pseudo_id
+   AND o.session_id = c.session_id
+   AND o.event_id = c.event_id
+   AND o.open_ts >= c.click_ts
+  GROUP BY c.user_pseudo_id, c.session_id, c.event_id, c.click_ts
+),
+good_clicked_cards AS (
+  SELECT DISTINCT
+    m.user_pseudo_id,
+    m.session_id,
+    m.event_id
+  FROM click_matched_opens m
+  JOIN raw r
+    ON r.user_pseudo_id = m.user_pseudo_id
+   AND r.session_id = m.session_id
+   AND r.event_timestamp >= m.visit.open_ts
+   AND (m.visit.next_open_ts IS NULL OR r.event_timestamp < m.visit.next_open_ts)
+   AND (
+     (r.event_name = "section_view" AND r.page_location = m.visit.page_location AND r.section IN ("description", "location"))
+     OR (r.event_name IN ("outbound_click", "favorite_add", "share", "add_to_calendar")
+         AND (r.param_event_id = m.event_id OR r.page_location = m.visit.page_location))
+   )
+),
+clicked_card_set AS (
+  SELECT DISTINCT user_pseudo_id, session_id, event_id FROM card_clicks
+)
+SELECT
+  s.category,
+  COUNT(*) AS seen_cards,
+  COUNTIF(st.event_id IS NOT NULL) AS stopped_cards,
+  ROUND(AVG(st.max_dwell_ms), 0) AS avg_stop_ms,
+  COUNTIF(c.event_id IS NOT NULL) AS clicked_cards,
+  COUNTIF(g.event_id IS NOT NULL) AS good_clicks,
+  ROUND(100.0 * COUNTIF(c.event_id IS NOT NULL) / NULLIF(COUNT(*), 0), 2) AS ctr_pct,
+  ROUND(100.0 * COUNTIF(g.event_id IS NOT NULL) / NULLIF(COUNT(*), 0), 2) AS good_ctr_pct
+FROM seen_cards s
+LEFT JOIN stopped_cards st USING (user_pseudo_id, session_id, event_id)
+LEFT JOIN clicked_card_set c USING (user_pseudo_id, session_id, event_id)
+LEFT JOIN good_clicked_cards g USING (user_pseudo_id, session_id, event_id)
+GROUP BY s.category
+ORDER BY seen_cards DESC;
+```
+
+```sql
+-- 2. Related-events place-slug match (town, or region fallback when an event has no town)
+--    vs category match with comparable non-null denominators (§4 Question 2)
+SELECT
+  COUNT(*) AS related_clicks,
+  COUNTIF(event_place IS NOT NULL AND source_place IS NOT NULL) AS comparable_place_pairs,
+  COUNTIF(event_place = source_place AND source_place IS NOT NULL) AS same_place_clicks,
+  ROUND(100.0 * COUNTIF(event_place = source_place AND source_place IS NOT NULL)
+        / NULLIF(COUNTIF(event_place IS NOT NULL AND source_place IS NOT NULL), 0), 1) AS same_place_pct,
+  COUNTIF(event_cat IS NOT NULL AND source_cat IS NOT NULL) AS comparable_category_pairs,
+  COUNTIF(event_cat = source_cat AND source_cat IS NOT NULL) AS same_category_clicks,
+  ROUND(100.0 * COUNTIF(event_cat = source_cat AND source_cat IS NOT NULL)
+        / NULLIF(COUNTIF(event_cat IS NOT NULL AND source_cat IS NOT NULL), 0), 1) AS same_category_pct,
+  ROUND(AVG(position), 2) AS avg_clicked_slot
+FROM (
+  SELECT
+    NULLIF((SELECT value.string_value FROM UNNEST(event_params) WHERE key = "event_place_slug"), "") AS event_place,
+    NULLIF((SELECT value.string_value FROM UNNEST(event_params) WHERE key = "place_slug"), "") AS source_place,
+    NULLIF((SELECT value.string_value FROM UNNEST(event_params) WHERE key = "event_category_slug"), "") AS event_cat,
+    NULLIF((SELECT value.string_value FROM UNNEST(event_params) WHERE key = "category_slug"), "") AS source_cat,
+    (SELECT value.int_value FROM UNNEST(event_params) WHERE key = "position") AS position
+  FROM `esdeveniments.analytics_406884331.events_*`
+  WHERE _TABLE_SUFFIX BETWEEN FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 28 DAY))
+                          AND FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
+    AND geo.country = "Spain"
+    AND event_name = "related_event_click"
+);
+```
+

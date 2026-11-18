@@ -2,10 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { sendGoogleEvent } from "@utils/analytics";
+import { omitDefaultFilterValue } from "@utils/constants";
 import {
   compactAnalyticsParams,
   computeCardStops,
-  sendCardStopBatch,
+  selectTopCardStops,
+  sendCardStops,
   sendItemListImpressions,
 } from "@utils/card-impressions";
 import { observeCardVisibility } from "@utils/card-visibility-observer";
@@ -16,12 +18,14 @@ function buildListingParams(context: {
   category?: string;
   date?: string;
 }): Record<string, string> {
+  const category = omitDefaultFilterValue(context.category);
+  const date = omitDefaultFilterValue(context.date);
   return compactAnalyticsParams({
     place: context.place,
     place_slug: context.place,
-    category: context.category,
-    category_slug: context.category,
-    date: context.date,
+    category,
+    category_slug: category,
+    date,
   });
 }
 
@@ -29,7 +33,7 @@ function buildListingParams(context: {
  * Tracks listing page analytics:
  * 1. Card impressions (2s batch): `card_impression_batch` + `view_item_list`
  * 2. Scroll depth (25/50/75/100%) derived from unique cards seen
- * 3. Card stops (`card_stop_batch` on hide/unmount) relative to visitor median
+ * 3. Card stops (`card_stop` on hide/unmount) relative to visitor median
  */
 export default function useListingAnalytics(
   root: HTMLElement | null,
@@ -50,6 +54,7 @@ export default function useListingAnalytics(
       { item: ListingImpressionItem; dwellMs: number }
     >();
     const reportedStopIds = new Set<string>();
+    const cappedDwellById = new Map<string, number>();
 
     const controller = observeCardVisibility(root, "[data-listing-grid] > *", {
       onSeenProgress: (seen, cards) => {
@@ -91,10 +96,15 @@ export default function useListingAnalytics(
       },
       onFlushStops: () => {
         const samples = [...dwellByEventId.values()];
-        const stops = computeCardStops(samples, reportedStopIds);
+        // Top 10 stops are marked reported; capped-out stops compete again only
+        // after accruing more dwell (`selectTopCardStops`).
+        const stops = selectTopCardStops(
+          computeCardStops(samples, reportedStopIds),
+          reportedStopIds,
+          cappedDwellById,
+        );
         if (stops.length === 0) return;
-        for (const stop of stops) reportedStopIds.add(stop.item_id);
-        sendCardStopBatch(
+        sendCardStops(
           "listing",
           stops,
           samples.length,

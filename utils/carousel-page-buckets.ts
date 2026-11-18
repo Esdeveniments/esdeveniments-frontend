@@ -1,4 +1,8 @@
-import { computeCardStops, sendCardStopBatch } from "@utils/card-impressions";
+import {
+  computeCardStops,
+  selectTopCardStops,
+  sendCardStops,
+} from "@utils/card-impressions";
 import type {
   CarouselPageBucket,
   ListingImpressionItem,
@@ -34,6 +38,7 @@ export function getCarouselPageBucket(href: string): CarouselPageBucket {
       seenItemIdsByList: new Map(),
       dwellPoolByKey: new Map(),
       reportedStopKeys: new Set(),
+      cappedStopDwellByKey: new Map(),
       activePauseHandlers: new Set(),
     };
     bucketsByHref.set(href, bucket);
@@ -86,46 +91,25 @@ export function flushCarouselBucketStops(bucket: CarouselPageBucket): void {
     item: { ...entry.item, item_id: key },
     dwellMs: entry.dwellMs,
   }));
-  const rawStops = computeCardStops(samples, bucket.reportedStopKeys);
-  if (rawStops.length === 0) return;
+  const ranked = selectTopCardStops(
+    computeCardStops(samples, bucket.reportedStopKeys),
+    bucket.reportedStopKeys,
+    bucket.cappedStopDwellByKey,
+  );
+  if (ranked.length === 0) return;
 
-  const grouped = new Map<
-    string,
-    {
-      listName: string;
-      placeSlug?: string;
-      categorySlug?: string;
-      stops: Array<ListingImpressionItem & { dwell_ms: number }>;
-    }
-  >();
-
-  for (const stop of rawStops) {
-    bucket.reportedStopKeys.add(stop.item_id);
+  for (const stop of ranked) {
     const entry = bucket.dwellPoolByKey.get(stop.item_id);
     if (!entry) continue;
-    const groupKey = carouselRowIdentity(
+    sendCardStops(
       entry.listName,
-      entry.categorySlug,
-      entry.placeSlug,
+      [{ ...entry.item, dwell_ms: stop.dwell_ms }],
+      entries.length,
+      {
+        place_slug: entry.placeSlug,
+        category_slug: entry.categorySlug,
+      },
     );
-    let group = grouped.get(groupKey);
-    if (!group) {
-      group = {
-        listName: entry.listName,
-        placeSlug: entry.placeSlug,
-        categorySlug: entry.categorySlug,
-        stops: [],
-      };
-      grouped.set(groupKey, group);
-    }
-    group.stops.push({ ...entry.item, dwell_ms: stop.dwell_ms });
-  }
-
-  for (const group of grouped.values()) {
-    sendCardStopBatch(group.listName, group.stops, entries.length, {
-      place_slug: group.placeSlug,
-      category_slug: group.categorySlug,
-    });
   }
 }
 

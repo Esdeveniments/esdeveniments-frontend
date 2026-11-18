@@ -286,6 +286,12 @@ export const DISTANCES: number[] = [5, 10, 25, 50, 100];
  */
 export const DEFAULT_FILTER_VALUE = "tots";
 
+/** Drops internal `"tots"` sentinel so callers only receive real filter slugs. */
+export const omitDefaultFilterValue = (
+  slug?: string | null,
+): string | undefined =>
+  slug && slug !== DEFAULT_FILTER_VALUE ? slug : undefined;
+
 /** `?price=` URL value → backend `GET /events?free=` value. */
 export const PRICE_FILTER_FREE_PARAM: Record<PriceFilterValue, boolean> = {
   gratis: true,
