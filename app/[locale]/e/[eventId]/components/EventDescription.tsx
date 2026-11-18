@@ -16,9 +16,9 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
 }) => {
   return (
     <div
-      // A new description remounts the body and the button, so a stored
-      // original or a late translation never lands on the new text.
-      key={shortTagHash(description)}
+      // A new description, or the button going away once the event ends,
+      // remounts the body: no stored original or late translation survives.
+      key={`${shortTagHash(description)}${showTranslate ? "t" : ""}`}
       className="max-w-none text-foreground min-w-0"
     >
       <Description

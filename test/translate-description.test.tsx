@@ -58,7 +58,8 @@ describe("TranslateDescription", () => {
   });
 
   it("keeps the original when 'show original' is double-clicked mid-fade", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    // Manual clock: the 120 ms fade must still be pending at the second click.
+    vi.useFakeTimers();
     render(<TwoEvents />);
     const current = screen.getByTestId("current-event");
     const button = () => current.querySelector("button")!;
@@ -66,10 +67,11 @@ describe("TranslateDescription", () => {
     const original = body();
 
     fireEvent.click(button());
-    await waitFor(() => expect(button().disabled).toBe(false));
+    await act(async () => {});
     act(() => {
       vi.advanceTimersByTime(200);
     });
+    expect(body()).toBe("<p>Traducido</p>");
 
     // A toggle settles at once, so a second click can land before the fade.
     const toggle = async () => {
@@ -78,6 +80,7 @@ describe("TranslateDescription", () => {
     };
     await toggle();
     await toggle();
+    expect(body()).toBe("<p>Traducido</p>");
     act(() => {
       vi.advanceTimersByTime(200);
     });
