@@ -10,8 +10,8 @@ import { isProductionSiteUrl } from "@utils/production-host";
  * Sentry environment from the site URL each Docker build inlines. Staging used
  * to report "production": NEXT_PUBLIC_VERCEL_ENV is a Vercel variable our
  * builds never set, so Sentry fell back to its default. Builds for any other
- * host ("preview") don't report at all: an outside deploy with the DSN but no
- * backend secrets (an old AWS Amplify app) sent 63% of the Oct-Nov 2026 quota.
+ * host ("preview") don't report at all: Vercel preview builds of PR branches,
+ * with the DSN but no backend secrets, sent 63% of the Oct-Nov 2026 quota.
  */
 export function sentryEnvironment(
   siteUrl: string | undefined = process.env.NEXT_PUBLIC_SITE_URL,
