@@ -1167,6 +1167,7 @@ export interface CompleteProfileGateProps {
 export interface EventActionBarProps {
   event: import("./api/event").EventDetailResponseDTO;
   locale: AppLocale;
+  calendar: import("./common").CalendarEventData;
 }
 
 export interface EventActionBarActionsProps {
@@ -1260,6 +1261,7 @@ export interface EventSidebarProps {
   event: import("./api/event").EventDetailResponseDTO;
   cityName: string;
   regionName: string;
+  calendar: import("./common").CalendarEventData;
   // Rendered outside the cached event body: the sponsor slot is request-time.
   sponsorSlot: import("react").ReactNode;
 }

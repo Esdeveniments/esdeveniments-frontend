@@ -39,13 +39,15 @@ const useOutsideClick = <T extends HTMLElement>(
 };
 
 const AddToCalendar: React.FC<AddToCalendarProps> = ({
-  title,
-  description,
-  location,
-  startDate,
-  endDate,
-  canonical,
-  analytics,
+  calendar: {
+    title,
+    description,
+    location,
+    startDate,
+    endDate,
+    canonical,
+    analytics,
+  },
   variant = "neutral",
   iconOnly = false,
   shortLabel = false,

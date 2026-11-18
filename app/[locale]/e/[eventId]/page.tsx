@@ -3,6 +3,7 @@ import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
 import {
+  buildCalendarEventData,
   getDefaultEventNoun,
   getEventAnalyticsSlugs,
 } from "@utils/event-helpers";
@@ -395,6 +396,8 @@ async function EventPageBody({
     event.endTime,
     statusLabels
   );
+  // One object for the sidebar and the action bar, so the RSC payload sends it once.
+  const calendar = buildCalendarEventData(event, locale as AppLocale);
 
   const shouldShowFavoriteButton = Boolean(event.slug);
   const favoriteLabels = {
@@ -698,6 +701,7 @@ async function EventPageBody({
                 event={event}
                 cityName={cityName}
                 regionName={regionName}
+                calendar={calendar}
                 sponsorSlot={sidebarSponsorSlot}
               />
             </div>
@@ -709,7 +713,7 @@ async function EventPageBody({
       {latestNewsSlot}
 
       {/* Mobile action bar: server-rendered and fixed, so it never shifts the page */}
-      {temporalStatus.state !== "past" && <EventActionBar event={event} locale={locale} />}
+      {temporalStatus.state !== "past" && <EventActionBar event={event} locale={locale} calendar={calendar} />}
     </>
   );
 }

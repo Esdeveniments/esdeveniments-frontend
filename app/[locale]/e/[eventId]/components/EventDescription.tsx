@@ -1,6 +1,7 @@
 import Description from "@components/ui/common/description";
 import React from "react";
 import TranslateDescription from "./TranslateDescription";
+import { isNonDefaultLocale } from "@utils/i18n-routing";
 import type { EventDescriptionProps } from "types/event";
 
 const DESCRIPTION_BODY_ID = "event-description-body";
@@ -19,10 +20,9 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
         introText={introText}
         descriptionHtmlId={DESCRIPTION_BODY_ID}
         headerActions={
-          showTranslate ? (
+          showTranslate && isNonDefaultLocale(locale) ? (
             <TranslateDescription
               slug={slug}
-              description={description}
               locale={locale}
               targetId={DESCRIPTION_BODY_ID}
             />

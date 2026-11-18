@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { sanitizeHtmlClient } from "@utils/sanitize";
 import { captureException } from "@sentry/nextjs";
@@ -12,12 +12,10 @@ import Button from "@components/ui/common/button";
 
 export default function TranslateDescription({
   slug,
-  description,
   locale,
   targetId = "event-description-body",
 }: {
   slug: string;
-  description: string;
   locale?: AppLocale;
   targetId?: string;
 }) {
@@ -27,11 +25,10 @@ export default function TranslateDescription({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showTranslated, setShowTranslated] = useState(false);
 
+  // The server already rendered the original into the target, so it isn't
+  // sent again as a prop; it's kept here before the first swap.
+  const originalHtmlRef = useRef<string | null>(null);
   const targetLang = isNonDefaultLocale(locale) ? locale : null;
-  const originalHtml = useMemo(() => {
-    const processed = processDescription(description || "");
-    return sanitizeHtmlClient(processed);
-  }, [description]);
 
   if (!targetLang) {
     // Component only shows on non-default locales when description is in Catalan
@@ -45,6 +42,7 @@ export default function TranslateDescription({
   const swapHtmlWithFade = (nextHtml: string) => {
     const el = typeof document !== "undefined" ? document.getElementById(targetId) : null;
     if (!el) return;
+    originalHtmlRef.current ??= el.innerHTML;
 
     // Add transition classes once (cheap, idempotent)
     el.classList.add("transition-opacity", "duration-300", "ease-in-out");
@@ -65,7 +63,7 @@ export default function TranslateDescription({
         if (translationHtml) {
           setShowTranslated((prev) => {
             const next = !prev;
-            swapHtmlWithFade(next ? translationHtml : originalHtml);
+            swapHtmlWithFade(next ? translationHtml : (originalHtmlRef.current ?? ""));
             return next;
           });
           return;

@@ -31,7 +31,7 @@ export default function EventActionBarActions({
   return (
     <div ref={ref} className="relative flex flex-shrink-0 items-center gap-2">
       <AddToCalendar
-        {...calendar}
+        calendar={calendar}
         variant={eventUrl ? "neutral" : "primary"}
         iconOnly={Boolean(eventUrl)}
         shortLabel
