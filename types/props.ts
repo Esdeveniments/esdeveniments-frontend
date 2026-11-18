@@ -638,10 +638,6 @@ export interface FiltersClientProps {
   labels: FilterLabels;
 }
 
-export interface CopyrightNoticeProps {
-  year: number;
-}
-
 export interface ActiveNavLinkProps {
   href: string;
   children: ReactNode;
@@ -1171,6 +1167,7 @@ export interface CompleteProfileGateProps {
 export interface EventActionBarProps {
   event: import("./api/event").EventDetailResponseDTO;
   locale: AppLocale;
+  calendar: import("./common").CalendarEventData;
 }
 
 export interface EventActionBarActionsProps {
@@ -1264,6 +1261,7 @@ export interface EventSidebarProps {
   event: import("./api/event").EventDetailResponseDTO;
   cityName: string;
   regionName: string;
+  calendar: import("./common").CalendarEventData;
   // Rendered outside the cached event body: the sponsor slot is request-time.
   sponsorSlot: import("react").ReactNode;
 }
@@ -1373,6 +1371,11 @@ export interface EventMoreEventsProps {
   relatedEvents: EventSummaryResponseDTO[];
   sourceEventSlug: string;
   sourceSlugs?: EventAnalyticsSlugs;
+  /**
+   * The page's Suspense fallback row (all related events). Reused as is when
+   * no related event is promoted, so the RSC payload sends that row once.
+   */
+  relatedRow?: ReactNode;
 }
 
 export interface PromotedEventsTrackerProps {

@@ -92,6 +92,13 @@ describe("AdContext consent detection", () => {
     });
   }
 
+  // A user's choice is applied after the next frame (see setConsentAfterPaint)
+  function flushNextFrame() {
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+  }
+
   describe("CMP available on mount", () => {
     it("should set adsAllowed=true when consent is granted", () => {
       installMockCmp(true);
@@ -264,7 +271,7 @@ describe("AdContext consent detection", () => {
       // Initially granted
       expect(screen.getByTestId("ads-allowed").textContent).toBe("true");
 
-      // User revokes consent via CMP banner
+      // User revokes consent via CMP banner: applied at once, no frame wait
       act(() => {
         simulateConsentChange(false);
       });
@@ -289,6 +296,7 @@ describe("AdContext consent detection", () => {
       act(() => {
         simulateConsentChange(true);
       });
+      flushNextFrame();
 
       expect(screen.getByTestId("ads-allowed").textContent).toBe("true");
     });
@@ -313,6 +321,7 @@ describe("AdContext consent detection", () => {
       act(() => {
         simulateConsentChange(true);
       });
+      flushNextFrame();
 
       // Should not dispatch another event
       const finalDispatchCount = dispatchSpy.mock.calls.filter(
@@ -320,6 +329,73 @@ describe("AdContext consent detection", () => {
       ).length;
 
       expect(finalDispatchCount).toBe(initialDispatchCount);
+    });
+  });
+
+  describe("user choice inside the CMP click", () => {
+    it("applies the choice after the next frame, not inside the click", () => {
+      installMockCmp(false);
+
+      render(
+        <AdProvider>
+          <TestConsumer />
+        </AdProvider>
+      );
+
+      act(() => {
+        simulateConsentChange(true);
+      });
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
+
+      flushNextFrame();
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("true");
+      expect(window.__adsConsentGranted).toBe(true);
+    });
+
+    it("drops a queued grant when the user revokes before the next frame", () => {
+      installMockCmp(false);
+
+      render(
+        <AdProvider>
+          <TestConsumer />
+        </AdProvider>
+      );
+
+      act(() => {
+        simulateConsentChange(true);
+        simulateConsentChange(false);
+      });
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      flushNextFrame();
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
+    });
+
+    it("applies a tcloaded denial at once and drops a queued grant", () => {
+      installMockCmp(true);
+
+      render(
+        <AdProvider>
+          <TestConsumer />
+        </AdProvider>
+      );
+
+      act(() => {
+        simulateConsentChange(true);
+        tcfListeners.forEach((callback) => {
+          callback(createTcfData("tcloaded", false), true);
+        });
+      });
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
+      flushNextFrame();
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
     });
   });
 
@@ -404,6 +480,7 @@ describe("AdContext consent detection", () => {
       act(() => {
         simulateConsentChange(false);
       });
+      flushNextFrame();
 
       // Should not cause any React warnings about state updates on unmounted components
       expect(consoleErrorSpy).not.toHaveBeenCalledWith(

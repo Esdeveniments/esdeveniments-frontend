@@ -27,7 +27,13 @@ async function SponsorBannerSlotContent({
   const result = await getActiveSponsorForPlace(place, fallbackPlaces);
 
   if (result) {
-    return <SponsorBanner sponsor={result.sponsor} place={result.matchedPlace} />;
+    const { businessName, imageUrl, targetUrl, geoScope } = result.sponsor;
+    return (
+      <SponsorBanner
+        sponsor={{ businessName, imageUrl, targetUrl, geoScope }}
+        place={result.matchedPlace}
+      />
+    );
   }
 
   // No paid sponsor — try house ad

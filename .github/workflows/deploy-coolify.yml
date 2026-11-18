@@ -806,11 +806,13 @@ jobs:
 
       # The festivity hubs read a year of events (~150 backend calls for
       # /festes-majors) into the in-memory "use cache" store, which each deploy
-      # empties, and the purge above empties Cloudflare: the first request,
-      # maybe Googlebot, would wait 30–40 s. Request every sitemap in
-      # /sitemap.xml once instead: server-festa-major-sitemap.xml reads the
-      # calendar and every festivity in config/festivities.ts, the same cached
-      # reads the hub pages use. A sitemap that isn't 200 is a warning (Search
+      # empties, and the purge above empties Cloudflare: a cold read took 78 s.
+      # Request every sitemap in /sitemap.xml once to start those reads:
+      # server-festa-major-sitemap.xml reads the calendar and every festivity
+      # in config/festivities.ts, the same cached reads the hub pages use. It
+      # stops waiting after FESTA_SITEMAP_READ_BUDGET_MS (utils/constants.ts)
+      # and lists only the calendar for 5 min while the reads finish. A
+      # sitemap that isn't 200 is a warning (Search
       # Console logs it as an error). Never fails the deploy, and the step
       # timeout keeps it inside the job's 25 min after a 15 min Coolify wait.
       - name: Warm sitemaps and festivity hubs

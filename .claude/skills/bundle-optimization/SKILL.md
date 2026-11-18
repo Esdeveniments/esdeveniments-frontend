@@ -72,7 +72,7 @@ Add an icon to the sprite only if it repeats many times per page.
 
 - Server Components by default and `"use client"` at the leaf (`react-nextjs-patterns`). No local re-export barrels: see `react-nextjs-patterns` › No local barrel files.
 - Third-party scripts: follow the load timing in AGENTS.md › Performance (Funding Choices in `<head>`, AdSense after consent + interaction, GA `lazyOnload`).
-- Client i18n: only the namespaces in `lib/i18n/client-namespaces.ts` reach the client. Add a namespace there only if a client component needs it.
+- Client i18n: only the namespaces in `lib/i18n/client-namespaces.ts` reach the client. Add a namespace there only if a client component needs it, and to `ROUTE_CLIENT_PATHS` when only one route reads it.
 - Prefetch: `partialPrefetching` is on. Never `prefetch={true}`; `PressableAnchor` defaults to `false`.
 - Before adding a client dependency, check it with `yarn analyze` (or `yarn analyze:experimental`).
 

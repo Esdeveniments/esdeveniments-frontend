@@ -2,10 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { formatCardDate, formatEventTimeDisplay } from "@utils/date-helpers";
 import { formatPriceText, getEventPriceText, isFreePriceText } from "@utils/event-price";
 import { getEventLinkUrl } from "@utils/event-url";
-import {
-  buildCalendarEventData,
-  getEventAnalyticsSlugs,
-} from "@utils/event-helpers";
+import { getEventAnalyticsSlugs } from "@utils/event-helpers";
 import type { EventActionBarProps } from "types/props";
 import EventActionBarActions from "./EventActionBarActions";
 
@@ -16,7 +13,7 @@ const NO_TIME_LABELS = { consult: "", startsAt: "", range: "", simpleRange: "" }
  * right (Eventbrite, Fever, Meetup). Server-rendered and fixed, so it shows
  * from the first paint and can't shift the page; only the buttons hydrate.
  */
-export default async function EventActionBar({ event, locale }: EventActionBarProps) {
+export default async function EventActionBar({ event, locale, calendar }: EventActionBarProps) {
   const [t, tCalendar] = await Promise.all([
     getTranslations({ locale, namespace: "Components.EventPage" }),
     getTranslations({ locale, namespace: "Components.EventCalendar" }),
@@ -54,7 +51,7 @@ export default async function EventActionBar({ event, locale }: EventActionBarPr
           {...getEventAnalyticsSlugs(event)}
           eventUrl={getEventLinkUrl(event.url)}
           moreInfoLabel={t("moreInfo")}
-          calendar={buildCalendarEventData(event, locale)}
+          calendar={calendar}
         />
       </div>
     </div>
