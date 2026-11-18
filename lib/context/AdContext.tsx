@@ -81,11 +81,16 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     // handler. The store update re-renders every consumer synchronously and
     // runs the gtag consent update, which delayed that click's paint by ~80 ms
     // (INP, 4x CPU). Apply a grant right after the next frame. A revocation
-    // applies at once and drops any queued grant: hidden tabs run no frames.
+    // and a `tcloaded` choice apply at once and drop any queued grant: hidden
+    // tabs run no frames.
+    const setConsentNow = (allowed: boolean) => {
+      pendingConsent = undefined;
+      setConsent(allowed);
+    };
+
     const setConsentAfterPaint = (allowed: boolean) => {
       if (!allowed) {
-        pendingConsent = undefined;
-        setConsent(false);
+        setConsentNow(false);
         return;
       }
       const scheduled = pendingConsent !== undefined;
@@ -105,7 +110,7 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       if (tcData.eventStatus === "useractioncomplete") {
         setConsentAfterPaint(hasAdConsent(tcData));
       } else if (tcData.eventStatus === "tcloaded") {
-        setConsent(hasAdConsent(tcData));
+        setConsentNow(hasAdConsent(tcData));
       }
       if (typeof tcData.listenerId === "number") {
         listenerId = tcData.listenerId;

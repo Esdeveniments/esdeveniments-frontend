@@ -25,8 +25,7 @@ export default function TranslateDescription({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showTranslated, setShowTranslated] = useState(false);
 
-  // The server already rendered the original into the target, so it isn't
-  // sent again as a prop; it's kept here before the first swap.
+  const rootRef = useRef<HTMLDivElement>(null);
   const originalHtmlRef = useRef<string | null>(null);
   const targetLang = isNonDefaultLocale(locale) ? locale : null;
 
@@ -39,33 +38,37 @@ export default function TranslateDescription({
     ? t(`target.${targetLang}`)
     : targetLang.toUpperCase();
 
-  const swapHtmlWithFade = (nextHtml: string) => {
-    const el = typeof document !== "undefined" ? document.getElementById(targetId) : null;
-    if (!el) return;
-    originalHtmlRef.current ??= el.innerHTML;
+  // Search our own section: Next keeps recently visited pages mounted but
+  // hidden, so a document-wide lookup by id can hit another event.
+  const getTarget = () =>
+    rootRef.current?.closest("section")?.querySelector<HTMLElement>(`#${targetId}`) ?? null;
 
+  const swapHtmlWithFade = (el: HTMLElement, nextHtml: string) => {
     // Add transition classes once (cheap, idempotent)
     el.classList.add("transition-opacity", "duration-300", "ease-in-out");
 
     // Fade out → replace → fade in
-    (el as HTMLElement).style.opacity = "0";
+    el.style.opacity = "0";
     window.setTimeout(() => {
       el.innerHTML = nextHtml;
-      (el as HTMLElement).style.opacity = "1";
+      el.style.opacity = "1";
     }, 120);
   };
 
   const handleTranslate = () => {
     setErrorMessage(null);
+    // Taken before the request, so the answer lands where it was asked for.
+    const el = getTarget();
+    if (!el) return;
+    // The original isn't sent as a prop: the server already rendered it here.
+    if (!showTranslated) originalHtmlRef.current = el.innerHTML;
     startTransition(async () => {
       try {
         // If we already have a translation, just toggle in-place
         if (translationHtml) {
-          setShowTranslated((prev) => {
-            const next = !prev;
-            swapHtmlWithFade(next ? translationHtml : (originalHtmlRef.current ?? ""));
-            return next;
-          });
+          const next = !showTranslated;
+          setShowTranslated(next);
+          swapHtmlWithFade(el, next ? translationHtml : (originalHtmlRef.current ?? ""));
           return;
         }
 
@@ -76,7 +79,7 @@ export default function TranslateDescription({
           const sanitized = sanitizeHtmlClient(processed);
           setTranslationHtml(sanitized);
           setShowTranslated(true);
-          swapHtmlWithFade(sanitized);
+          swapHtmlWithFade(el, sanitized);
           return;
         }
 
@@ -109,7 +112,7 @@ export default function TranslateDescription({
   };
 
   return (
-    <div className="space-y-1">
+    <div ref={rootRef} className="space-y-1">
       <Button
         variant="ghost"
         onClick={handleTranslate}

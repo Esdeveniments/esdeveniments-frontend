@@ -374,6 +374,27 @@ describe("AdContext consent detection", () => {
       expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
       expect(window.__adsConsentGranted).toBe(false);
     });
+
+    it("drops a queued grant when a tcloaded denial arrives before the next frame", () => {
+      installMockCmp(false);
+
+      render(
+        <AdProvider>
+          <TestConsumer />
+        </AdProvider>
+      );
+
+      act(() => {
+        simulateConsentChange(true);
+        tcfListeners.forEach((callback) => {
+          callback(createTcfData("tcloaded", false), true);
+        });
+      });
+      flushNextFrame();
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("false");
+      expect(window.__adsConsentGranted).toBe(false);
+    });
   });
 
   describe("15-second total timeout", () => {
