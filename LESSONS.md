@@ -1174,7 +1174,24 @@ but `useEvents` passed the `category` prop through, so "Carregar més" on every
 `/<place>/<date>` listing without a category fetched nothing and hid the button
 (likely since backend contract v2 reached production on 2026-11-04).
 `buildEventsQuery` (`utils/api-helpers.ts`), which builds every events query,
-now drops `tots` from `category` and `byDate`.
+now drops `tots` from `category` and `byDate`. Analytics callers use
+`omitDefaultFilterValue` (`utils/constants.ts`) for the same reason, since
+`/[place]/[byDate]` and `parseFiltersFromUrl` keep `"tots"` in `category` when
+no category is selected.
+
+## GA4 BigQuery Export drops `items` on custom event names
+
+Passing an ecommerce `items` array on a custom GA4 event name (`card_stop_batch`
+in `#827`) reaches `gtag.js`, and the event itself lands in GA4 and BigQuery,
+while Google's collector strips the `items` repeated record (`items: []` on
+every row in `events_20261117`). Only Google's predefined ecommerce event
+names (`view_item_list`, `select_item`, `view_item`, `begin_checkout`,
+`purchase`, ...) populate `items` in BigQuery, and standard GA4 properties cut
+`event_params` string values at 100 characters (less than three UUIDs). Keep
+`view_item_list` for list impressions, and send custom per-card signals as
+capped flat events (`card_stop`, `utils/card-impressions.ts`) with scalar
+parameters (`event_id`, `event_category_slug`, `event_place_slug`, `position`,
+`dwell_ms`).
 
 ## A path Proxy skips becomes the `[locale]` segment
 

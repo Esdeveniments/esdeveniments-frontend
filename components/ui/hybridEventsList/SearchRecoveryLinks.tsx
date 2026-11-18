@@ -11,6 +11,7 @@ import {
   startNavigationFeedback,
 } from "@lib/navigation-feedback";
 import { sendGoogleEvent } from "@utils/analytics";
+import { omitDefaultFilterValue } from "@utils/constants";
 import { scheduleIdleCallback } from "@utils/browser";
 import {
   getSearchRecoveryLinks,
@@ -47,10 +48,7 @@ export default function SearchRecoveryLinks(): JSX.Element | null {
 
   const handleRecoveryClick = (e: MouseEvent, action: SearchRecoveryAction) => {
     const placeSlug = segments.place || undefined;
-    const categorySlug =
-      segments.category && segments.category !== "tots"
-        ? segments.category
-        : undefined;
+    const categorySlug = omitDefaultFilterValue(segments.category);
     scheduleIdleCallback(() =>
       sendGoogleEvent("zero_results_recovery", {
         action,

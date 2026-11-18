@@ -13,6 +13,7 @@ export const IMPRESSION_DEBOUNCE_MS = 2000;
 export const MIN_CARDS_FOR_STOP_BASELINE = 4;
 export const MIN_STOP_DWELL_MS = 2500;
 export const STOP_MEDIAN_RATIO = 1.75;
+export const MAX_REPORTED_STOPS = 10;
 
 /** Reads an event card's GA4 item fields from its title link; null for ads. */
 export function toImpressionItem(
@@ -81,8 +82,40 @@ export function computeCardStops(
   return stops;
 }
 
-/** Sends one batched `card_stop_batch` event (<=200 items per chunk). */
-export function sendCardStopBatch(
+/**
+ * Ranks eligible stops by `dwell_ms` descending, marks the top 10 as reported,
+ * and records capped-out cards' dwell so they stay silent on a zero-new-dwell
+ * re-hide while competing again if they later accrue more dwell.
+ */
+export function selectTopCardStops(
+  candidates: ReadonlyArray<CardStopItem>,
+  reportedIds: Set<string>,
+  cappedDwellById: Map<string, number>,
+): CardStopItem[] {
+  const fresh = candidates.filter(
+    (stop) => stop.dwell_ms > (cappedDwellById.get(stop.item_id) ?? -1),
+  );
+  if (fresh.length === 0) return [];
+  const ranked = [...fresh].sort((a, b) => b.dwell_ms - a.dwell_ms);
+  const selected = ranked.slice(0, MAX_REPORTED_STOPS);
+  for (const stop of selected) {
+    reportedIds.add(stop.item_id);
+    cappedDwellById.delete(stop.item_id);
+  }
+  for (const overflow of ranked.slice(MAX_REPORTED_STOPS)) {
+    cappedDwellById.set(overflow.item_id, overflow.dwell_ms);
+  }
+  return selected;
+}
+
+/**
+ * Sends one flat `card_stop` event per stopped card.
+ * GA4 BigQuery Export drops `items[]` on custom event names and caps string
+ * params at 100 chars, whereas flat `event_id`, `event_category_slug`,
+ * `event_place_slug`, `position`, and `dwell_ms` land intact in both GA4 and
+ * BigQuery `event_params`.
+ */
+export function sendCardStops(
   listName: string,
   stops: ReadonlyArray<CardStopItem>,
   totalSeen: number,
@@ -90,14 +123,20 @@ export function sendCardStopBatch(
 ): void {
   if (stops.length === 0) return;
   const context = compactAnalyticsParams(params);
-  for (let i = 0; i < stops.length; i += MAX_ITEMS_PER_EVENT) {
-    const chunk = stops.slice(i, i + MAX_ITEMS_PER_EVENT);
-    sendGoogleEvent("card_stop_batch", {
+  for (const stop of stops) {
+    sendGoogleEvent("card_stop", {
       item_list_name: listName,
-      visible_cards: chunk.length,
+      event_id: stop.item_id,
+      ...(stop.item_category
+        ? { event_category_slug: stop.item_category }
+        : {}),
+      ...(stop.item_category2
+        ? { event_place_slug: stop.item_category2 }
+        : {}),
+      position: stop.index,
+      dwell_ms: stop.dwell_ms,
       total_cards: totalSeen,
       ...context,
-      items: chunk,
     });
   }
 }

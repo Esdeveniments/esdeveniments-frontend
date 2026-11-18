@@ -10,6 +10,7 @@ import SearchAwareHeading from "./SearchAwareHeading";
 import CountLine from "./CountLine";
 import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
+import { omitDefaultFilterValue } from "@utils/constants";
 import { hasCardImage } from "@utils/event-helpers";
 import { buildEventMapPoints } from "@utils/event-map";
 import { ListingEventsProvider } from "@components/context/ListingEventsContext";
@@ -69,6 +70,9 @@ async function HybridEventsList({
   // Sponsor banner slot - shows active sponsor or CTA to advertise
   const sponsorSlot = <SponsorBannerSlot place={place || "catalunya"} />;
 
+  const analyticsCategorySlug = omitDefaultFilterValue(category);
+  const analyticsDateSlug = omitDefaultFilterValue(date);
+
   if (noEventsFound || initialEvents.length === 0) {
     return (
       <div
@@ -77,8 +81,8 @@ async function HybridEventsList({
         data-analytics-container="true"
         data-analytics-context="events_list"
         data-analytics-place-slug={place || undefined}
-        data-analytics-category-slug={category || undefined}
-        data-analytics-date-slug={date || undefined}
+        data-analytics-category-slug={analyticsCategorySlug}
+        data-analytics-date-slug={analyticsDateSlug}
       >
         {headingSection}
         {promotedSlot}
@@ -118,8 +122,8 @@ async function HybridEventsList({
       data-analytics-container="true"
       data-analytics-context="events_list"
       data-analytics-place-slug={place || undefined}
-      data-analytics-category-slug={category || undefined}
-      data-analytics-date-slug={date || undefined}
+      data-analytics-category-slug={analyticsCategorySlug}
+      data-analytics-date-slug={analyticsDateSlug}
     >
       {headingSection}
       {promotedSlot}
