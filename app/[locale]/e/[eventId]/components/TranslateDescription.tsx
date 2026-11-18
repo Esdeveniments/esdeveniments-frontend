@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { sanitizeHtmlClient } from "@utils/sanitize";
 import { captureException } from "@sentry/nextjs";
@@ -12,10 +12,12 @@ import Button from "@components/ui/common/button";
 
 export default function TranslateDescription({
   slug,
+  description,
   locale,
   targetId = "event-description-body",
 }: {
   slug: string;
+  description: string;
   locale?: AppLocale;
   targetId?: string;
 }) {
@@ -25,9 +27,11 @@ export default function TranslateDescription({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showTranslated, setShowTranslated] = useState(false);
 
-  const rootRef = useRef<HTMLDivElement>(null);
-  const originalHtmlRef = useRef<string | null>(null);
   const targetLang = isNonDefaultLocale(locale) ? locale : null;
+  const originalHtml = useMemo(() => {
+    const processed = processDescription(description || "");
+    return sanitizeHtmlClient(processed);
+  }, [description]);
 
   if (!targetLang) {
     // Component only shows on non-default locales when description is in Catalan
@@ -38,37 +42,32 @@ export default function TranslateDescription({
     ? t(`target.${targetLang}`)
     : targetLang.toUpperCase();
 
-  // Search our own section: Next keeps recently visited pages mounted but
-  // hidden, so a document-wide lookup by id can hit another event.
-  const getTarget = () =>
-    rootRef.current?.closest("section")?.querySelector<HTMLElement>(`#${targetId}`) ?? null;
+  const swapHtmlWithFade = (nextHtml: string) => {
+    const el = typeof document !== "undefined" ? document.getElementById(targetId) : null;
+    if (!el) return;
 
-  const swapHtmlWithFade = (el: HTMLElement, nextHtml: string) => {
     // Add transition classes once (cheap, idempotent)
     el.classList.add("transition-opacity", "duration-300", "ease-in-out");
 
     // Fade out → replace → fade in
-    el.style.opacity = "0";
+    (el as HTMLElement).style.opacity = "0";
     window.setTimeout(() => {
       el.innerHTML = nextHtml;
-      el.style.opacity = "1";
+      (el as HTMLElement).style.opacity = "1";
     }, 120);
   };
 
   const handleTranslate = () => {
     setErrorMessage(null);
-    // Taken before the request, so the answer lands where it was asked for.
-    const el = getTarget();
-    if (!el) return;
-    // The original isn't sent as a prop: the server already rendered it here.
-    originalHtmlRef.current ??= el.innerHTML;
     startTransition(async () => {
       try {
         // If we already have a translation, just toggle in-place
         if (translationHtml) {
-          const next = !showTranslated;
-          setShowTranslated(next);
-          swapHtmlWithFade(el, next ? translationHtml : (originalHtmlRef.current ?? ""));
+          setShowTranslated((prev) => {
+            const next = !prev;
+            swapHtmlWithFade(next ? translationHtml : originalHtml);
+            return next;
+          });
           return;
         }
 
@@ -79,7 +78,7 @@ export default function TranslateDescription({
           const sanitized = sanitizeHtmlClient(processed);
           setTranslationHtml(sanitized);
           setShowTranslated(true);
-          swapHtmlWithFade(el, sanitized);
+          swapHtmlWithFade(sanitized);
           return;
         }
 
@@ -112,7 +111,7 @@ export default function TranslateDescription({
   };
 
   return (
-    <div ref={rootRef} className="space-y-1">
+    <div className="space-y-1">
       <Button
         variant="ghost"
         onClick={handleTranslate}
