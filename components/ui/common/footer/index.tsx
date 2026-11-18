@@ -4,7 +4,6 @@ import { getTranslations } from "next-intl/server";
 import { JSX } from "react";
 import { Link } from "@i18n/routing";
 import Social from "@components/ui/common/social";
-import CopyrightNotice from "./CopyrightYear";
 import { buildTopAgendaLinks } from "@config/top-agenda-links";
 import type { AppLocale } from "types/i18n";
 import { contactEmail, socialLinks } from "@config/index";
@@ -191,7 +190,9 @@ export default async function Footer(): Promise<JSX.Element> {
           className="w-full flex flex-col items-center gap-element-gap-sm px-section-x"
           data-testid="footer-last-content"
         >
-          <CopyrightNotice year={await getCopyrightYear()} />
+          <span className="body-small text-muted-foreground text-center">
+            {t("copyright", { year: await getCopyrightYear() })}
+          </span>
           <span className="text-xs text-muted-foreground text-center">
             {t("tagline")}
           </span>

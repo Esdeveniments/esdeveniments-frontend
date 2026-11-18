@@ -74,6 +74,27 @@ describe("EventMoreEvents", () => {
     expect(result).toEqual({ promoted: ["paid"], related: ["other"] });
   });
 
+  it("reuses the fallback row only when no related event is promoted", async () => {
+    const relatedRow = <EventRelatedEvents events={[ev("paid"), ev("other")]} sourceEventSlug="self" />;
+    const second = async () => {
+      const tree = await EventMoreEvents({
+        relatedEvents: [ev("paid"), ev("other")],
+        sourceEventSlug: "self",
+        cityId: 1,
+        relatedRow,
+      });
+      return (tree.props as { children: ReactElement[] }).children[1];
+    };
+
+    fetchPromotedEvents.mockResolvedValue([ev("elsewhere")]);
+    expect(await second()).toBe(relatedRow);
+
+    fetchPromotedEvents.mockResolvedValue([ev("paid")]);
+    const filtered = await second();
+    expect(filtered).not.toBe(relatedRow);
+    expect(ids(filtered)).toEqual(["other"]);
+  });
+
   it("skips a placement it has no id for", async () => {
     fetchPromotedEvents.mockResolvedValue([ev("a")]);
     await rows({ regionId: 2 });

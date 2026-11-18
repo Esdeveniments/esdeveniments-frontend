@@ -8,12 +8,16 @@ import {
   beforeSendServer,
   SENTRY_DATA_COLLECTION,
   SENTRY_IGNORE_ERRORS,
+  sentryEnvironment,
 } from "@utils/sentry-helpers";
 
-if (process.env.NODE_ENV === "production") {
+const environment = sentryEnvironment();
+
+// Only our production and staging builds report (see sentryEnvironment).
+if (process.env.NODE_ENV === "production" && environment !== "preview") {
   const config: NodeOptions = {
     dsn: process.env.SENTRY_DSN,
-    environment: process.env.NEXT_PUBLIC_VERCEL_ENV,
+    environment,
     // Release tracking: associate errors with deployments
     // Vercel automatically provides VERCEL_GIT_COMMIT_SHA
     release:

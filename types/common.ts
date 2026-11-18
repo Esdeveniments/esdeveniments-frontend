@@ -257,7 +257,8 @@ export interface CalendarAnalyticsContext {
   placeSlug?: string;
 }
 
-export interface AddToCalendarProps {
+/** Event data the calendar menu needs; built by `buildCalendarEventData`. */
+export interface CalendarEventData {
   title: string;
   description: string;
   location: string;
@@ -266,6 +267,11 @@ export interface AddToCalendarProps {
   canonical: string;
   /** Event identifiers for add_to_calendar GA4 tracking. */
   analytics?: CalendarAnalyticsContext;
+}
+
+export interface AddToCalendarProps {
+  /** One object, not spread props: the page's two menus share it, so the RSC payload sends the description once. */
+  calendar: CalendarEventData;
   /** Button style; the page's main action uses "primary". */
   variant?: CalendarButtonVariant;
   /** 44 px icon button; the label becomes its accessible name. */
@@ -280,18 +286,6 @@ export interface AddToCalendarProps {
   source?: string;
   onOpen?: () => void;
 }
-
-/** Event data the calendar menu needs; built by `buildCalendarEventData`. */
-export type CalendarEventData = Pick<
-  AddToCalendarProps,
-  | "title"
-  | "description"
-  | "location"
-  | "startDate"
-  | "endDate"
-  | "canonical"
-  | "analytics"
->;
 
 export type CalendarButtonVariant = "primary" | "outline" | "neutral";
 

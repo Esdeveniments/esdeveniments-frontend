@@ -4,6 +4,7 @@ import ProfilePageSkeleton, {
   ProfileHeaderSkeleton,
 } from "@components/ui/common/skeletons/ProfilePageSkeleton";
 import { getUserByUsernameCached } from "@lib/api/profiles";
+import RouteClientMessages from "@components/partials/RouteClientMessages";
 
 const SHELL = "container py-section-y flex flex-col gap-section-y";
 
@@ -19,16 +20,18 @@ export default function ProfileLayout({
   params,
 }: LayoutProps<"/[locale]/perfil/[username]">) {
   return (
-    <Suspense
-      fallback={
-        <div className={SHELL}>
-          <ProfileHeaderSkeleton />
-          <ProfilePageSkeleton />
-        </div>
-      }
-    >
-      <ProfileShell params={params}>{children}</ProfileShell>
-    </Suspense>
+    <RouteClientMessages scope="profile">
+      <Suspense
+        fallback={
+          <div className={SHELL}>
+            <ProfileHeaderSkeleton />
+            <ProfilePageSkeleton />
+          </div>
+        }
+      >
+        <ProfileShell params={params}>{children}</ProfileShell>
+      </Suspense>
+    </RouteClientMessages>
   );
 }
 

@@ -507,3 +507,24 @@ New pages, first measurement. Lab, local build of `feat/festes-majors` (method a
 - Cold cache: the hubs read a whole year of events into the in-memory `"use cache"` store, which each deploy empties. The first `/festes-majors` request after a deploy waited 40 s for its content (the `loading.tsx` skeleton arrives in 0.25 s). The deploy workflow now requests every sitemap in `/sitemap.xml` once after the smoke tests ("Warm sitemaps and festivity hubs", never fails the deploy): `server-festa-major-sitemap.xml` reads the calendar and every festivity in `config/festivities.ts`, the same cached reads as the hubs, so a new festivity is warmed without editing the workflow. The step used to list four hub pages and missed `/carnaval`; on 2026-11-10 the first request for the festa major sitemap took 31 s. Town and region hubs are a single place's read (0.4-5 s), so they aren't warmed.
 
 **Next check:** CrUX for `/festes-majors` and `/festa-major/*` once they get traffic; the "Warm sitemaps and festivity hubs" times in the deploy log.
+
+## 2026-11-16: INP, consent click
+
+**Field (CrUX, phone, p75, 2026-10-19 to 2026-11-15):** INP 187 ms (78.8% good, 1.1% poor); desktop 75 ms. Weekly history: 209-214 ms in June, 201-206 ms July to October, 186-192 ms since late October. CrUX has no URL-level INP for any page we tried (home, listings, events, `/festes-majors`), so the split by page comes from GA4.
+
+**GA4 `web_vitals` INP (Spain, mobile, 2026-11-04 to 2026-11-16, 509 events):** event pages send 79% of them (399, 20% slower than 200 ms), listings 74 (18%), home 18, festes 10, news 8. No page type stands out by rate. On event pages, 237 of 399 have no `element`: web-vitals leaves it empty when the target is gone by the time it reports, as with the Funding Choices button, which is removed on consent. Sentry can't help here: tracing is off (`tracesSampleRate: 0`).
+
+**Lab (Playwright, Pixel 7, 4x CPU, production):**
+
+| Interaction | INP | Where the time goes |
+|---|---|---|
+| Consent "Accepta" (event page) | 192-248 ms | Funding Choices handler, then our `adsAllowed` re-render and `gtag("consent", "update")` (~70 ms) in the same task |
+| "Llegir més", hero image (event page) | 120-152 ms | 60-125 ms input delay from AdSense `show_ads_impl` scroll and rAF handlers |
+| "Categoria" chip, "Filtres" (`/barcelona`) | 128-144 ms | ~90 ms synchronous React render with ~25 ms forced layout |
+| Favorite, map, calendar, load more, card tap | 40-96 ms | |
+
+**Change:** `AdContext` applies a `useractioncomplete` consent after the next frame (`requestAnimationFrame` then `setTimeout`), so Funding Choices' click paints before our re-render and gtag call. `tcloaded` (returning visitors) is still applied at once. Emulated on production by deferring only our TCF listener, 5 runs each: consent click 240 ms median (192-248) before, 160 ms (152-192) after; consent was granted in every run.
+
+**Left:** AdSense's scroll handlers (third party), the filter modal render, and gtag.js load tasks of ~200 ms at 4x.
+
+**Next check:** GA4 consent-click INP (`element` empty, `load_state` complete) two weeks after the deploy; CrUX phone INP after it leaves the 28-day window.

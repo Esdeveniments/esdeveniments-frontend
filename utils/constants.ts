@@ -67,6 +67,13 @@ export const FESTA_MAJOR_TERM = "festa major";
 export const FESTA_MAJOR_MIN_INDEXABLE_ACTS = 5;
 /** A Nadal collection (/fires-de-nadal…) needs events in this many towns to be indexed. */
 export const FESTIVITY_MIN_INDEXABLE_TOWNS = 5;
+/**
+ * server-festa-major-sitemap.xml waits this long for its reads. A cold read
+ * (after a deploy purges everything, or once a quiet festivity's cache entry
+ * expires) is ~300 backend calls and took 78 s in production, far past what a
+ * crawler waits; after the budget the sitemap lists only the calendar.
+ */
+export const FESTA_SITEMAP_READ_BUDGET_MS = 8000;
 
 // Year range for sitemap/archive pages validation
 export const MIN_VALID_YEAR = 2000;

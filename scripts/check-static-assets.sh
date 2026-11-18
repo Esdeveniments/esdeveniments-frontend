@@ -19,7 +19,10 @@ shift
 failed=0
 for path in "$@"; do
   html=$(curl -sS --max-time 15 "${BASE_URL}${path}") || html=""
-  assets=$(printf '%s' "$html" | grep -oE '/_next/static/[^"'"'"'\\ )]+\.(js|css)' | sort -u)
+  # The inlined RSC payload is a Flight binary stream, so a chunk boundary can
+  # fall inside a URL and leave a row header ("25:o3f4,") in the middle of it.
+  # Chunk names never contain ":" or ",", so those split copies don't match.
+  assets=$(printf '%s' "$html" | grep -oE '/_next/static/[^"'"'"'\\ ):,]+\.(js|css)' | sort -u)
   if [ -z "$assets" ]; then
     echo "::error::${path}: no /_next/static assets found in the HTML"
     failed=1

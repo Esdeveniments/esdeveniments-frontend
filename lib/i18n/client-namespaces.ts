@@ -11,51 +11,34 @@
  * namespace is missing from these lists. Update both places together.
  */
 
-export const CLIENT_APP_KEYS = ["EditProfile", "Error", "EventEdit", "EventPromote", "NotFound", "Publish"] as const;
+import type { RouteMessagesScope } from "types/i18n";
+
+export const CLIENT_APP_KEYS = ["Error", "NotFound"] as const;
 
 export const CLIENT_COMPONENT_KEYS = [
   "AdBoard",
   "CardContent",
-  "DatePicker",
   "DateRangeCalendar",
-  "Description",
-  "EditModal",
-  "EventForm",
-  "EventLocation",
-  "EventPage",
-  "EventsMap",
   "FavoriteButton",
   "FavoritesLoginNudge",
-  "Filters",
-  "FiltersModal",
-  "Footer",
   "HeroCTA",
   "HeroFilters",
   "HeroSearch",
-  "HybridEventsListClient",
-  "ImageUploader",
   "LoadMoreButton",
   "Modal",
-  "MultiSelect",
   "Navbar",
   "NoEventsFound",
   "Notification",
   "PwaBackButton",
-  "PromotionInfoModal",
-  "Profile",
-  "RestaurantPromotionForm",
   "SearchBar",
   "Select",
   "ShareKit",
   "SocialFollowPopup",
-  "TextArea",
-  "WhereToEatSection",
 ] as const;
 
 export const CLIENT_UTILS_KEYS = [
   "Calendar",
   "EventStatus",
-  "Validation",
 ] as const;
 
 // Top-level namespaces that are shipped to the client in full (no sub-key pick).
@@ -66,12 +49,62 @@ export const CLIENT_FULL_TOP_LEVEL = ["Config", "Sponsor"] as const;
 // where a "*" segment matches every key at that level. The guard test checks that every key a client file reads from these
 // namespaces resolves under one of the paths.
 export const CLIENT_PARTIAL_PATHS = [
-  "Sponsorship.checkout",
-  "Sponsorship.placeSelector",
-  "Sponsorship.pricing",
-  "Sponsorship.upload",
-  "Sponsorship.uploadPage",
+  // The publish and promote upsell modal on event pages.
+  "App.EventPromote.benefit1",
+  "App.EventPromote.benefit2",
+  "App.EventPromote.benefit3",
+  "App.Publish.promoteUpsell",
+  // AdCard (every listing) reads one EventPage key.
+  "Components.EventPage.sponsored",
+  // VerifiedBadge, on event pages and in search suggestions.
+  "Components.Profile.verified",
+  "Components.Profile.verifiedOrganizer",
 ] as const;
+
+// What EventForm and its form fields read, on publish and event edit.
+const EVENT_FORM_PATHS = [
+  "Components.DatePicker",
+  "Components.EventForm",
+  "Components.ImageUploader",
+  "Components.MultiSelect",
+  "Components.TextArea",
+  "Utils.Validation",
+];
+
+// Paths only one route's client components read. Its layout mounts
+// <RouteClientMessages scope="..."> to add them on top of the root messages,
+// so other pages don't carry them in their RSC payload. A nested route gets
+// its parents' scopes too. The guard test checks which files may read each.
+export const ROUTE_CLIENT_PATHS: Record<RouteMessagesScope, readonly string[]> = {
+  publish: ["App.Publish", ...EVENT_FORM_PATHS],
+  eventEdit: ["App.EventEdit", ...EVENT_FORM_PATHS],
+  eventPromote: ["App.EventPromote"],
+  editProfile: ["App.EditProfile"],
+  event: [
+    "Components.Description",
+    "Components.EditModal",
+    "Components.EventLocation",
+    "Components.EventPage",
+    "Components.PromotionInfoModal",
+    "Components.RestaurantPromotionForm",
+    "Components.WhereToEatSection",
+  ],
+  listing: [
+    "Components.EventsMap",
+    "Components.Filters",
+    "Components.FiltersModal",
+    "Components.HybridEventsListClient",
+  ],
+  profile: ["Components.Profile"],
+  sponsorship: [
+    "Components.ImageUploader",
+    "Sponsorship.checkout",
+    "Sponsorship.placeSelector",
+    "Sponsorship.pricing",
+    "Sponsorship.upload",
+    "Sponsorship.uploadPage",
+  ],
+};
 
 // Copies the value at `keys` from source into target. "*" matches every child.
 export function pickPath(

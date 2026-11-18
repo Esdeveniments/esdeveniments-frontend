@@ -6,10 +6,7 @@ import AddToCalendar from "@components/ui/addToCalendar";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
 import EventOrganizerCard from "./EventOrganizerCard";
-import {
-  buildCalendarEventData,
-  getEventAnalyticsSlugs,
-} from "@utils/event-helpers";
+import { getEventAnalyticsSlugs } from "@utils/event-helpers";
 import { getEventLinkUrl } from "@utils/event-url";
 import { getEventVenue } from "@utils/location-helpers";
 import { getEventVenueCoords } from "@utils/event-map";
@@ -27,6 +24,7 @@ export default async function EventSidebar({
   event,
   cityName,
   regionName,
+  calendar,
   sponsorSlot,
 }: EventSidebarProps) {
   const locale = (await rootLocale()) as AppLocale;
@@ -66,7 +64,7 @@ export default async function EventSidebar({
                 </a>
               )}
               <AddToCalendar
-                {...buildCalendarEventData(event, locale)}
+                calendar={calendar}
                 variant={eventUrl ? "neutral" : "primary"}
                 fullWidth
                 source="sidebar"

@@ -50,6 +50,8 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     let listenerId: number | undefined;
     let pollIntervalId: ReturnType<typeof setInterval> | undefined;
     let cmpListenerRegistered = false;
+    let pendingConsent: boolean | undefined;
+    let consentTimer: ReturnType<typeof setTimeout> | undefined;
 
     const setConsent = (allowed: boolean) => {
       if (!isMounted) return;
@@ -75,13 +77,40 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       return Boolean(purposeConsent["1"] && vendorConsent["755"]);
     };
 
+    // Funding Choices calls TCF listeners inside its consent button's click
+    // handler. The store update re-renders every consumer synchronously and
+    // runs the gtag consent update, which delayed that click's paint by ~80 ms
+    // (INP, 4x CPU). Apply a grant right after the next frame. A revocation
+    // and a `tcloaded` choice apply at once and drop any queued grant: hidden
+    // tabs run no frames.
+    const setConsentNow = (allowed: boolean) => {
+      pendingConsent = undefined;
+      setConsent(allowed);
+    };
+
+    const setConsentAfterPaint = (allowed: boolean) => {
+      if (!allowed) {
+        setConsentNow(false);
+        return;
+      }
+      const scheduled = pendingConsent !== undefined;
+      pendingConsent = allowed;
+      if (scheduled) return;
+      requestAnimationFrame(() => {
+        consentTimer = setTimeout(() => {
+          const latest = pendingConsent;
+          pendingConsent = undefined;
+          if (latest !== undefined) setConsent(latest);
+        }, 0);
+      });
+    };
+
     const maybeHandleTcData: TcfCallback = (tcData, success) => {
       if (!success || !tcData) return;
-      if (
-        tcData.eventStatus === "useractioncomplete" ||
-        tcData.eventStatus === "tcloaded"
-      ) {
-        setConsent(hasAdConsent(tcData));
+      if (tcData.eventStatus === "useractioncomplete") {
+        setConsentAfterPaint(hasAdConsent(tcData));
+      } else if (tcData.eventStatus === "tcloaded") {
+        setConsentNow(hasAdConsent(tcData));
       }
       if (typeof tcData.listenerId === "number") {
         listenerId = tcData.listenerId;
@@ -149,6 +178,7 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
 
     return () => {
       isMounted = false;
+      clearTimeout(consentTimer);
       if (pollIntervalId) clearInterval(pollIntervalId);
       if (
         listenerId &&

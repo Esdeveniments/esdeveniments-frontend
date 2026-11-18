@@ -5,6 +5,7 @@ import { summarizeTowns } from "@utils/festa-major-calendar";
 import { fetchFestaMajorCalendar } from "@lib/api/festes-majors";
 import { fetchFestivityPage } from "@lib/api/festivities";
 import type { FestivityPageData } from "types/festivity";
+import { FESTA_SITEMAP_READ_BUDGET_MS } from "@utils/constants";
 import { GET } from "../../app/server-festa-major-sitemap.xml/route";
 
 vi.mock("@config/index", async (importActual) => ({
@@ -102,6 +103,25 @@ describe("server-festa-major-sitemap.xml", () => {
     const response = await GET(request);
 
     expect(response.headers.get("Cache-Control")).toContain("s-maxage=300");
+  });
+
+  it("keeps only the calendar, briefly cached, when the reads are too slow", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(fetchFestaMajorCalendar).mockReturnValue(new Promise(() => {}));
+
+      const pending = GET(request);
+      await vi.advanceTimersByTimeAsync(FESTA_SITEMAP_READ_BUDGET_MS);
+      const response = await pending;
+      const xml = await response.text();
+
+      expect(xml).toContain("/festes-majors</loc>");
+      expect(xml).not.toContain("/festa-major/");
+      expect(xml).not.toContain("/cavalcades-de-reis");
+      expect(response.headers.get("Cache-Control")).toContain("s-maxage=300");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps only the calendar, briefly cached, when the backend fails", async () => {

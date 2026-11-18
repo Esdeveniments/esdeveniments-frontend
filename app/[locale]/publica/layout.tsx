@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { buildPageMeta } from "@components/partials/seo-meta";
 import { siteUrl } from "@config/index";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import RouteClientMessages from "@components/partials/RouteClientMessages";
 import { withLocalePath } from "@utils/i18n-seo";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
@@ -54,7 +55,7 @@ export default function PublicaLayout({ children }: { children: ReactNode }) {
         id="publica-webpage-schema"
         data={schemaPromise as unknown as Record<string, unknown>}
       />
-      {children}
+      <RouteClientMessages scope="publish">{children}</RouteClientMessages>
     </>
   );
 }

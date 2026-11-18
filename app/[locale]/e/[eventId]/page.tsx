@@ -3,6 +3,7 @@ import type { JSX } from "react";
 import EventDetailSkeleton from "@components/ui/common/skeletons/EventDetailSkeleton";
 import { generateJsonData } from "@utils/helpers";
 import {
+  buildCalendarEventData,
   getDefaultEventNoun,
   getEventAnalyticsSlugs,
 } from "@utils/event-helpers";
@@ -212,6 +213,15 @@ async function EventPageContent({
   const { primaryPlaceSlug, sponsorFallbackPlaces, placeLabel, placeType, newsHref } =
     getPlaceContext(event, locale);
   const analyticsSlugs = getEventAnalyticsSlugs(event);
+  // One element for the fallback and the streamed row: React sends it once.
+  const relatedRow = (
+    <EventRelatedEvents
+      events={event.relatedEvents ?? []}
+      sourceEventId={event.id}
+      sourceEventSlug={event.slug || slug}
+      sourceSlugs={analyticsSlugs}
+    />
+  );
   // Request-time parts stay outside the cached body and pass through it.
   const sponsorSlot = (
     <SponsorBannerSlot
@@ -242,14 +252,7 @@ async function EventPageContent({
       moreEventsSlot={
         <Suspense
           key="more-events"
-          fallback={
-            <EventRelatedEvents
-              events={event.relatedEvents ?? []}
-              sourceEventId={event.id}
-              sourceEventSlug={event.slug || slug}
-              sourceSlugs={analyticsSlugs}
-            />
-          }
+          fallback={relatedRow}
         >
           <EventMoreEvents
             eventId={event.id}
@@ -259,6 +262,7 @@ async function EventPageContent({
             relatedEvents={event.relatedEvents ?? []}
             sourceEventSlug={event.slug || slug}
             sourceSlugs={analyticsSlugs}
+            relatedRow={relatedRow}
           />
         </Suspense>
       }
@@ -392,6 +396,8 @@ async function EventPageBody({
     event.endTime,
     statusLabels
   );
+  // One object for the sidebar and the action bar, so the RSC payload sends it once.
+  const calendar = buildCalendarEventData(event, locale as AppLocale);
 
   const shouldShowFavoriteButton = Boolean(event.slug);
   const favoriteLabels = {
@@ -695,6 +701,7 @@ async function EventPageBody({
                 event={event}
                 cityName={cityName}
                 regionName={regionName}
+                calendar={calendar}
                 sponsorSlot={sidebarSponsorSlot}
               />
             </div>
@@ -706,7 +713,7 @@ async function EventPageBody({
       {latestNewsSlot}
 
       {/* Mobile action bar: server-rendered and fixed, so it never shifts the page */}
-      {temporalStatus.state !== "past" && <EventActionBar event={event} locale={locale} />}
+      {temporalStatus.state !== "past" && <EventActionBar event={event} locale={locale} calendar={calendar} />}
     </>
   );
 }
