@@ -183,7 +183,7 @@ Next strips the router headers (`rsc`, `next-router-state-tree`, `next-router-pr
 
 ## A Cloudflare purge during a Coolify rollover re-caches the old build
 
-Coolify keeps the old container in the Traefik pool until the new one is healthy, plus its stop grace period. A purge in that window lets the old container refill Cloudflare with old HTML and with 404s for the new build's chunks, and the `/_next/static` cache rule keeps those 404s. Pages return 200 but render unstyled and dead. The deploy workflow now waits until 10 health checks in a row report the new commit before it purges or checks assets, then loads every referenced asset with `scripts/check-static-assets.sh`. See [docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md](docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md).
+Coolify keeps the old container in the Traefik pool until the new one is healthy, plus its stop grace period. A purge in that window lets the old container refill Cloudflare with old HTML and with 404s for the new build's chunks, and the `/_next/static` cache rule keeps those 404s. Pages return 200 but render unstyled and dead. The deploy workflow now waits until 10 health checks in a row report the new commit before it purges or checks assets, then loads every referenced asset with `scripts/check-static-assets.sh`. That check reads the raw HTML, where the inlined Flight stream can cut a chunk name with a row header (`0fd_r_s25:o3f4,ckp-62.js` failed a healthy staging deploy on 2026-11-18), so it skips names containing `:` or `,`. See [docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md](docs/incidents/2026-11-08-cloudflare-cached-chunk-404.md).
 
 ## The Redis cacheHandler is self-hosted-only — and HTTP 200 ≠ rendered
 
