@@ -1,7 +1,7 @@
 import Description, { DescriptionBody } from "@components/ui/common/description";
 import { isNonDefaultLocale } from "@utils/i18n-routing";
 import TranslateDescription from "./TranslateDescription";
-import { hashText } from "../translation-utils";
+import { getCacheKey } from "../translation-utils";
 import type { EventDescriptionProps } from "types/event";
 
 export default function EventDescription({
@@ -20,7 +20,7 @@ export default function EventDescription({
         <TranslateDescription
           slug={slug}
           targetLang={targetLang}
-          version={hashText(description || "")}
+          version={getCacheKey(description || "", targetLang)}
           introText={introText}
         >
           <DescriptionBody description={description} />

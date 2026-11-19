@@ -47,12 +47,15 @@ export default function TranslateDescription({
     startTransition(async () => {
       let next: DescriptionTranslation;
       try {
-        const result = await translateDescription({ slug, targetLang });
-        const detail = result.ok ? "" : (ERROR_DETAILS[result.error] ?? "");
-        next =
-          result.ok && result.translation
-            ? { version, html: result.translation, showing: true, error: null }
-            : { version, html: null, showing: false, error: t("translateError") + detail };
+        const result = await translateDescription({ slug, targetLang, version });
+        if (result.ok && result.translation) {
+          next = { version, html: result.translation, showing: true, error: null };
+        } else {
+          const error = !result.ok && result.error === "description-changed"
+            ? t("descriptionChanged")
+            : t("translateError") + (result.ok ? "" : (ERROR_DETAILS[result.error] ?? ""));
+          next = { version, html: null, showing: false, error };
+        }
       } catch (error) {
         console.error("Translation error:", error);
         if (process.env.NODE_ENV === "production") {
@@ -91,7 +94,7 @@ export default function TranslateDescription({
                 : t("translateCta", { target: t(`target.${targetLang}`) })}
           </Button>
           {translation?.error && (
-            <p className="body-normal text-foreground/80">{translation.error}</p>
+            <p role="alert" className="body-normal text-muted-foreground">{translation.error}</p>
           )}
         </div>
       }

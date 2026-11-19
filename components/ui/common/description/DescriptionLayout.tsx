@@ -17,7 +17,7 @@ export default function DescriptionLayout({
   return (
     <section className="w-full" aria-labelledby="description-section">
       <div className="stack min-w-0">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex-between flex-wrap gap-element-gap">
           <SectionHeading
             headingId="description-section"
             title={title}

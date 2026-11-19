@@ -143,9 +143,11 @@ async function fetchTranslationFromDeepL(args: {
 export async function translateDescription({
   slug,
   targetLang,
+  version,
 }: {
   slug: string;
   targetLang: string;
+  version: string;
 }) {
   if (!isNonDefaultLocale(targetLang)) {
     return { ok: false as const, error: "unsupported-lang" as const };
@@ -176,15 +178,19 @@ export async function translateDescription({
     return { ok: false as const, error: "not-found" as const };
   }
 
-  const trimmed = (event.description || "").trim();
+  const description = event.description || "";
+  const cacheKey = getCacheKey(description, targetLang);
+  if (version !== cacheKey) {
+    return { ok: false as const, error: "description-changed" as const };
+  }
+
+  const trimmed = description.trim();
   if (!trimmed) {
     return { ok: false as const, error: "empty" as const };
   }
   if (trimmed.length > MAX_TRANSLATE_CHARS) {
     return { ok: false as const, error: "too-long" as const };
   }
-
-  const cacheKey = getCacheKey(trimmed, targetLang);
 
   try {
     // Cache automatically handles TTL (24h) and only calls fetcher on cache miss.

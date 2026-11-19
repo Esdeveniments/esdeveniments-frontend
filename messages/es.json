@@ -1152,6 +1152,7 @@
       "translatedLabel": "Traducido del catalán al {target}",
       "showOriginal": "Mostrar original",
       "translateError": "No hemos podido traducir ahora mismo. Inténtalo de nuevo.",
+      "descriptionChanged": "La descripción ha cambiado. Recarga la página para ver la nueva versión.",
       "target": {
         "en": "inglés",
         "es": "castellano"

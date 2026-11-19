@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { act, fireEvent, render, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import caMessages from "../../messages/ca.json";
 import type { EventDescriptionProps } from "types/event";
 
@@ -18,6 +18,7 @@ vi.mock("app/[locale]/e/[eventId]/actions", () => ({ translateDescription }));
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 import EventDescription from "app/[locale]/e/[eventId]/components/EventDescription";
+import { getCacheKey } from "app/[locale]/e/[eventId]/translation-utils";
 
 const SHOW_ORIGINAL = caMessages.Components.Description.showOriginal;
 const TRANSLATE = /^Traduir la descripció/;
@@ -77,12 +78,6 @@ function bodyOf(root: HTMLElement): HTMLElement {
   return node;
 }
 
-async function settle() {
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(300);
-  });
-}
-
 async function click(button: HTMLElement) {
   await act(async () => {
     fireEvent.click(button);
@@ -98,12 +93,7 @@ function deferred() {
 }
 
 beforeEach(() => {
-  vi.useFakeTimers();
   translateDescription.mockReset();
-});
-
-afterEach(() => {
-  vi.useRealTimers();
 });
 
 describe("EventDescription translate button", () => {
@@ -113,36 +103,38 @@ describe("EventDescription translate button", () => {
     expect(bodyOf(container).innerHTML).toBe(ORIGINAL_A);
 
     await click(getByRole("button", { name: TRANSLATE }));
-    await settle();
-    expect(translateDescription).toHaveBeenCalledWith({ slug: "a", targetLang: "es" });
+    expect(translateDescription).toHaveBeenCalledWith({
+      slug: "a", targetLang: "es", version: getCacheKey(ORIGINAL_A, "es"),
+    });
     expect(bodyOf(container).innerHTML).toBe(TRANSLATION_A);
 
     await click(getByRole("button", { name: SHOW_ORIGINAL }));
-    await settle();
     expect(bodyOf(container).innerHTML).toBe(ORIGINAL_A);
     expect(getByRole("button", { name: TRANSLATE })).toBeInTheDocument();
   });
 
-  it("keeps the original when the button is double-clicked mid-fade", async () => {
+  it("restores the translation after two quick toggles", async () => {
     translateDescription.mockResolvedValue({ ok: true, translation: TRANSLATION_A });
     const { container, getByRole } = render(await serverEvent(propsFor("a", ORIGINAL_A)));
     await click(getByRole("button", { name: TRANSLATE }));
-    await settle();
 
     await click(getByRole("button", { name: SHOW_ORIGINAL }));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(50);
-    });
     await click(getByRole("button"));
-    await settle();
-    // Two clicks are two toggles: the translation is back, and the label says so.
     expect(bodyOf(container).innerHTML).toBe(TRANSLATION_A);
     expect(getByRole("button", { name: SHOW_ORIGINAL })).toBeInTheDocument();
 
     await click(getByRole("button", { name: SHOW_ORIGINAL }));
-    await settle();
     expect(bodyOf(container).innerHTML).toBe(ORIGINAL_A);
     expect(translateDescription).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the original and asks for a reload when the stored text has changed", async () => {
+    translateDescription.mockResolvedValue({ ok: false, error: "description-changed" });
+    const { container, getByRole } = render(await serverEvent(propsFor("a", ORIGINAL_A)));
+    await click(getByRole("button", { name: TRANSLATE }));
+
+    expect(bodyOf(container).innerHTML).toBe(ORIGINAL_A);
+    expect(getByRole("alert")).toHaveTextContent(caMessages.Components.Description.descriptionChanged);
   });
 
   it("shows the new original after a refresh changes the description", async () => {
@@ -151,11 +143,9 @@ describe("EventDescription translate button", () => {
       await serverEvent(propsFor("a", ORIGINAL_A)),
     );
     await click(getByRole("button", { name: TRANSLATE }));
-    await settle();
     expect(bodyOf(container).innerHTML).toBe(TRANSLATION_A);
 
     rerender(await serverEvent(propsFor("a", ORIGINAL_B)));
-    await settle();
     expect(bodyOf(container).innerHTML).toBe(ORIGINAL_B);
     expect(getByRole("button", { name: TRANSLATE })).toBeInTheDocument();
   });
@@ -166,11 +156,9 @@ describe("EventDescription translate button", () => {
       await serverEvent(propsFor("a", ORIGINAL_A)),
     );
     await click(getByRole("button", { name: TRANSLATE }));
-    await settle();
     expect(bodyOf(container).innerHTML).toBe(TRANSLATION_A);
 
     rerender(await serverEvent(propsFor("a", ORIGINAL_A, false)));
-    await settle();
     expect(bodyOf(container).innerHTML).toBe(ORIGINAL_A);
     expect(queryByRole("button")).toBeNull();
   });
@@ -190,13 +178,13 @@ describe("EventDescription translate button", () => {
     // Like a client navigation with cacheComponents: event A stays in the DOM, hidden.
     const { getByTestId, rerender } = render(page("visible", null));
     rerender(page("hidden", <div data-testid="event-b">{eventB}</div>));
-    await settle();
 
     const b = getByTestId("event-b");
     await click(within(b).getByRole("button", { name: TRANSLATE }));
-    await settle();
 
-    expect(translateDescription).toHaveBeenCalledWith({ slug: "b", targetLang: "es" });
+    expect(translateDescription).toHaveBeenCalledWith({
+      slug: "b", targetLang: "es", version: getCacheKey(ORIGINAL_B, "es"),
+    });
     expect(bodyOf(b).innerHTML).toBe(TRANSLATION_B);
     expect(bodyOf(getByTestId("event-a")).innerHTML).toBe(ORIGINAL_A);
   });
@@ -213,7 +201,6 @@ describe("EventDescription translate button", () => {
     await act(async () => {
       reply.resolve({ ok: true, translation: TRANSLATION_A });
     });
-    await settle();
 
     expect(bodyOf(container).innerHTML).toBe(ORIGINAL_B);
     expect(getByRole("button", { name: TRANSLATE })).toBeInTheDocument();
