@@ -43,6 +43,23 @@ const SendSchema = z.object({
     .default("/static/icons/icon-192x192.png"),
 });
 
+// web-push's `timeout` only closes an idle socket: an endpoint that never
+// answers, or trickles bytes, could still hold its batch (and every later
+// batch and page) forever. The race bounds the whole send; a timed-out send
+// counts as failed and is never treated as expired.
+const SEND_TIMEOUT_MS = 10_000;
+
+function sendWithDeadline(send: Promise<unknown>): Promise<unknown> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("Push send timed out")),
+      SEND_TIMEOUT_MS,
+    );
+  });
+  return Promise.race([send, deadline]).finally(() => clearTimeout(timer));
+}
+
 function getVapidConfig(): {
   publicKey: string;
   privateKey: string;
@@ -152,13 +169,16 @@ export async function POST(request: Request) {
 
         const results = await Promise.allSettled(
           batch.map((sub) =>
-            webpush.sendNotification(
-              {
-                endpoint: sub.endpoint,
-                keys: { p256dh: sub.p256dh, auth: sub.auth },
-              },
-              payload,
-              { TTL: 60 * 60 * 24 }, // 24h TTL — queued if device offline
+            sendWithDeadline(
+              webpush.sendNotification(
+                {
+                  endpoint: sub.endpoint,
+                  keys: { p256dh: sub.p256dh, auth: sub.auth },
+                },
+                payload,
+                // 24h TTL — queued if device offline
+                { TTL: 60 * 60 * 24, timeout: SEND_TIMEOUT_MS },
+              ),
             ),
           ),
         );

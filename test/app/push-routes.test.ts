@@ -235,4 +235,41 @@ describe("POST /api/push/send", () => {
     expect(db.getSubscriptionsPage.mock.calls[1][0]).toBe(11); // last id of page 1
     expect(webpush.sendNotification).toHaveBeenCalledTimes(3);
   });
+
+  it("times out a stalled send so the next batch still runs and expired rows are deleted", async () => {
+    vi.useFakeTimers();
+    try {
+      // 101 rows: a first batch of 100 (one stalls, one expired) and a second of 1.
+      const subs = Array.from({ length: 101 }, (_, i) => ({
+        id: i + 1,
+        endpoint: `https://fcm.googleapis.com/fcm/send/${i + 1}`,
+        p256dh: "k",
+        auth: "a",
+      }));
+      db.getSubscriptionsPage.mockResolvedValueOnce(subs);
+      const stalled = subs[0].endpoint;
+      const expired = subs[1].endpoint;
+      const last = subs[100].endpoint;
+      webpush.sendNotification.mockImplementation(({ endpoint }) => {
+        if (endpoint === stalled) return new Promise(() => {});
+        if (endpoint === expired) return Promise.reject({ statusCode: 410 });
+        return Promise.resolve(undefined);
+      });
+
+      const pending = sendPOST(
+        postJson("https://app.test/api/push/send", validBody, AUTH),
+      );
+      await vi.advanceTimersByTimeAsync(10_000);
+      const res = await pending;
+
+      expect(await res.json()).toMatchObject({ ok: true, sent: 99, failed: 2 });
+      const endpoints = webpush.sendNotification.mock.calls.map((c) => c[0].endpoint);
+      expect(endpoints).toContain(last);
+      expect(webpush.sendNotification.mock.calls[0][2]).toMatchObject({ timeout: 10_000 });
+      // Only the 410 is cleaned up; a timeout is not proof the row expired.
+      expect(db.deleteSubscriptions).toHaveBeenCalledWith([expired]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
