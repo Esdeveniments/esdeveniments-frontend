@@ -401,7 +401,7 @@
       "draftDiscardConfirm": "¿Descartar el borrador?",
       "draftDiscardDescription": "Se borrarán el formulario y la imagen. No se puede deshacer.",
       "draftKeep": "Conservar el borrador",
-      "draftDateExpired": "Revisa las fechas: el borrador empieza en una fecha pasada. No las hemos cambiado.",
+      "draftDateExpired": "Revisa las fechas: el evento empieza en una fecha pasada. No las hemos cambiado.",
       "draftCityUnavailable": "El municipio guardado ya no está en la lista. Revísalo y vuelve a seleccionarlo. Hemos conservado el valor original.",
       "draftCategoryUnavailable": "Alguna categoría guardada ya no está en la lista. Revisa las categorías. Hemos conservado los valores originales.",
       "draftCleanupFailed": "El evento se ha publicado, pero no se ha podido eliminar el borrador local. Descártalo al volver al formulario. No vuelvas a publicar el evento.",
@@ -414,7 +414,8 @@
         "keepFreeButton": "Ahora no",
         "shareTitle": "¡Publicado! Ahora compártelo",
         "shareDescription": "Envíalo a tus grupos y contactos: es la forma más rápida de llegar a más gente."
-      }
+      },
+      "dateEnded": "Este evento ya ha terminado. Revisa las fechas antes de publicarlo."
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",

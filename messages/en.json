@@ -401,7 +401,7 @@
       "draftDiscardConfirm": "Discard this draft?",
       "draftDiscardDescription": "The form and image will be deleted. This can't be undone.",
       "draftKeep": "Keep draft",
-      "draftDateExpired": "Check the dates: this draft starts in the past. We have not changed them.",
+      "draftDateExpired": "Check the dates: this event starts in the past. We have not changed them.",
       "draftCityUnavailable": "The saved town is no longer listed. Check and select it again. We have kept the original value.",
       "draftCategoryUnavailable": "A saved category is no longer listed. Check the categories. We have kept the original values.",
       "draftCleanupFailed": "Your event was published, but the local draft could not be removed. Discard it when you return to the form. Do not publish the event again.",
@@ -414,7 +414,8 @@
         "keepFreeButton": "Not now",
         "shareTitle": "It's live! Now spread the word",
         "shareDescription": "Send it to your groups and contacts: it's the quickest way to reach more people."
-      }
+      },
+      "dateEnded": "This event has already ended. Check the dates before you publish it."
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",

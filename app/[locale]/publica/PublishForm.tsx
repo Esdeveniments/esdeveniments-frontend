@@ -15,7 +15,7 @@ import EventForm from "@components/ui/EventForm";
 import { useImagePreview } from "@components/hooks/useImagePreview";
 import { usePublishDraft } from "@components/hooks/usePublishDraft";
 import PublishDraftPanel from "@components/ui/publish/PublishDraftPanel";
-import { getPublishDraftWarnings } from "@utils/publish-draft-warnings";
+import { getPublishDraftWarnings, hasPublishFormEnded } from "@utils/publish-draft-warnings";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
@@ -56,28 +56,16 @@ const PreviewContent = dynamic(
   }
 );
 
-const getDefaultEventDates = () => {
-  const now = new Date();
-  now.setMinutes(0, 0, 0);
-  const startDate = new Date(now);
-  startDate.setHours(9, 0, 0, 0);
-  const endDate = new Date(startDate);
-  endDate.setHours(10, 0, 0, 0);
-
-  return {
-    startDate: toLocalDateTimeString(startDate),
-    endDate: toLocalDateTimeString(endDate),
-  };
-};
-
-const defaultEventDates = getDefaultEventDates();
-
-const defaultForm: FormData = {
+// Dates stay empty in the prerendered shell (cacheComponents refuses a clock
+// read there) and are filled on every open and discard. A module-level default
+// kept the day the bundle loaded, so a form opened after midnight started
+// yesterday (#534).
+const emptyForm: FormData = {
   title: "",
   description: "",
-  startDate: defaultEventDates.startDate,
+  startDate: "",
   startTime: "",
-  endDate: defaultEventDates.endDate,
+  endDate: "",
   endTime: "",
   region: null,
   town: null,
@@ -85,6 +73,14 @@ const defaultForm: FormData = {
   url: "",
   categories: [],
   email: "",
+};
+
+const createDefaultDates = (): Pick<FormData, "startDate" | "endDate"> => {
+  const startDate = new Date();
+  startDate.setHours(9, 0, 0, 0);
+  const endDate = new Date(startDate);
+  endDate.setHours(10, 0, 0, 0);
+  return { startDate: toLocalDateTimeString(startDate), endDate: toLocalDateTimeString(endDate) };
 };
 
 const isRegionDTO = (
@@ -120,12 +116,22 @@ const PublishForm = () => {
   const tForm = useTranslations("Components.EventForm");
   const router = useRouter();
   const locale = useLocale();
-  const [form, setForm] = useState<FormData>(defaultForm);
+  const [form, setForm] = useState<FormData>(emptyForm);
+  // True while the dates are the filled-in defaults; picking or restoring dates turns it off.
+  const autoDatesRef = useRef(true);
+  const refreshDefaultDates = useEffectEvent(() => {
+    if (!autoDatesRef.current) return;
+    const fresh = createDefaultDates();
+    if (fresh.startDate !== form.startDate) setForm((current) => ({ ...current, ...fresh }));
+  });
+  // Runs on mount and each time Next shows this route again from its <Activity>
+  // cache, which keeps the state of a form opened yesterday.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- the clock can be read only after hydration (the prerendered shell must not read it)
+  useEffect(() => refreshDefaultDates(), []);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreparing, setImagePreparing] = useState(false);
   const [imagePreview, updateImagePreview] = useImagePreview(null);
   const { user, signIn, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const [restoredDraft, setRestoredDraft] = useState(false);
   const [editorVersion, setEditorVersion] = useState(0);
   const [wizardStep, setWizardStep] = useState<EventFormStep>(0);
   const [publishAfterReturn, setPublishAfterReturn] = useState<PublishResumeIntent | null>(null);
@@ -155,10 +161,10 @@ const PublishForm = () => {
     setError(null);
     setShowPreview(false);
     setEditorVersion((version) => version + 1);
-    setForm({ ...defaultForm });
+    autoDatesRef.current = true;
+    setForm({ ...emptyForm, ...createDefaultDates() });
     setImageFile(null);
     updateImagePreview(null);
-    setRestoredDraft(false);
   }, [updateImagePreview]);
   const draft = usePublishDraft({
     accountId: isAuthenticated ? user?.id : undefined, isAuthLoading, form, imageFile, step: wizardStep,
@@ -166,12 +172,12 @@ const PublishForm = () => {
       setError(null);
       setIsRedirecting(false);
       setEditorVersion((version) => version + 1);
-      setForm({ ...defaultForm, ...saved.form });
+      autoDatesRef.current = false;
+      setForm({ ...emptyForm, ...createDefaultDates(), ...saved.form });
       setImageFile(saved.imageFile);
       setWizardStep(saved.step ?? 0);
       setPublishAfterReturn(intent?.action === "publish" ? intent : null);
       updateImagePreview(saved.imageFile);
-      setRestoredDraft(true);
       submittedRef.current = false;
       if (resumed) {
         handoffStartedRef.current = handedOffRef.current = false;
@@ -276,8 +282,13 @@ const PublishForm = () => {
     value: FormData[K]
   ) => {
     trackFieldInteraction(String(name));
+    if (name === "startDate" || name === "endDate" || name === "isAllDay") {
+      autoDatesRef.current = false;
+      const ended = t("dateEnded");
+      setError((current) => (current === ended ? null : current));
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
-  }, [trackFieldInteraction]);
+  }, [trackFieldInteraction, t]);
 
   const handleImageChange = (file: File | null) => {
     setError(null);
@@ -483,6 +494,10 @@ const PublishForm = () => {
       return;
     }
     if (draft.status === "loading" || draft.status === "discarding") return;
+    if (hasPublishFormEnded(form)) {
+      setError(t("dateEnded"));
+      return;
+    }
     if (requiredAuthStage) { await beginAuthReturn("publish"); return; }
     setError(null); // Clear any previous errors
 
@@ -824,9 +839,9 @@ const PublishForm = () => {
             onRestoreGuest={draft.restoreGuest}
             onDiscard={draft.discard}
             onRetry={() => { void draft.retry(); }}
-            warnings={restoredDraft ? getPublishDraftWarnings(form, cityOptions, categoryOptions,
+            warnings={getPublishDraftWarnings(form, cityOptions, categoryOptions,
               !isLoadingCities && !isErrorRegionsWithCities,
-              !isLoadingCategories && !isErrorCategories) : []}
+              !isLoadingCategories && !isErrorCategories)}
           />
           </fieldset>
           {/* Until the user picks restore or discard, show only that choice instead of a locked form. */}
