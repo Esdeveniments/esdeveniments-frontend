@@ -1,177 +1,136 @@
+import { detectImageType, isBackendImageType } from "@utils/image-validation";
+import {
+  canDecodeImage,
+  decodeImage,
+  getScaledDimensions,
+} from "@utils/image-decode";
+import type {
+  DecodedImage,
+  PosterImageFailure,
+  PosterImageResult,
+} from "types/upload";
+
 const DEFAULT_MAX_DIMENSION = 2560;
-const DEFAULT_INITIAL_QUALITY = 0.85;
-const DEFAULT_MIN_QUALITY = 0.5;
-const DEFAULT_QUALITY_STEP = 0.05;
-const DEFAULT_MAX_ITERATIONS = 20;
-
-const readFileAsDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === "string") {
-        resolve(result);
-        return;
-      }
-      reject(new Error("Unable to read image as data URL"));
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-
-const loadImage = (src: string): Promise<HTMLImageElement> =>
-  new Promise((resolve, reject) => {
-    const image = new Image();
-    image.decoding = "async";
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Unable to load image"));
-    image.src = src;
-  });
-
-const getScaledDimensions = (
-  width: number,
-  height: number,
-  maxDimension: number
-) => {
-  if (!width || !height) {
-    return { width: 0, height: 0 };
-  }
-  const maxSide = Math.max(width, height);
-  if (maxSide <= maxDimension) {
-    return { width, height };
-  }
-  const scale = maxDimension / maxSide;
-  return {
-    width: Math.max(1, Math.round(width * scale)),
-    height: Math.max(1, Math.round(height * scale)),
-  };
-};
+// Below this the poster gets hard to read; give up instead of shrinking further.
+const MIN_DIMENSION = 1024;
+const SHRINK_FACTOR = 0.75;
+const JPEG_QUALITIES = [0.85, 0.75, 0.65, 0.5];
 
 const canvasToBlob = (
   canvas: HTMLCanvasElement,
   type: string,
-  quality: number
+  quality?: number,
 ): Promise<Blob | null> =>
   new Promise((resolve) => {
     if (!canvas.toBlob) {
       resolve(null);
       return;
     }
-    canvas.toBlob((blob) => resolve(blob), type, quality);
+    canvas.toBlob((blob) => resolve(blob && blob.size > 0 ? blob : null), type, quality);
   });
 
-const createCompressedFilename = (name: string, mime: string): string => {
-  const baseName = name.replace(/\.[^.]+$/, "");
-  const extension =
-    mime === "image/webp"
-      ? "webp"
-      : mime === "image/png"
-        ? "png"
-        : "jpg";
-  return `${baseName}-compressed.${extension}`;
-};
-
-// Steps the quality down until the blob fits or the floor is reached.
-async function encodeWithinBytes(
-  canvas: HTMLCanvasElement,
-  type: string,
+// Tries PNG once (lossless, so quality changes nothing) when the source was a
+// PNG, then JPEG on white at falling quality, then the same at smaller sizes.
+// A null blob (iOS Safari out of canvas memory) also moves to a smaller size.
+async function encodeToFit(
+  image: DecodedImage,
   maxBytes: number,
-  options: { initialQuality?: number; minQuality?: number; qualityStep?: number },
-): Promise<Blob | null> {
-  let quality = options.initialQuality ?? DEFAULT_INITIAL_QUALITY;
-  // Lossless: quality is ignored, so one encode is all a retry would produce.
-  if (type === "image/png") return canvasToBlob(canvas, type, quality);
-  const minQuality = options.minQuality ?? DEFAULT_MIN_QUALITY;
-  const step = options.qualityStep ?? DEFAULT_QUALITY_STEP;
-  let iterations = 0;
-  let blob = await canvasToBlob(canvas, type, quality);
-
-  while (
-    blob &&
-    blob.size > maxBytes &&
-    quality > minQuality &&
-    iterations < DEFAULT_MAX_ITERATIONS
-  ) {
-    quality = Math.max(minQuality, quality - step);
-    blob = await canvasToBlob(canvas, type, quality);
-    iterations += 1;
-  }
-  return blob;
-}
-
-export async function compressImageIfNeeded(
-  file: File,
-  options: {
-    maxBytes: number;
-    maxDimension?: number;
-    initialQuality?: number;
-    minQuality?: number;
-    qualityStep?: number;
-  }
-): Promise<File | null> {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return null;
-  }
-  const { maxBytes } = options;
-  if (!file.type.startsWith("image/") || file.size <= maxBytes) {
-    return null;
-  }
-
-  try {
-    const dataUrl = await readFileAsDataUrl(file);
-    const image = await loadImage(dataUrl);
-    const { width, height } = getScaledDimensions(
-      image.width,
-      image.height,
-      options.maxDimension ?? DEFAULT_MAX_DIMENSION
-    );
-
-    if (!width || !height) {
-      return null;
-    }
-
+  maxDimension: number,
+  tryPng: boolean,
+): Promise<Blob | PosterImageFailure> {
+  let encodedAny = false;
+  let dimension = Math.min(maxDimension, Math.max(image.width, image.height));
+  for (;;) {
+    const { width, height } = getScaledDimensions(image.width, image.height, dimension);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-      return null;
-    }
-
-    ctx.drawImage(image, 0, 0, width, height);
-
-    const targetType =
-      file.type === "image/webp"
-        ? "image/webp"
-        : file.type === "image/png"
-          ? "image/png"
-          : "image/jpeg";
-    let blob = await encodeWithinBytes(canvas, targetType, maxBytes, options);
-
-    // PNG is lossless, so quality changes nothing: a large PNG poster stays
-    // over the limit (a 6.7 MB poster re-encoded to 7.3 MB in Chrome 158).
-    // Fall back to JPEG, which the backend accepts; JPEG has no alpha, so
-    // paint white behind transparent pixels instead of letting them go black.
-    if (targetType === "image/png" && (!blob || blob.size > maxBytes)) {
-      ctx.globalCompositeOperation = "destination-over";
+    if (!ctx) return "encode_failed";
+    try {
+      if (tryPng) {
+        ctx.drawImage(image.source, 0, 0, width, height);
+        const png = await canvasToBlob(canvas, "image/png");
+        encodedAny ||= Boolean(png);
+        if (png && png.size <= maxBytes) return png;
+        ctx.clearRect(0, 0, width, height);
+        tryPng = false;
+      }
+      // JPEG has no alpha: paint white so transparent areas don't turn black.
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, width, height);
-      blob = await encodeWithinBytes(canvas, "image/jpeg", maxBytes, options);
+      ctx.drawImage(image.source, 0, 0, width, height);
+      for (const quality of JPEG_QUALITIES) {
+        const jpeg = await canvasToBlob(canvas, "image/jpeg", quality);
+        if (!jpeg) break;
+        encodedAny = true;
+        if (jpeg.size <= maxBytes) return jpeg;
+      }
+    } finally {
+      // iOS keeps canvas memory until the canvas is shrunk.
+      canvas.width = 0;
+      canvas.height = 0;
     }
+    const next = Math.floor(dimension * SHRINK_FACTOR);
+    if (next < MIN_DIMENSION) return encodedAny ? "too_large" : "encode_failed";
+    dimension = next;
+  }
+}
 
-    if (!blob || blob.size >= file.size || blob.size > maxBytes) {
-      return null;
-    }
+const renameFor = (name: string, type: string): string =>
+  `${name.replace(/\.[^.]+$/, "") || "poster"}.${type === "image/png" ? "png" : "jpg"}`;
 
-    const compressedFile = new File([blob], createCompressedFilename(file.name, blob.type), {
-      type: blob.type,
-      lastModified: Date.now(),
-    });
+/**
+ * Turns any image the browser can decode into a JPEG or PNG within maxBytes.
+ * The type comes from the file's bytes, never from file.type, which Android
+ * pickers often leave blank. A JPEG or PNG that already fits and decodes is
+ * kept as is.
+ */
+export async function preparePosterImage(
+  file: File,
+  options: { maxBytes: number; maxDimension?: number },
+): Promise<PosterImageResult> {
+  const { maxBytes, maxDimension = DEFAULT_MAX_DIMENSION } = options;
+  const detectedType = file.size > 0 ? await detectImageType(file) : null;
+  const fail = (reason: PosterImageFailure): PosterImageResult => ({
+    ok: false,
+    reason,
+    detectedType,
+  });
+  if (file.size === 0) return fail("empty");
 
-    return compressedFile;
-  } catch (error) {
-    console.warn("compressImageIfNeeded: failed to optimize image", error);
-    return null;
+  if (detectedType && isBackendImageType(detectedType) && file.size <= maxBytes) {
+    if (!(await canDecodeImage(file))) return fail("undecodable");
+    const typed =
+      file.type === detectedType
+        ? file
+        : new File([file], renameFor(file.name, detectedType), {
+            type: detectedType,
+            lastModified: file.lastModified,
+          });
+    return { ok: true, file: typed, detectedType };
+  }
+
+  let image: DecodedImage;
+  try {
+    image = await decodeImage(file, maxDimension);
+  } catch {
+    const isHeic = detectedType === "image/heic" || detectedType === "image/heif";
+    return fail(isHeic ? "heic_undecodable" : "undecodable");
+  }
+
+  try {
+    const blob = await encodeToFit(image, maxBytes, maxDimension, detectedType === "image/png");
+    if (typeof blob === "string") return fail(blob);
+    return {
+      ok: true,
+      file: new File([blob], renameFor(file.name, blob.type), {
+        type: blob.type,
+        lastModified: Date.now(),
+      }),
+      detectedType,
+    };
+  } finally {
+    image.release();
   }
 }

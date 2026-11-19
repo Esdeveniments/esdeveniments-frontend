@@ -830,12 +830,14 @@
       "originalTooLarge": "La imagen supera el límite de {limit} MB. Elige una más pequeña.",
       "tooLarge": "No hemos podido reducir la imagen por debajo de {limit} MB. Elige una más pequeña.",
       "compressFailed": "No hemos podido reducir la imagen. Inténtalo de nuevo.",
+      "unreadable": "No hemos podido leer esta imagen. Elige otra.",
+      "heicUnsupported": "Este navegador no puede abrir fotos HEIC. Elige la foto en JPG o haz una captura de pantalla.",
       "optimizing": "Optimizando la imagen…",
       "remove": "Eliminar imagen",
       "altPreview": "Imagen",
       "uploadDropCta": "o arrástrala aquí",
       "selectButton": "Elegir imagen",
-      "formatHelper": "JPG o PNG",
+      "formatHelper": "JPG, PNG o WebP",
       "change": "Cambiar"
     },
     "HeroCTA": {

@@ -121,15 +121,22 @@ export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
   "event_image_upload_too_large";
 export const FORMDATA_PARSE_ERROR_SUBSTRING = "failed to parse body as formdata";
 export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads (compression handles the rest)
+// Any image: a JPEG/PNG-only list greys out WebP and blank-MIME photos in
+// some Android galleries; preparePosterImage converts whatever the browser
+// decodes. HEIC isn't named because iOS then hands over the HEIC instead of
+// converting it to JPEG, and Chrome can't decode it.
+export const POSTER_IMAGE_ACCEPT = "image/*";
 export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024; // Sponsor images are uploaded raw (no compression) — keep under common body size limits
 
+export const BYTES_PER_MEGABYTE = 1024 * 1024;
+
 export const formatMegabytesLabel = (bytes: number): string => {
-  const value = bytes / (1024 * 1024);
+  const value = bytes / BYTES_PER_MEGABYTE;
   return Number.isInteger(value) ? value.toString() : value.toFixed(1);
 };
 
 export const formatMegabytes = (bytes: number): string =>
-  (bytes / (1024 * 1024)).toFixed(2);
+  (bytes / BYTES_PER_MEGABYTE).toFixed(2);
 
 export const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(
   MAX_TOTAL_UPLOAD_BYTES,
