@@ -1154,6 +1154,7 @@
       "translatedLabel": "Translated from Catalan to {target}",
       "showOriginal": "Show original",
       "translateError": "We couldn't translate right now. Please try again.",
+      "descriptionChanged": "The description has changed. Reload the page to see the new version.",
       "target": {
         "en": "English",
         "es": "Spanish"

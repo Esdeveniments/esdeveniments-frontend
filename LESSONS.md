@@ -603,6 +603,22 @@ Auto ads › "Allow additional triggers for vignette ads".
 renders in `<body>`, where the browser finds it late. Pass `href` (a fallback
 URL) as well as `imageSrcSet`, as the home hero preload does (#508).
 
+## Next keeps visited pages mounted: never find page content by global id or edit React's DOM
+
+With `cacheComponents`, Next keeps the last visited page mounted but hidden
+(`<Activity>`) after a client navigation. So after one navigation from an event
+page to another there are two `#event-description-body` elements, and
+`document.getElementById` can return the hidden page's. The old translate
+button found the body that way and wrote the translation with `innerHTML`.
+That changed the wrong page, and since React doesn't rewrite an unchanged
+`__html`, a refresh with a new description kept the old translation, and a
+late reply landed on the new text (#835 patched it with timers, keys and a
+section-scoped lookup, then reverted). Keep what's on screen in React state
+and render it: `TranslateDescription` gets the server-rendered body as
+`children` and renders the translation (sanitized by the server action)
+instead, tied to a hash of the text it came from. No global ids for page
+content, no `innerHTML` writes, no `setTimeout` swaps.
+
 ## Local builds: leave `SENTRY_AUTH_TOKEN` empty
 
 `next.config.js` uploads source maps and creates a Sentry release whenever

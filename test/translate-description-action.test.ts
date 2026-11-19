@@ -11,6 +11,7 @@ vi.mock("next/headers", () => ({ headers: async () => requestHeaders.current }))
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
 import { translateDescription } from "app/[locale]/e/[eventId]/actions";
+import { getCacheKey } from "app/[locale]/e/[eventId]/translation-utils";
 
 const SLUG = "concert-de-nadal-2026-5df20b79-fb9b-4964-9c5a-4697ecc3f5cb";
 let ipCounter = 0;
@@ -33,10 +34,15 @@ beforeEach(() => {
 
 describe("translateDescription", () => {
   it("translates the stored description of the event, not client text", async () => {
-    getCachedEventBySlug.mockResolvedValue(eventWith(`Concert ${ipCounter}`));
+    const description = `  Concert ${ipCounter}\n`;
+    getCachedEventBySlug.mockResolvedValue(eventWith(description));
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(deeplOk());
 
-    const result = await translateDescription({ slug: SLUG, targetLang: "es" });
+    const result = await translateDescription({
+      slug: SLUG,
+      targetLang: "es",
+      version: getCacheKey(description, "es"),
+    });
 
     expect(result).toEqual({ ok: true, translation: "Translated" });
     expect(getCachedEventBySlug).toHaveBeenCalledWith(SLUG);
@@ -45,12 +51,46 @@ describe("translateDescription", () => {
     expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
+  it("does not translate an edit the visitor has not seen", async () => {
+    getCachedEventBySlug.mockResolvedValue(eventWith("Concert a les 21 h"));
+    const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(deeplOk());
+
+    const result = await translateDescription({
+      slug: SLUG,
+      targetLang: "es",
+      version: getCacheKey("Concert a les 20 h", "es"),
+    });
+
+    expect(result).toEqual({ ok: false, error: "description-changed" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the translation sanitized like the server-rendered original", async () => {
+    const description = `Concert ${ipCounter}`;
+    getCachedEventBySlug.mockResolvedValue(eventWith(description));
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      deeplOk('<p onclick="x()">**Edades** < 10 con adulto; > 16 sin adulto.</p><img src=x onerror="y()">\nAdiós'),
+    );
+
+    const result = await translateDescription({
+      slug: SLUG,
+      targetLang: "es",
+      version: getCacheKey(description, "es"),
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      translation: "<p><strong>Edades</strong> &lt; 10 con adulto; > 16 sin adulto.</p><br>Adiós",
+    });
+  });
+
   it("rejects a malformed slug without loading or translating", async () => {
     const fetchMock = vi.spyOn(global, "fetch");
 
     const result = await translateDescription({
       slug: "../../x",
       targetLang: "es",
+      version: getCacheKey("", "es"),
     });
 
     expect(result).toEqual({ ok: false, error: "not-found" });
@@ -62,17 +102,26 @@ describe("translateDescription", () => {
     getCachedEventBySlug.mockResolvedValue(null);
     const fetchMock = vi.spyOn(global, "fetch");
 
-    const result = await translateDescription({ slug: SLUG, targetLang: "en" });
+    const result = await translateDescription({
+      slug: SLUG,
+      targetLang: "en",
+      version: getCacheKey("", "en"),
+    });
 
     expect(result).toEqual({ ok: false, error: "not-found" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("does not send an over-long description to DeepL", async () => {
-    getCachedEventBySlug.mockResolvedValue(eventWith("a".repeat(20_001)));
+    const description = "a".repeat(20_001);
+    getCachedEventBySlug.mockResolvedValue(eventWith(description));
     const fetchMock = vi.spyOn(global, "fetch");
 
-    const result = await translateDescription({ slug: SLUG, targetLang: "en" });
+    const result = await translateDescription({
+      slug: SLUG,
+      targetLang: "en",
+      version: getCacheKey(description, "en"),
+    });
 
     expect(result).toEqual({ ok: false, error: "too-long" });
     expect(fetchMock).not.toHaveBeenCalled();
@@ -80,14 +129,13 @@ describe("translateDescription", () => {
 
   it("rate-limits one client IP", async () => {
     vi.spyOn(global, "fetch").mockImplementation(async () => deeplOk());
-    let call = 0;
-    getCachedEventBySlug.mockImplementation(async () =>
-      eventWith(`Text ${ipCounter}-${++call}`),
-    );
+    const description = `Text ${ipCounter}`;
+    getCachedEventBySlug.mockResolvedValue(eventWith(description));
+    const version = getCacheKey(description, "es");
 
     const results = [];
     for (let i = 0; i < 11; i++) {
-      results.push(await translateDescription({ slug: SLUG, targetLang: "es" }));
+      results.push(await translateDescription({ slug: SLUG, targetLang: "es", version }));
     }
 
     expect(results.slice(0, 10).every((r) => r.ok)).toBe(true);
