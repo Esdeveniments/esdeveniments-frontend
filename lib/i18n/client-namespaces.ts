@@ -79,7 +79,7 @@ export const ROUTE_CLIENT_PATHS: Record<RouteMessagesScope, readonly string[]> =
   publish: ["App.Publish", ...EVENT_FORM_PATHS],
   eventEdit: ["App.EventEdit", ...EVENT_FORM_PATHS],
   eventPromote: ["App.EventPromote"],
-  editProfile: ["App.EditProfile"],
+  editProfile: ["App.EditProfile", "Components.ImageUploader"],
   event: [
     "Components.Description",
     "Components.EditModal",

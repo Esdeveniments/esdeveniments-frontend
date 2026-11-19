@@ -10,10 +10,10 @@ import {
   readCurrentUsername,
 } from "@lib/cache/revalidate-profile-pages";
 import { detectImageType, isBackendImageType } from "@utils/image-validation";
+import { MAX_AVATAR_BYTES } from "@utils/constants";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2 MB hard cap; matches MAX_TOTAL_UPLOAD_BYTES
 
 async function requireAuthCookie(): Promise<
   { ok: true; token: string } | { ok: false; response: Response }

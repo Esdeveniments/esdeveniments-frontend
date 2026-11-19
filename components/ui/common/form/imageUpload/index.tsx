@@ -3,17 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ImageUploaderProps } from "types/props";
-import type { PosterImageFailure } from "types/upload";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
-  MAX_UPLOAD_LIMIT_LABEL,
   BYTES_PER_MEGABYTE,
-  MAX_ORIGINAL_FILE_BYTES,
-  MAX_ORIGINAL_LIMIT_LABEL,
-  POSTER_IMAGE_ACCEPT,
+  IMAGE_UPLOAD_ACCEPT,
 } from "@utils/constants";
 import { isBackendImageType } from "@utils/image-validation";
-import { preparePosterImage } from "@utils/image-optimizer";
+import { imageUploadErrorMessage, loadAndPrepareImage } from "@utils/image-upload";
 import { sendGoogleEvent } from "@utils/analytics";
 
 
@@ -59,24 +55,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   const prepareFile = async (file: File): Promise<void> => {
     const sizeMb = Math.round(file.size / BYTES_PER_MEGABYTE);
-    if (file.size > MAX_ORIGINAL_FILE_BYTES) {
-      setError(t("originalTooLarge", { limit: MAX_ORIGINAL_LIMIT_LABEL }));
-      sendGoogleEvent("poster_image_blocked", {
-        reason: "original_too_large",
-        size_mb: sizeMb,
-      });
-      return;
-    }
     const version = ++selectionVersionRef.current;
     resetMessages();
     setIsPreparing(true);
     onPreparingChange?.(true);
     setIsOptimizing(file.size > MAX_TOTAL_UPLOAD_BYTES || !isBackendImageType(file.type));
     try {
-      const result = await preparePosterImage(file, { maxBytes: MAX_TOTAL_UPLOAD_BYTES });
+      const result = await loadAndPrepareImage(file, { maxBytes: MAX_TOTAL_UPLOAD_BYTES });
       if (version !== selectionVersionRef.current) return;
       if (!result.ok) {
-        setError(failureMessage(result.reason));
+        setError(imageUploadErrorMessage(t, result.reason, MAX_TOTAL_UPLOAD_BYTES));
         sendGoogleEvent("poster_image_blocked", {
           reason: result.reason,
           detected_type: result.detectedType ?? "unknown",
@@ -105,19 +93,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       }
     }
   };
-
-  function failureMessage(reason: PosterImageFailure): string {
-    switch (reason) {
-      case "too_large":
-        return t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL });
-      case "heic_undecodable":
-        return t("heicUnsupported");
-      case "encode_failed":
-        return t("compressFailed");
-      default:
-        return t("unreadable");
-    }
-  }
 
   const onChangeImage = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -176,7 +151,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         ref={fileSelect}
         id="image"
         type="file"
-        accept={POSTER_IMAGE_ACCEPT}
+        accept={IMAGE_UPLOAD_ACCEPT}
         className="hidden"
         aria-labelledby="image-label"
         onChange={(event) => {

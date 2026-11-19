@@ -122,11 +122,16 @@ export const EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR =
 export const FORMDATA_PARSE_ERROR_SUBSTRING = "failed to parse body as formdata";
 export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid massive browser uploads (compression handles the rest)
 // Any image: a JPEG/PNG-only list greys out WebP and blank-MIME photos in
-// some Android galleries; preparePosterImage converts whatever the browser
+// some Android galleries; prepareImageForUpload converts whatever the browser
 // decodes. HEIC isn't named because iOS then hands over the HEIC instead of
 // converting it to JPEG, and Chrome can't decode it.
-export const POSTER_IMAGE_ACCEPT = "image/*";
-export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024; // Sponsor images are uploaded raw (no compression) — keep under common body size limits
+export const IMAGE_UPLOAD_ACCEPT = "image/*";
+// Sponsor banners go to Cloudinary; a JPEG/PNG under this is sent unchanged.
+export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024;
+// Avatars show at 80 px; 1024 covers retina and any later larger slot.
+export const MAX_AVATAR_BYTES = MAX_TOTAL_UPLOAD_BYTES;
+export const AVATAR_MAX_DIMENSION = 1024;
+export const AVATAR_MIN_DIMENSION = 256;
 
 export const BYTES_PER_MEGABYTE = 1024 * 1024;
 

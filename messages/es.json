@@ -299,11 +299,8 @@
         "uploading": "Subiendo…",
         "removing": "Eliminando…",
         "altPreview": "Foto de perfil",
-        "errorUnsupported": "Formato no admitido. Usa JPG o PNG.",
-        "errorTooLarge": "La imagen supera el límite de 2 MB.",
         "errorUploadFailed": "No se ha podido subir la foto. Inténtalo de nuevo.",
-        "errorRemoveFailed": "No se ha podido eliminar la foto. Inténtalo de nuevo.",
-        "hint": "PNG o JPG, hasta 2 MB."
+        "errorRemoveFailed": "No se ha podido eliminar la foto. Inténtalo de nuevo."
       },
       "authGate": {
         "title": "Inicia sesión para editar el perfil",
@@ -826,7 +823,6 @@
     },
     "ImageUploader": {
       "label": "Imagen",
-      "unsupported": "Este archivo no es compatible. Elige una imagen JPG o PNG.",
       "originalTooLarge": "La imagen supera el límite de {limit} MB. Elige una más pequeña.",
       "tooLarge": "No hemos podido reducir la imagen por debajo de {limit} MB. Elige una más pequeña.",
       "compressFailed": "No hemos podido reducir la imagen. Inténtalo de nuevo.",
@@ -1955,16 +1951,9 @@
       "doneCta": "Finalizar",
       "dropzone": {
         "title": "Arrastra la imagen aquí o haz clic",
-        "formats": "Formato horizontal • JPG o PNG",
+        "orientation": "Formato horizontal",
         "optimal": "Óptimo: 728×150px",
         "minimum": "Mínimo: 400×80px"
-      },
-      "guidelines": {
-        "title": "Recomendaciones para la imagen:",
-        "recommended": "Tamaño óptimo: {width}×{height}px (proporción 5:1)",
-        "horizontal": "Formato banner horizontal alargado",
-        "formats": "Formatos: JPG o PNG",
-        "minimum": "Mínimo aceptado: 400×80px"
       },
       "validation": {
         "warning": "Aviso sobre la imagen:",

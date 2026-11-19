@@ -6,18 +6,21 @@ import { useAuth } from "@components/hooks/useAuth";
 import { useRouter } from "@i18n/routing";
 import AvatarInitials from "@components/ui/common/AvatarInitials";
 import { sendGoogleEvent } from "@utils/analytics";
-import { isBackendImageType } from "@utils/image-validation";
+import {
+  AVATAR_MAX_DIMENSION,
+  AVATAR_MIN_DIMENSION,
+  IMAGE_UPLOAD_ACCEPT,
+  MAX_AVATAR_BYTES,
+} from "@utils/constants";
+import { imageUploadErrorMessage, loadAndPrepareImage } from "@utils/image-upload";
 import type { EditProfileAvatarProps } from "types/props";
-
-// Mirrors the caps enforced server-side in app/api/users/me/avatar/route.ts.
-// Checking here is UX only (fail before the upload round-trip) — the route
-// is the real gate.
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+import type { ImageUploadResult } from "types/upload";
 
 export default function EditProfileAvatar({
   className,
 }: EditProfileAvatarProps) {
   const t = useTranslations("App.EditProfile.avatar");
+  const tImage = useTranslations("Components.ImageUploader");
   const router = useRouter();
   const { user, refetchUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,23 +46,31 @@ export default function EditProfileAvatar({
 
     setError(null);
     sendGoogleEvent("avatar_upload_start", {});
-
-    if (!isBackendImageType(file.type)) {
-      setError(t("errorUnsupported"));
-      sendGoogleEvent("avatar_upload_blocked", { reason: "unsupported_type" });
-      return;
-    }
-    if (file.size > MAX_AVATAR_BYTES) {
-      setError(t("errorTooLarge"));
-      sendGoogleEvent("avatar_upload_blocked", { reason: "too_large" });
-      return;
-    }
-
     setIsUploading(true);
     try {
+      // Phones hand over 5-12 MB photos, HEIC on iOS and WebP or a blank type
+      // on Android; the route only takes a JPEG or PNG under 2 MB.
+      let prepared: ImageUploadResult;
+      try {
+        prepared = await loadAndPrepareImage(file, {
+          maxBytes: MAX_AVATAR_BYTES,
+          maxDimension: AVATAR_MAX_DIMENSION,
+          minDimension: AVATAR_MIN_DIMENSION,
+        });
+      } catch {
+        prepared = { ok: false, reason: "encode_failed", detectedType: null };
+      }
+      if (!prepared.ok) {
+        setError(imageUploadErrorMessage(tImage, prepared.reason, MAX_AVATAR_BYTES));
+        sendGoogleEvent("avatar_upload_blocked", {
+          reason: prepared.reason,
+          detected_type: prepared.detectedType ?? "unknown",
+        });
+        return;
+      }
       try {
         const formData = new FormData();
-        formData.append("avatarFile", file);
+        formData.append("avatarFile", prepared.file);
         const response = await fetch("/api/users/me/avatar", {
           method: "POST",
           credentials: "include",
@@ -167,13 +178,13 @@ export default function EditProfileAvatar({
             )}
           </div>
           <p id="avatar-hint" className="form-helper">
-            {t("hint")}
+            {tImage("formatHelper")}
           </p>
         </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png, image/jpeg"
+          accept={IMAGE_UPLOAD_ACCEPT}
           className="hidden"
           onChange={(event) => {
             void handleFileChange(event);

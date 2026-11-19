@@ -4,15 +4,17 @@ import {
   decodeImage,
   getScaledDimensions,
 } from "@utils/image-decode";
+import { MAX_ORIGINAL_FILE_BYTES } from "@utils/constants";
 import type {
   DecodedImage,
-  PosterImageFailure,
-  PosterImageResult,
+  ImageUploadFailure,
+  ImageUploadOptions,
+  ImageUploadResult,
 } from "types/upload";
 
 const DEFAULT_MAX_DIMENSION = 2560;
-// Below this the poster gets hard to read; give up instead of shrinking further.
-const MIN_DIMENSION = 1024;
+// Below this a poster gets hard to read; give up instead of shrinking further.
+const DEFAULT_MIN_DIMENSION = 1024;
 const SHRINK_FACTOR = 0.75;
 const JPEG_QUALITIES = [0.85, 0.75, 0.65, 0.5];
 
@@ -34,10 +36,9 @@ const canvasToBlob = (
 // A null blob (iOS Safari out of canvas memory) also moves to a smaller size.
 async function encodeToFit(
   image: DecodedImage,
-  maxBytes: number,
-  maxDimension: number,
+  { maxBytes, maxDimension, minDimension }: Required<ImageUploadOptions>,
   tryPng: boolean,
-): Promise<Blob | PosterImageFailure> {
+): Promise<Blob | ImageUploadFailure> {
   let encodedAny = false;
   let dimension = Math.min(maxDimension, Math.max(image.width, image.height));
   for (;;) {
@@ -72,7 +73,7 @@ async function encodeToFit(
       canvas.height = 0;
     }
     const next = Math.floor(dimension * SHRINK_FACTOR);
-    if (next < MIN_DIMENSION) return encodedAny ? "too_large" : "encode_failed";
+    if (next < minDimension) return encodedAny ? "too_large" : "encode_failed";
     dimension = next;
   }
 }
@@ -86,18 +87,23 @@ const renameFor = (name: string, type: string): string =>
  * pickers often leave blank. A JPEG or PNG that already fits and decodes is
  * kept as is.
  */
-export async function preparePosterImage(
+export async function prepareImageForUpload(
   file: File,
-  options: { maxBytes: number; maxDimension?: number },
-): Promise<PosterImageResult> {
-  const { maxBytes, maxDimension = DEFAULT_MAX_DIMENSION } = options;
+  options: ImageUploadOptions,
+): Promise<ImageUploadResult> {
+  const {
+    maxBytes,
+    maxDimension = DEFAULT_MAX_DIMENSION,
+    minDimension = Math.min(DEFAULT_MIN_DIMENSION, maxDimension),
+  } = options;
   const detectedType = file.size > 0 ? await detectImageType(file) : null;
-  const fail = (reason: PosterImageFailure): PosterImageResult => ({
+  const fail = (reason: ImageUploadFailure): ImageUploadResult => ({
     ok: false,
     reason,
     detectedType,
   });
   if (file.size === 0) return fail("empty");
+  if (file.size > MAX_ORIGINAL_FILE_BYTES) return fail("original_too_large");
 
   if (detectedType && isBackendImageType(detectedType) && file.size <= maxBytes) {
     if (!(await canDecodeImage(file))) return fail("undecodable");
@@ -120,7 +126,11 @@ export async function preparePosterImage(
   }
 
   try {
-    const blob = await encodeToFit(image, maxBytes, maxDimension, detectedType === "image/png");
+    const blob = await encodeToFit(
+      image,
+      { maxBytes, maxDimension, minDimension },
+      detectedType === "image/png",
+    );
     if (typeof blob === "string") return fail(blob);
     return {
       ok: true,
