@@ -71,6 +71,34 @@ const createCompressedFilename = (name: string, mime: string): string => {
   return `${baseName}-compressed.${extension}`;
 };
 
+// Steps the quality down until the blob fits or the floor is reached.
+async function encodeWithinBytes(
+  canvas: HTMLCanvasElement,
+  type: string,
+  maxBytes: number,
+  options: { initialQuality?: number; minQuality?: number; qualityStep?: number },
+): Promise<Blob | null> {
+  let quality = options.initialQuality ?? DEFAULT_INITIAL_QUALITY;
+  // Lossless: quality is ignored, so one encode is all a retry would produce.
+  if (type === "image/png") return canvasToBlob(canvas, type, quality);
+  const minQuality = options.minQuality ?? DEFAULT_MIN_QUALITY;
+  const step = options.qualityStep ?? DEFAULT_QUALITY_STEP;
+  let iterations = 0;
+  let blob = await canvasToBlob(canvas, type, quality);
+
+  while (
+    blob &&
+    blob.size > maxBytes &&
+    quality > minQuality &&
+    iterations < DEFAULT_MAX_ITERATIONS
+  ) {
+    quality = Math.max(minQuality, quality - step);
+    blob = await canvasToBlob(canvas, type, quality);
+    iterations += 1;
+  }
+  return blob;
+}
+
 export async function compressImageIfNeeded(
   file: File,
   options: {
@@ -119,22 +147,17 @@ export async function compressImageIfNeeded(
         : file.type === "image/png"
           ? "image/png"
           : "image/jpeg";
-    let quality = options.initialQuality ?? DEFAULT_INITIAL_QUALITY;
-    const minQuality = options.minQuality ?? DEFAULT_MIN_QUALITY;
-    const step = options.qualityStep ?? DEFAULT_QUALITY_STEP;
-    const maxIterations = DEFAULT_MAX_ITERATIONS;
-    let iterations = 0;
-    let blob = await canvasToBlob(canvas, targetType, quality);
+    let blob = await encodeWithinBytes(canvas, targetType, maxBytes, options);
 
-    while (
-      blob &&
-      blob.size > maxBytes &&
-      quality > minQuality &&
-      iterations < maxIterations
-    ) {
-      quality = Math.max(minQuality, quality - step);
-      blob = await canvasToBlob(canvas, targetType, quality);
-      iterations += 1;
+    // PNG is lossless, so quality changes nothing: a large PNG poster stays
+    // over the limit (a 6.7 MB poster re-encoded to 7.3 MB in Chrome 158).
+    // Fall back to JPEG, which the backend accepts; JPEG has no alpha, so
+    // paint white behind transparent pixels instead of letting them go black.
+    if (targetType === "image/png" && (!blob || blob.size > maxBytes)) {
+      ctx.globalCompositeOperation = "destination-over";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      blob = await encodeWithinBytes(canvas, "image/jpeg", maxBytes, options);
     }
 
     if (!blob || blob.size >= file.size || blob.size > maxBytes) {
