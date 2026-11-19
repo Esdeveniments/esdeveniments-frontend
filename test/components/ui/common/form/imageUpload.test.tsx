@@ -6,18 +6,17 @@ import ImageUploader from "@components/ui/common/form/imageUpload";
 import { useImagePreview } from "@components/hooks/useImagePreview";
 import { renderWithProviders } from "../../../../utils/renderWithProviders";
 import {
-  MAX_ORIGINAL_FILE_BYTES,
   MAX_TOTAL_UPLOAD_BYTES,
-  POSTER_IMAGE_ACCEPT,
+  IMAGE_UPLOAD_ACCEPT,
   formatMegabytesLabel,
 } from "@utils/constants";
-import type { PosterImageResult } from "types/upload";
+import type { ImageUploadResult } from "types/upload";
 
 const mockPrepare = vi.fn();
 const mockSendEvent = vi.fn();
 
 vi.mock("@utils/image-optimizer", () => ({
-  preparePosterImage: (...args: unknown[]) => mockPrepare(...args),
+  prepareImageForUpload: (...args: unknown[]) => mockPrepare(...args),
 }));
 vi.mock("@utils/analytics", () => ({
   sendGoogleEvent: (...args: unknown[]) => mockSendEvent(...args),
@@ -130,13 +129,13 @@ describe("ImageUploader file validation", () => {
     return file;
   };
 
-  const ready = (file: File): PosterImageResult => ({ ok: true, file, detectedType: "image/jpeg" });
+  const ready = (file: File): ImageUploadResult => ({ ok: true, file, detectedType: "image/jpeg" });
 
   const pick = (file: File) =>
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } });
 
   it("ignores compression finishing after the editor is unmounted", async () => {
-    const pending = Promise.withResolvers<PosterImageResult>();
+    const pending = Promise.withResolvers<ImageUploadResult>();
     mockPrepare.mockReturnValueOnce(pending.promise);
     const onUpload = vi.fn();
     const view = renderWithProviders(<ImageUploader value={null} onUpload={onUpload} />);
@@ -149,7 +148,7 @@ describe("ImageUploader file validation", () => {
   });
 
   it("invalidates pending compression when the user removes the cover", async () => {
-    const pending = Promise.withResolvers<PosterImageResult>();
+    const pending = Promise.withResolvers<ImageUploadResult>();
     mockPrepare.mockReturnValueOnce(pending.promise);
     const onUpload = vi.fn();
     const preparing = vi.fn();
@@ -201,7 +200,7 @@ describe("ImageUploader file validation", () => {
 
   it("opens the picker for any image, HEIC included", () => {
     renderWithProviders(<ImageUploader value={null} onUpload={vi.fn()} />);
-    expect(document.querySelector('input[type="file"]')).toHaveAttribute("accept", POSTER_IMAGE_ACCEPT);
+    expect(document.querySelector('input[type="file"]')).toHaveAttribute("accept", IMAGE_UPLOAD_ACCEPT);
   });
 
   it("passes the prepared file on, even when the picker sent no type", async () => {
@@ -224,6 +223,7 @@ describe("ImageUploader file validation", () => {
   });
 
   it.each([
+    ["original_too_large", "La imatge supera el límit de 25 MB"],
     ["too_large", `No hem pogut reduir la imatge per sota de ${MAX_LIMIT_LABEL} MB`],
     ["heic_undecodable", "Aquest navegador no pot obrir fotos HEIC"],
     ["undecodable", "No hem pogut llegir aquesta imatge"],
@@ -243,20 +243,6 @@ describe("ImageUploader file validation", () => {
       detected_type: "image/heic",
       file_type: "blank",
       size_mb: 3,
-    });
-  });
-
-  it("refuses a file over the original limit without decoding it", async () => {
-    const onUpload = vi.fn();
-    renderWithProviders(<ImageUploader value={null} onUpload={onUpload} />);
-
-    pick(createMockFile("huge.jpg", "image/jpeg", MAX_ORIGINAL_FILE_BYTES + 1));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(/supera el límit/);
-    expect(mockPrepare).not.toHaveBeenCalled();
-    expect(mockSendEvent).toHaveBeenCalledWith("poster_image_blocked", {
-      reason: "original_too_large",
-      size_mb: 25,
     });
   });
 

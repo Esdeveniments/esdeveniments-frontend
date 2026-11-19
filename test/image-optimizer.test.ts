@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { preparePosterImage } from "@utils/image-optimizer";
+import { prepareImageForUpload } from "@utils/image-optimizer";
 import { detectImageType } from "@utils/image-validation";
 
 const MB = 1024 * 1024;
@@ -87,12 +87,12 @@ describe("detectImageType", () => {
   });
 });
 
-describe("preparePosterImage", () => {
+describe("prepareImageForUpload", () => {
   it("keeps a small JPEG untouched", async () => {
     const { toBlob } = stubCanvas({});
     const file = fileOf(JPEG_HEAD, 1 * MB, "poster.jpg", "image/jpeg");
 
-    const out = await preparePosterImage(file, { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
 
     expect(out).toEqual({ ok: true, file, detectedType: "image/jpeg" });
     expect(toBlob).not.toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe("preparePosterImage", () => {
     stubCanvas({});
     const file = fileOf(JPEG_HEAD, 1 * MB, "IMG_1234", "");
 
-    const out = await preparePosterImage(file, { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
 
     expect(out.ok && [out.file.type, out.file.name]).toEqual(["image/jpeg", "IMG_1234.jpg"]);
   });
@@ -111,7 +111,7 @@ describe("preparePosterImage", () => {
     const { toBlob, fills } = stubCanvas({ "image/png": 7 * MB, "image/jpeg": 1 * MB });
     const file = fileOf(PNG_HEAD, 6 * MB, "poster.png", "image/png");
 
-    const out = await preparePosterImage(file, { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
 
     expect(out.ok && [out.file.type, out.file.name]).toEqual(["image/jpeg", "poster.jpg"]);
     expect(fills).toEqual(["#ffffff source-over"]);
@@ -123,7 +123,7 @@ describe("preparePosterImage", () => {
     const { fills } = stubCanvas({ "image/png": 1 * MB, "image/jpeg": 0.5 * MB });
     const file = fileOf(PNG_HEAD, 3 * MB, "poster.png", "image/png");
 
-    const out = await preparePosterImage(file, { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
 
     expect(out.ok && out.file.type).toBe("image/png");
     expect(fills).toEqual([]);
@@ -133,7 +133,7 @@ describe("preparePosterImage", () => {
     stubCanvas({ "image/jpeg": 0.4 * MB });
     const file = fileOf(ftyp("heic", ["mif1"]), 1 * MB, "IMG_0001.HEIC", "");
 
-    const out = await preparePosterImage(file, { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
 
     expect(out.ok && [out.file.type, out.file.name, out.detectedType]).toEqual([
       "image/jpeg",
@@ -146,18 +146,45 @@ describe("preparePosterImage", () => {
     const { toBlob } = stubCanvas({ "image/jpeg": 3 * MB }, { width: 3000, height: 4000 });
     const file = fileOf(JPEG_HEAD, 9 * MB, "big.jpg", "image/jpeg");
 
-    const out = await preparePosterImage(file, { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
 
     // 2560 → 1920 → 1440 → 1080, four qualities each, then the floor.
     expect(out).toEqual({ ok: false, reason: "too_large", detectedType: "image/jpeg" });
     expect(toBlob).toHaveBeenCalledTimes(16);
   });
 
+  it("shrinks an avatar down to its own, smaller floor", async () => {
+    const { toBlob } = stubCanvas({ "image/jpeg": 3 * MB }, { width: 3000, height: 4000 });
+    const file = fileOf(JPEG_HEAD, 9 * MB, "big.jpg", "image/jpeg");
+
+    const out = await prepareImageForUpload(file, {
+      maxBytes: 2 * MB,
+      maxDimension: 1024,
+      minDimension: 256,
+    });
+
+    // 1024 → 768 → 576 → 432 → 324, four qualities each, then the floor.
+    expect(out).toMatchObject({ ok: false, reason: "too_large" });
+    expect(toBlob).toHaveBeenCalledTimes(20);
+  });
+
+  it("refuses an original over 25 MB before decoding it", async () => {
+    const { toBlob, revoke } = stubCanvas({ "image/jpeg": MB });
+    const file = fileOf(JPEG_HEAD, 64, "huge.jpg", "image/jpeg");
+    Object.defineProperty(file, "size", { value: 25 * MB + 1 });
+
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
+
+    expect(out).toEqual({ ok: false, reason: "original_too_large", detectedType: "image/jpeg" });
+    expect(toBlob).not.toHaveBeenCalled();
+    expect(revoke).not.toHaveBeenCalled();
+  });
+
   it("moves to a smaller size when the canvas returns no blob", async () => {
     const { toBlob } = stubCanvas({ "image/jpeg": null }, { width: 3000, height: 4000 });
     const file = fileOf(JPEG_HEAD, 9 * MB, "big.jpg", "image/jpeg");
 
-    const out = await preparePosterImage(file, { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(file, { maxBytes: 2 * MB });
 
     expect(out).toMatchObject({ ok: false, reason: "encode_failed" });
     expect(toBlob).toHaveBeenCalledTimes(4);
@@ -171,7 +198,7 @@ describe("preparePosterImage", () => {
   ])("fails clearly on %s", async (_, head, size, reason) => {
     const { revoke } = stubCanvas({}, { decodes: false });
 
-    const out = await preparePosterImage(fileOf(head, size, "x.jpg", ""), { maxBytes: 2 * MB });
+    const out = await prepareImageForUpload(fileOf(head, size, "x.jpg", ""), { maxBytes: 2 * MB });
 
     expect(out).toMatchObject({ ok: false, reason });
     if (size > 0) expect(revoke).toHaveBeenCalledTimes(1);

@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { FormData } from "types/event";
-import type { PosterImageResult } from "types/upload";
+import type { ImageUploadResult } from "types/upload";
 
 const compress = vi.hoisted(() => vi.fn());
-vi.mock("@utils/image-optimizer", () => ({ preparePosterImage: compress }));
+vi.mock("@utils/image-optimizer", () => ({ prepareImageForUpload: compress }));
 vi.mock("@components/ui/common/form", async () => ({
   ImageUpload: (await import("@components/ui/common/form/imageUpload")).default,
   Input: () => null, Select: () => null, TextArea: () => null,
@@ -25,7 +25,7 @@ afterEach(() => vi.useRealTimers());
 describe("EventForm image preparation", () => {
   it("blocks Save, preview and explicit submit until the selected cover is ready", async () => {
     vi.useFakeTimers();
-    const pending = Promise.withResolvers<PosterImageResult>();
+    const pending = Promise.withResolvers<ImageUploadResult>();
     compress.mockReturnValueOnce(pending.promise);
     const onSubmit = vi.fn();
     const onImage = vi.fn();
@@ -58,7 +58,7 @@ describe("EventForm image preparation", () => {
 
   it("clears the preparing flag when the uploader unmounts mid-compression", async () => {
     vi.useFakeTimers();
-    const pending = Promise.withResolvers<PosterImageResult>();
+    const pending = Promise.withResolvers<ImageUploadResult>();
     compress.mockReturnValueOnce(pending.promise);
     const onImage = vi.fn();
     render(

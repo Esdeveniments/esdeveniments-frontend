@@ -14,12 +14,16 @@ import {
 import {
   SPONSOR_BANNER_IMAGE,
   MAX_SPONSOR_IMAGE_BYTES,
+  IMAGE_UPLOAD_ACCEPT,
 } from "@utils/constants";
+import { prepareImageForUpload } from "@utils/image-optimizer";
+import { imageUploadErrorMessage } from "@utils/image-upload-message";
 import type {
   SponsorImageUploadResult,
   SponsorImageValidation,
   SponsorImageWarning,
 } from "types/sponsor";
+import type { ImageUploadResult } from "types/upload";
 
 /**
  * Validate image dimensions against sponsor banner recommendations.
@@ -94,6 +98,8 @@ export default function SponsorImageUpload({
   const [preview, setPreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const selectionRef = useRef(0);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SponsorImageUploadResult | null>(null);
@@ -129,37 +135,45 @@ export default function SponsorImageUpload({
    * Process a selected file - validate dimensions and create preview
    */
   const processFile = useCallback(
-    (selectedFile: File | null) => {
+    async (selectedFile: File | null) => {
       // Clean up previous preview
       if (preview) {
         URL.revokeObjectURL(preview);
       }
 
-      setFile(selectedFile);
+      setFile(null);
       setValidation(null);
       setError(null);
       setPreview(null);
 
       if (!selectedFile) return;
 
-      if (selectedFile.type !== "image/jpeg" && selectedFile.type !== "image/png") {
-        setFile(null);
-        setError(tImage("unsupported"));
+      // A JPEG/PNG under the limit is sent unchanged; WebP, HEIC (Safari),
+      // blank-type or oversized picks are converted to fit instead of refused.
+      const version = ++selectionRef.current;
+      setIsPreparing(true);
+      let prepared: ImageUploadResult;
+      try {
+        prepared = await prepareImageForUpload(selectedFile, {
+          maxBytes: MAX_SPONSOR_IMAGE_BYTES,
+        });
+      } catch {
+        prepared = { ok: false, reason: "encode_failed", detectedType: null };
+      }
+      if (version !== selectionRef.current) return;
+      setIsPreparing(false);
+
+      if (!prepared.ok) {
+        setError(
+          imageUploadErrorMessage(tImage, prepared.reason, MAX_SPONSOR_IMAGE_BYTES),
+        );
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       }
 
-      if (selectedFile.size > MAX_SPONSOR_IMAGE_BYTES) {
-        setFile(null);
-        setError(t("upload.errors.tooLarge"));
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        return;
-      }
-
+      setFile(prepared.file);
       // Create preview URL
-      const previewUrl = URL.createObjectURL(selectedFile);
+      const previewUrl = URL.createObjectURL(prepared.file);
       setPreview(previewUrl);
 
       // Read image dimensions for validation
@@ -181,7 +195,7 @@ export default function SponsorImageUpload({
    */
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      processFile(e.target.files?.[0] ?? null);
+      void processFile(e.target.files?.[0] ?? null);
     },
     [processFile],
   );
@@ -203,10 +217,9 @@ export default function SponsorImageUpload({
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
+      // Some Android files have no type; let the decoder judge them.
       const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile?.type.startsWith("image/")) {
-        processFile(droppedFile);
-      }
+      if (droppedFile) void processFile(droppedFile);
     },
     [processFile],
   );
@@ -215,6 +228,8 @@ export default function SponsorImageUpload({
    * Clear selected file
    */
   const clearFile = useCallback(() => {
+    selectionRef.current += 1;
+    setIsPreparing(false);
     if (preview) {
       URL.revokeObjectURL(preview);
     }
@@ -423,7 +438,7 @@ export default function SponsorImageUpload({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/png"
+                accept={IMAGE_UPLOAD_ACCEPT}
                 onChange={handleFileChange}
                 className="sr-only"
                 disabled={isUploading}
@@ -465,7 +480,9 @@ export default function SponsorImageUpload({
                       {t("upload.dropzone.title")}
                     </p>
                     <p className="body-small text-muted-foreground mt-1">
-                      {t("upload.dropzone.formats")}
+                      {isPreparing
+                        ? tImage("optimizing")
+                        : `${t("upload.dropzone.orientation")} • ${tImage("formatHelper")}`}
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 body-small text-muted-foreground">
@@ -507,10 +524,10 @@ export default function SponsorImageUpload({
             {/* Upload button */}
             <button
               onClick={upload}
-              disabled={!file || isUploading}
+              disabled={!file || isUploading || isPreparing}
               className={`
                 btn-primary w-full flex items-center justify-center gap-2 mt-2
-                ${!file || isUploading ? "opacity-50 cursor-not-allowed" : ""}
+                ${!file || isUploading || isPreparing ? "opacity-50 cursor-not-allowed" : ""}
               `}
             >
               {isUploading ? (
