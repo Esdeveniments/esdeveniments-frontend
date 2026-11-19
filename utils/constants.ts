@@ -128,13 +128,15 @@ export const MAX_ORIGINAL_FILE_BYTES = 25 * 1024 * 1024; // Guardrail to avoid m
 export const POSTER_IMAGE_ACCEPT = "image/*";
 export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024; // Sponsor images are uploaded raw (no compression) — keep under common body size limits
 
+export const BYTES_PER_MEGABYTE = 1024 * 1024;
+
 export const formatMegabytesLabel = (bytes: number): string => {
-  const value = bytes / (1024 * 1024);
+  const value = bytes / BYTES_PER_MEGABYTE;
   return Number.isInteger(value) ? value.toString() : value.toFixed(1);
 };
 
 export const formatMegabytes = (bytes: number): string =>
-  (bytes / (1024 * 1024)).toFixed(2);
+  (bytes / BYTES_PER_MEGABYTE).toFixed(2);
 
 export const MAX_UPLOAD_LIMIT_LABEL = formatMegabytesLabel(
   MAX_TOTAL_UPLOAD_BYTES,

@@ -7,6 +7,7 @@ import type { PosterImageFailure } from "types/upload";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
+  BYTES_PER_MEGABYTE,
   MAX_ORIGINAL_FILE_BYTES,
   MAX_ORIGINAL_LIMIT_LABEL,
   POSTER_IMAGE_ACCEPT,
@@ -15,7 +16,6 @@ import { isBackendImageType } from "@utils/image-validation";
 import { preparePosterImage } from "@utils/image-optimizer";
 import { sendGoogleEvent } from "@utils/analytics";
 
-const MB = 1024 * 1024;
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   value, onUpload, onPreparingChange,
@@ -58,11 +58,12 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   }
 
   const prepareFile = async (file: File): Promise<void> => {
+    const sizeMb = Math.round(file.size / BYTES_PER_MEGABYTE);
     if (file.size > MAX_ORIGINAL_FILE_BYTES) {
       setError(t("originalTooLarge", { limit: MAX_ORIGINAL_LIMIT_LABEL }));
       sendGoogleEvent("poster_image_blocked", {
         reason: "original_too_large",
-        size_mb: Math.round(file.size / MB),
+        size_mb: sizeMb,
       });
       return;
     }
@@ -80,14 +81,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           reason: result.reason,
           detected_type: result.detectedType ?? "unknown",
           file_type: file.type || "blank",
-          size_mb: Math.round(file.size / MB),
+          size_mb: sizeMb,
         });
         return;
       }
       sendGoogleEvent("poster_image_prepared", {
         detected_type: result.detectedType ?? "unknown",
         converted: result.file !== file,
-        size_mb: Math.round(file.size / MB),
+        size_mb: sizeMb,
       });
       // Replacing via Change keeps that button mounted, so only the first upload moves focus.
       if (!hasPreview) pendingFocusRef.current = "change";
