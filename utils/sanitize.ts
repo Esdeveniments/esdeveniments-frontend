@@ -108,7 +108,6 @@ function normalizeUrl(url: string): string {
 
   // Remove null bytes, control characters (0x00-0x1F, 0x7F), and whitespace
   // in one pass. Control char regex is necessary for security bypass prevention.
-   
   normalized = normalized.replace(/[\x00-\x1f\x7f\s]+/g, "");
 
   return normalized.toLowerCase();
