@@ -1165,6 +1165,7 @@
       "translatedLabel": "Traduït del català al {target}",
       "showOriginal": "Mostrar original",
       "translateError": "No hem pogut traduir ara mateix. Torna-ho a provar.",
+      "descriptionChanged": "La descripció ha canviat. Recarrega la pàgina per veure'n la versió nova.",
       "target": {
         "en": "anglès",
         "es": "castellà"
