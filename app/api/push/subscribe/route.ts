@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { captureException } from "@sentry/nextjs";
 import { isSafePublicFetchUrl } from "@utils/public-fetch-safety";
+import { createRateLimiter } from "@utils/rate-limit";
 import {
   upsertSubscription,
   deleteSubscription,
@@ -34,8 +35,20 @@ const UnsubscribeSchema = z.object({
 });
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
+const limiter = createRateLimiter({ maxRequests: 10, windowMs: 60_000 });
 
 export async function POST(request: Request) {
+  const blocked = limiter.check(request);
+  if (blocked) {
+    return NextResponse.json(
+      { ok: false, error: "RATE_LIMITED" },
+      {
+        status: blocked.status,
+        headers: { ...Object.fromEntries(blocked.headers), ...NO_STORE },
+      },
+    );
+  }
+
   let json: unknown;
   try {
     json = await request.json();
