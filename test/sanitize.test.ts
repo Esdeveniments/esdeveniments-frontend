@@ -281,6 +281,12 @@ describe("sanitizeHtml", () => {
   });
 
   describe("edge cases", () => {
+    it("keeps literal comparisons without swallowing the next tag", () => {
+      expect(sanitizeHtml("Tickets <5: <b>book now</b>. Fee <= 10.")).toBe(
+        "Tickets &lt;5: <b>book now</b>. Fee &lt;= 10."
+      );
+    });
+
     it("handles malformed tags gracefully", () => {
       expect(sanitizeHtml("<p>Unclosed")).toBe("<p>Unclosed");
       expect(sanitizeHtml("Text < more text")).toBe("Text &lt; more text");

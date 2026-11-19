@@ -108,7 +108,7 @@ function normalizeUrl(url: string): string {
 
   // Remove null bytes, control characters (0x00-0x1F, 0x7F), and whitespace
   // in one pass. Control char regex is necessary for security bypass prevention.
-  // eslint-disable-next-line no-control-regex
+   
   normalized = normalized.replace(/[\x00-\x1f\x7f\s]+/g, "");
 
   return normalized.toLowerCase();
@@ -282,9 +282,11 @@ export function sanitizeHtml(html: string): string {
 
   while (i < processed.length) {
     if (processed[i] === "<") {
-      const tagEnd = processed.indexOf(">", i);
+      // Only scan for a tag end after a markup opener; "< 10" is text.
+      const tagEnd = /[a-zA-Z/!?>]/.test(processed[i + 1] ?? "")
+        ? processed.indexOf(">", i + 1)
+        : -1;
       if (tagEnd === -1) {
-        // Malformed tag - escape the < and continue
         result += "&lt;";
         i++;
         continue;

@@ -48,14 +48,14 @@ describe("translateDescription", () => {
   it("returns the translation sanitized like the server-rendered original", async () => {
     getCachedEventBySlug.mockResolvedValue(eventWith(`Concert ${ipCounter}`));
     vi.spyOn(global, "fetch").mockResolvedValue(
-      deeplOk('<p onclick="x()">**Hola**</p><img src=x onerror="y()">\nAdiós'),
+      deeplOk('<p onclick="x()">**Edades** < 10 con adulto; > 16 sin adulto.</p><img src=x onerror="y()">\nAdiós'),
     );
 
     const result = await translateDescription({ slug: SLUG, targetLang: "es" });
 
     expect(result).toEqual({
       ok: true,
-      translation: "<p><strong>Hola</strong></p><br>Adiós",
+      translation: "<p><strong>Edades</strong> &lt; 10 con adulto; > 16 sin adulto.</p><br>Adiós",
     });
   });
 
