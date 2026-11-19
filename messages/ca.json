@@ -401,7 +401,7 @@
       "draftDiscardConfirm": "Vols descartar l'esborrany?",
       "draftDiscardDescription": "S'esborraran el formulari i la imatge. No es pot desfer.",
       "draftKeep": "Conserva l'esborrany",
-      "draftDateExpired": "Revisa les dates: l'esborrany comença en una data passada. No les hem canviat.",
+      "draftDateExpired": "Revisa les dates: l'esdeveniment comença en una data passada. No les hem canviat.",
       "draftCityUnavailable": "El municipi desat ja no és a la llista. Revisa'l i torna'l a seleccionar. Hem conservat el valor original.",
       "draftCategoryUnavailable": "Alguna categoria desada ja no és a la llista. Revisa les categories. Hem conservat els valors originals.",
       "draftCleanupFailed": "L'esdeveniment s'ha publicat, però no s'ha pogut eliminar l'esborrany local. Descarta'l en tornar al formulari. No tornis a publicar l'esdeveniment.",
@@ -414,7 +414,8 @@
         "keepFreeButton": "Ara no",
         "shareTitle": "Publicat! Ara fes-lo córrer",
         "shareDescription": "Envia'l als teus grups i contactes: és la manera més ràpida d'arribar a més gent."
-      }
+      },
+      "dateEnded": "Aquest esdeveniment ja s'ha acabat. Revisa les dates abans de publicar-lo."
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",
