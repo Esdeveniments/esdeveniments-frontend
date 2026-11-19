@@ -9,8 +9,11 @@ function stubCanvas(sizes: Record<string, number>) {
   const fills: string[] = [];
   const ctx = {
     drawImage: vi.fn(),
-    fillRect: vi.fn(function (this: { fillStyle: string }) {
-      fills.push(this.fillStyle);
+    fillRect: vi.fn(function (
+      this: { fillStyle: string; globalCompositeOperation: string },
+    ) {
+      // A white fill drawn with source-over would cover the poster.
+      fills.push(`${this.fillStyle} ${this.globalCompositeOperation}`);
     }),
     fillStyle: "",
     globalCompositeOperation: "source-over",
@@ -51,7 +54,7 @@ describe("compressImageIfNeeded", () => {
 
     expect(out?.type).toBe("image/jpeg");
     expect(out?.name).toBe("poster-compressed.jpg");
-    expect(fills).toEqual(["#ffffff"]);
+    expect(fills).toEqual(["#ffffff destination-over"]);
     // One PNG encode (quality does nothing), then JPEG.
     expect(toBlob.mock.calls.map((c) => c[1])).toEqual(["image/png", "image/jpeg"]);
   });

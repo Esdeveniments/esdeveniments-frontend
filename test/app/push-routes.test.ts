@@ -11,6 +11,7 @@
  *   isBlockedAddress, not stubs).
  */
 
+import { Agent } from "node:https";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
@@ -238,6 +239,7 @@ describe("POST /api/push/send", () => {
 
   it("times out a stalled send so the next batch still runs and expired rows are deleted", async () => {
     vi.useFakeTimers();
+    const destroy = vi.spyOn(Agent.prototype, "destroy");
     try {
       // 101 rows: a first batch of 100 (one stalls, one expired) and a second of 1.
       const subs = Array.from({ length: 101 }, (_, i) => ({
@@ -266,9 +268,19 @@ describe("POST /api/push/send", () => {
       const endpoints = webpush.sendNotification.mock.calls.map((c) => c[0].endpoint);
       expect(endpoints).toContain(last);
       expect(webpush.sendNotification.mock.calls[0][2]).toMatchObject({ timeout: 10_000 });
+      // The stalled send's agent is destroyed (closing its socket) before batch 2 starts.
+      const firstAgent = webpush.sendNotification.mock.calls[0][2].agent;
+      const lastAgent = webpush.sendNotification.mock.calls[100][2].agent;
+      expect(firstAgent).toBeInstanceOf(Agent);
+      expect(lastAgent).not.toBe(firstAgent);
+      expect(destroy.mock.contexts[0]).toBe(firstAgent);
+      expect(destroy.mock.invocationCallOrder[0]).toBeLessThan(
+        webpush.sendNotification.mock.invocationCallOrder[100],
+      );
       // Only the 410 is cleaned up; a timeout is not proof the row expired.
       expect(db.deleteSubscriptions).toHaveBeenCalledWith([expired]);
     } finally {
+      destroy.mockRestore();
       vi.useRealTimers();
     }
   });

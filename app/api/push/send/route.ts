@@ -1,3 +1,4 @@
+import { Agent } from "node:https";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import webpush from "web-push";
@@ -46,7 +47,9 @@ const SendSchema = z.object({
 // web-push's `timeout` only closes an idle socket: an endpoint that never
 // answers, or trickles bytes, could still hold its batch (and every later
 // batch and page) forever. The race bounds the whole send; a timed-out send
-// counts as failed and is never treated as expired.
+// counts as failed and is never treated as expired. The race only settles the
+// promise, so each batch shares one agent that is destroyed once the batch
+// settles: that closes any socket still open before the next batch starts.
 const SEND_TIMEOUT_MS = 10_000;
 
 function sendWithDeadline(send: Promise<unknown>): Promise<unknown> {
@@ -166,22 +169,28 @@ export async function POST(request: Request) {
 
       for (let i = 0; i < validSubscriptions.length; i += SEND_CONCURRENCY) {
         const batch = validSubscriptions.slice(i, i + SEND_CONCURRENCY);
+        const agent = new Agent({ keepAlive: true });
 
-        const results = await Promise.allSettled(
-          batch.map((sub) =>
-            sendWithDeadline(
-              webpush.sendNotification(
-                {
-                  endpoint: sub.endpoint,
-                  keys: { p256dh: sub.p256dh, auth: sub.auth },
-                },
-                payload,
-                // 24h TTL — queued if device offline
-                { TTL: 60 * 60 * 24, timeout: SEND_TIMEOUT_MS },
+        let results: PromiseSettledResult<unknown>[];
+        try {
+          results = await Promise.allSettled(
+            batch.map((sub) =>
+              sendWithDeadline(
+                webpush.sendNotification(
+                  {
+                    endpoint: sub.endpoint,
+                    keys: { p256dh: sub.p256dh, auth: sub.auth },
+                  },
+                  payload,
+                  // 24h TTL — queued if device offline
+                  { TTL: 60 * 60 * 24, timeout: SEND_TIMEOUT_MS, agent },
+                ),
               ),
             ),
-          ),
-        );
+          );
+        } finally {
+          agent.destroy();
+        }
 
         totalSent += results.filter((r) => r.status === "fulfilled").length;
         totalFailed += results.filter((r) => r.status === "rejected").length;
