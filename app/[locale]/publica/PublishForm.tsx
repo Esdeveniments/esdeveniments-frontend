@@ -117,13 +117,11 @@ const PublishForm = () => {
   const router = useRouter();
   const locale = useLocale();
   const [form, setForm] = useState<FormData>(emptyForm);
-  // The defaults last filled in, so a later open can tell them from dates the user chose or restored.
-  const autoDatesRef = useRef<Pick<FormData, "startDate" | "endDate"> | null>(null);
-  const freshDates = () => (autoDatesRef.current = createDefaultDates());
+  // True while the dates are the filled-in defaults; picking or restoring dates turns it off.
+  const autoDatesRef = useRef(true);
   const refreshDefaultDates = useEffectEvent(() => {
-    const auto = autoDatesRef.current ?? { startDate: "", endDate: "" };
-    if (form.startDate !== auto.startDate || form.endDate !== auto.endDate) return;
-    const fresh = freshDates();
+    if (!autoDatesRef.current) return;
+    const fresh = createDefaultDates();
     if (fresh.startDate !== form.startDate) setForm((current) => ({ ...current, ...fresh }));
   });
   // Runs on mount and each time Next shows this route again from its <Activity>
@@ -163,7 +161,8 @@ const PublishForm = () => {
     setError(null);
     setShowPreview(false);
     setEditorVersion((version) => version + 1);
-    setForm({ ...emptyForm, ...freshDates() });
+    autoDatesRef.current = true;
+    setForm({ ...emptyForm, ...createDefaultDates() });
     setImageFile(null);
     updateImagePreview(null);
   }, [updateImagePreview]);
@@ -173,7 +172,8 @@ const PublishForm = () => {
       setError(null);
       setIsRedirecting(false);
       setEditorVersion((version) => version + 1);
-      setForm({ ...emptyForm, ...freshDates(), ...saved.form });
+      autoDatesRef.current = false;
+      setForm({ ...emptyForm, ...createDefaultDates(), ...saved.form });
       setImageFile(saved.imageFile);
       setWizardStep(saved.step ?? 0);
       setPublishAfterReturn(intent?.action === "publish" ? intent : null);
@@ -282,8 +282,13 @@ const PublishForm = () => {
     value: FormData[K]
   ) => {
     trackFieldInteraction(String(name));
+    if (name === "startDate" || name === "endDate" || name === "isAllDay") {
+      autoDatesRef.current = false;
+      const ended = t("dateEnded");
+      setError((current) => (current === ended ? null : current));
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
-  }, [trackFieldInteraction]);
+  }, [trackFieldInteraction, t]);
 
   const handleImageChange = (file: File | null) => {
     setError(null);

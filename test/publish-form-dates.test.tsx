@@ -39,11 +39,15 @@ vi.mock("@components/hooks/usePublishDraft", () => ({
 }));
 // Only the dates and the submit matter here; the real wizard is covered elsewhere.
 vi.mock("@components/ui/EventForm", () => ({
-  default: ({ form, onSubmit }: EventFormProps) => (
+  default: ({ form, onSubmit, handleFormChange }: EventFormProps) => (
     <div>
       <output data-testid="start">{form.startDate}</output>
       <output data-testid="end">{form.endDate}</output>
       <button type="button" onClick={(event) => { void onSubmit(event); }}>submit</button>
+      <button type="button" onClick={() => {
+        handleFormChange("startDate", "2026-11-25T18:00");
+        handleFormChange("endDate", "2026-11-25T20:00");
+      }}>pick</button>
     </div>
   ),
 }));
@@ -86,17 +90,40 @@ describe("publish form default dates (#534)", () => {
     expect(screen.getByTestId("end").textContent).toBe("2026-11-20T10:00");
   });
 
-  it("keeps restored dates when Next shows the route again", async () => {
+  it("keeps restored dates equal to the defaults when Next shows the route again", async () => {
     vi.setSystemTime(new Date(2026, 10, 19, 23, 50));
     const PublishForm = await loadPublishForm();
     const shown = (mode: "visible" | "hidden") => <Activity mode={mode}><PublishForm /></Activity>;
     const { rerender } = render(shown("visible"));
-    restore({ title: "Concert", startDate: "2026-11-19T09:00", endDate: "2026-11-19T12:00" });
+    restore({ title: "Concert", startDate: "2026-11-19T09:00", endDate: "2026-11-19T10:00" });
     rerender(shown("hidden"));
     vi.setSystemTime(new Date(2026, 10, 20, 8, 0));
     rerender(shown("visible"));
     expect(screen.getByTestId("start").textContent).toBe("2026-11-19T09:00");
     expect(screen.getByText(/comença en una data passada/)).toBeTruthy();
+  });
+
+  it("keeps picked dates when Next shows the route again", async () => {
+    vi.setSystemTime(new Date(2026, 10, 19, 23, 50));
+    const PublishForm = await loadPublishForm();
+    const shown = (mode: "visible" | "hidden") => <Activity mode={mode}><PublishForm /></Activity>;
+    const { rerender } = render(shown("visible"));
+    fireEvent.click(screen.getByText("pick"));
+    rerender(shown("hidden"));
+    vi.setSystemTime(new Date(2026, 10, 20, 8, 0));
+    rerender(shown("visible"));
+    expect(screen.getByTestId("start").textContent).toBe("2026-11-25T18:00");
+  });
+
+  it("clears the ended-event error once the dates change", async () => {
+    vi.setSystemTime(new Date(2026, 10, 20, 8, 0));
+    const PublishForm = await loadPublishForm();
+    render(<PublishForm />);
+    restore({ title: "Concert", startDate: "2026-11-18T19:00", endDate: "2026-11-18T21:00" });
+    fireEvent.click(screen.getByText("submit"));
+    expect(await screen.findByText(/ja s'ha acabat/)).toBeTruthy();
+    fireEvent.click(screen.getByText("pick"));
+    expect(screen.queryByText(/ja s'ha acabat/)).toBeNull();
   });
 
   it("gives a discarded form fresh defaults", async () => {
