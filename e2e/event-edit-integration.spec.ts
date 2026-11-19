@@ -7,6 +7,7 @@ import { loginViaUI } from "./helpers/login";
 import {
   advanceToLastStep,
   cleanupEvent,
+  dismissPromoteUpsell,
   endTimeInput,
   startTimeInput,
   waitForDatePicker,
@@ -119,6 +120,8 @@ test.describe("Event edit and images (staging, America/New_York)", () => {
     slug = await publishTestEvent(page, newTitle("cover"), {
       when: { date: DAY },
     });
+    // Otherwise the upsell reopens after the last edit and hides the title.
+    await dismissPromoteUpsell(page);
     const first = await fetchStoredEvent(slug);
     expect(first.imageUrl).toBeTruthy();
 
