@@ -299,11 +299,8 @@
         "uploading": "Pujant…",
         "removing": "Eliminant…",
         "altPreview": "Foto de perfil",
-        "errorUnsupported": "Format no admès. Utilitza JPG o PNG.",
-        "errorTooLarge": "La imatge supera el límit de 2 MB.",
         "errorUploadFailed": "No s'ha pogut pujar la foto. Torna-ho a provar.",
-        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a provar.",
-        "hint": "PNG o JPG, fins a 2 MB."
+        "errorRemoveFailed": "No s'ha pogut eliminar la foto. Torna-ho a provar."
       },
       "authGate": {
         "title": "Inicia sessió per editar el perfil",
@@ -841,16 +838,17 @@
     },
     "ImageUploader": {
       "label": "Imatge",
-      "unsupported": "Aquest fitxer no és compatible. Tria una imatge JPG o PNG.",
       "originalTooLarge": "La imatge supera el límit de {limit} MB. Tria'n una de més petita.",
       "tooLarge": "No hem pogut reduir la imatge per sota de {limit} MB. Tria'n una de més petita.",
       "compressFailed": "No hem pogut reduir la imatge. Torna-ho a provar.",
+      "unreadable": "No hem pogut llegir aquesta imatge. Tria'n una altra.",
+      "heicUnsupported": "Aquest navegador no pot obrir fotos HEIC. Tria la foto en JPG o fes-ne una captura de pantalla.",
       "optimizing": "Optimitzant la imatge…",
       "remove": "Elimina la imatge",
       "altPreview": "Imatge",
       "uploadDropCta": "o arrossega-la aquí",
       "selectButton": "Tria una imatge",
-      "formatHelper": "JPG o PNG",
+      "formatHelper": "JPG, PNG o WebP",
       "change": "Canvia"
     },
     "HeroCTA": {
@@ -1167,6 +1165,7 @@
       "translatedLabel": "Traduït del català al {target}",
       "showOriginal": "Mostrar original",
       "translateError": "No hem pogut traduir ara mateix. Torna-ho a provar.",
+      "descriptionChanged": "La descripció ha canviat. Recarrega la pàgina per veure'n la versió nova.",
       "target": {
         "en": "anglès",
         "es": "castellà"
@@ -1952,16 +1951,9 @@
       "doneCta": "Fet",
       "dropzone": {
         "title": "Arrossega la imatge aquí o fes clic",
-        "formats": "Format horitzontal • JPG o PNG",
+        "orientation": "Format horitzontal",
         "optimal": "Òptim: 728×150px",
         "minimum": "Mínim: 400×80px"
-      },
-      "guidelines": {
-        "title": "Recomanacions per a la imatge:",
-        "recommended": "Mida òptima: {width}×{height}px (proporció 5:1)",
-        "horizontal": "Format bàner horitzontal allargat",
-        "formats": "Formats: JPG o PNG",
-        "minimum": "Mínim acceptat: 400×80px"
       },
       "validation": {
         "warning": "Avís sobre la imatge:",

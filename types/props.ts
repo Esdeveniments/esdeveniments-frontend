@@ -100,7 +100,7 @@ import { RegionsGroupedByCitiesResponseDTO } from "types/api/region";
 import { PriceFilterValue, RouteSegments, URLQueryParams } from "types/url-filters";
 import type { FilterKey } from "types/filters";
 import type { NewsSummaryResponseDTO } from "types/api/news";
-import type { AppLocale } from "types/i18n";
+import type { AppLocale, NonDefaultLocale } from "types/i18n";
 import type { EventFormProps, EventPriceFormFields } from "types/event";
 import type {
   FestaMajorEdition,
@@ -422,16 +422,33 @@ export interface CulturalMessageProps {
 export interface DescriptionProps {
   description?: string;
   introText?: string;
-  /**
-   * Optional actions rendered next to the section title (e.g. a client island button).
-   * Must remain serializable/ReactNode compatible with server rendering.
-   */
-  headerActions?: ReactNode;
-  /**
-   * Optional id applied to the main description HTML container so a client island
-   * can replace its content (e.g. translated text) without converting this component to client.
-   */
-  descriptionHtmlId?: string;
+}
+
+export interface DescriptionLayoutProps {
+  title: string;
+  introText?: string;
+  /** Rendered next to the section title (e.g. the translate button). */
+  actions?: ReactNode;
+  /** The description body. */
+  children: ReactNode;
+}
+
+// Event page translate button (TranslateDescription.tsx)
+export interface TranslateDescriptionProps {
+  slug: string;
+  targetLang: NonDefaultLocale;
+  /** Hash of the description; a translation only shows for the text it came from. */
+  version: string;
+  introText?: string;
+  /** The server-rendered description body. */
+  children: ReactNode;
+}
+
+export interface DescriptionTranslation {
+  version: string;
+  html: string | null;
+  showing: boolean;
+  error: string | null;
 }
 
 // NavigationItem and Href are now imported from types/common.ts

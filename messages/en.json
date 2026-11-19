@@ -299,11 +299,8 @@
         "uploading": "Uploading…",
         "removing": "Removing…",
         "altPreview": "Profile photo",
-        "errorUnsupported": "Unsupported format. Use JPG or PNG.",
-        "errorTooLarge": "Image exceeds the 2 MB limit.",
         "errorUploadFailed": "Couldn't upload the photo. Please try again.",
-        "errorRemoveFailed": "Couldn't remove the photo. Please try again.",
-        "hint": "PNG or JPG, up to 2 MB."
+        "errorRemoveFailed": "Couldn't remove the photo. Please try again."
       },
       "authGate": {
         "title": "Log in to edit your profile",
@@ -826,16 +823,17 @@
     },
     "ImageUploader": {
       "label": "Image",
-      "unsupported": "This file isn't supported. Choose a JPG or PNG image.",
       "originalTooLarge": "The image is over {limit} MB. Choose a smaller one.",
       "tooLarge": "We couldn't shrink the image below {limit} MB. Choose a smaller one.",
       "compressFailed": "We couldn't shrink the image. Please try again.",
+      "unreadable": "We couldn't read this image. Choose another one.",
+      "heicUnsupported": "This browser can't open HEIC photos. Choose the photo as a JPG or take a screenshot of it.",
       "optimizing": "Optimizing image…",
       "remove": "Remove image",
       "altPreview": "Image",
       "uploadDropCta": "or drag it here",
       "selectButton": "Choose image",
-      "formatHelper": "JPG or PNG",
+      "formatHelper": "JPG, PNG or WebP",
       "change": "Change"
     },
     "HeroCTA": {
@@ -1152,6 +1150,7 @@
       "translatedLabel": "Translated from Catalan to {target}",
       "showOriginal": "Show original",
       "translateError": "We couldn't translate right now. Please try again.",
+      "descriptionChanged": "The description has changed. Reload the page to see the new version.",
       "target": {
         "en": "English",
         "es": "Spanish"
@@ -1952,16 +1951,9 @@
       "doneCta": "Finish",
       "dropzone": {
         "title": "Drag image here or click to select",
-        "formats": "Horizontal format • JPG or PNG",
+        "orientation": "Horizontal format",
         "optimal": "Optimal: 728×150px",
         "minimum": "Min: 400×80px"
-      },
-      "guidelines": {
-        "title": "Image recommendations:",
-        "recommended": "Optimal: {width}×{height}px (5:1 ratio)",
-        "horizontal": "Wide horizontal banner format",
-        "formats": "Formats: JPG or PNG",
-        "minimum": "Minimum accepted: 400×80px"
       },
       "validation": {
         "warning": "Image warning:",

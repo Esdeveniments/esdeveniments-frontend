@@ -3,7 +3,13 @@ import { screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { renderWithProviders } from "../../../utils/renderWithProviders";
 import SponsorImageUpload from "@components/ui/sponsor/SponsorImageUpload";
-import { MAX_SPONSOR_IMAGE_BYTES } from "@utils/constants";
+import { IMAGE_UPLOAD_ACCEPT, MAX_SPONSOR_IMAGE_BYTES } from "@utils/constants";
+import type { ImageUploadResult } from "types/upload";
+
+const mockPrepare = vi.fn<(file: File, options: unknown) => Promise<ImageUploadResult>>();
+vi.mock("@utils/image-optimizer", () => ({
+  prepareImageForUpload: (file: File, options: unknown) => mockPrepare(file, options),
+}));
 
 // Mock i18n routing
 vi.mock("@i18n/routing", () => ({
@@ -39,7 +45,7 @@ const createMockFile = (name: string, type: string, size: number): File => {
   return file;
 };
 
-describe("SponsorImageUpload file size validation", () => {
+describe("SponsorImageUpload image preparation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -64,67 +70,46 @@ describe("SponsorImageUpload file size validation", () => {
     fireEvent.change(input);
   };
 
-  it("accepts a file smaller than MAX_SPONSOR_IMAGE_BYTES", async () => {
+  it("opens the picker for any image", () => {
     renderComponent();
-    const file = createMockFile(
-      "small.jpg",
-      "image/jpeg",
-      MAX_SPONSOR_IMAGE_BYTES - 1,
-    );
-    selectFile(getFileInput(), file);
-
-    await waitFor(() => {
-      expect(screen.queryByText(/supera el límit permès/i)).not.toBeInTheDocument();
-      // Upload button should be enabled (file accepted into state)
-      expect(screen.getByRole("button", { name: /puja la imatge/i })).not.toBeDisabled();
-    });
+    expect(getFileInput()).toHaveAttribute("accept", IMAGE_UPLOAD_ACCEPT);
   });
 
-  it("accepts a file equal to MAX_SPONSOR_IMAGE_BYTES", async () => {
+  it("enables upload once the prepared file is ready, within the sponsor limit", async () => {
+    const picked = createMockFile("banner.webp", "image/webp", 7 * 1024 * 1024);
+    const prepared = createMockFile("banner.jpg", "image/jpeg", 1024);
+    mockPrepare.mockResolvedValueOnce({ ok: true, file: prepared, detectedType: "image/webp" });
     renderComponent();
-    const file = createMockFile(
-      "exact.jpg",
-      "image/jpeg",
-      MAX_SPONSOR_IMAGE_BYTES,
-    );
-    selectFile(getFileInput(), file);
 
-    await waitFor(() => {
-      expect(screen.queryByText(/supera el límit permès/i)).not.toBeInTheDocument();
-      // Upload button should be enabled (file accepted into state)
-      expect(screen.getByRole("button", { name: /puja la imatge/i })).not.toBeDisabled();
-    });
+    selectFile(getFileInput(), picked);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /puja la imatge/i })).not.toBeDisabled(),
+    );
+    expect(mockPrepare).toHaveBeenCalledWith(picked, { maxBytes: MAX_SPONSOR_IMAGE_BYTES });
+    expect(screen.getByText("banner.jpg")).toBeInTheDocument();
   });
 
-  it("rejects a file larger than MAX_SPONSOR_IMAGE_BYTES", async () => {
+  it("explains a failure with the sponsor limit and keeps upload disabled", async () => {
+    mockPrepare.mockResolvedValueOnce({ ok: false, reason: "too_large", detectedType: "image/jpeg" });
     renderComponent();
-    const file = createMockFile(
-      "large.jpg",
-      "image/jpeg",
-      MAX_SPONSOR_IMAGE_BYTES + 1,
-    );
-    selectFile(getFileInput(), file);
 
-    await waitFor(() => {
-      expect(screen.getByText(/supera el límit permès/i)).toBeInTheDocument();
-    });
+    selectFile(getFileInput(), createMockFile("huge.jpg", "image/jpeg", 20 * 1024 * 1024));
+
+    expect(
+      await screen.findByText(/No hem pogut reduir la imatge per sota de 5 MB/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /puja la imatge/i })).toBeDisabled();
   });
 
-  it("clears file state when file exceeds size limit (upload button stays disabled)", async () => {
+  it("passes a dropped file with no type on to preparation", async () => {
+    mockPrepare.mockResolvedValueOnce({ ok: false, reason: "undecodable", detectedType: null });
     renderComponent();
-    const file = createMockFile(
-      "large.jpg",
-      "image/jpeg",
-      MAX_SPONSOR_IMAGE_BYTES + 1,
-    );
-    selectFile(getFileInput(), file);
+    const file = createMockFile("photo", "", 1024);
 
-    await waitFor(() => {
-      expect(screen.getByText(/supera el límit permès/i)).toBeInTheDocument();
-    });
+    fireEvent.drop(getFileInput().parentElement!, { dataTransfer: { files: [file] } });
 
-    // Upload button should be rendered but disabled (no file in state)
-    const uploadButton = screen.getByRole("button", { name: /puja la imatge/i });
-    expect(uploadButton).toBeDisabled();
+    expect(await screen.findByText(/No hem pogut llegir aquesta imatge/)).toBeInTheDocument();
+    expect(mockPrepare).toHaveBeenCalledWith(file, { maxBytes: MAX_SPONSOR_IMAGE_BYTES });
   });
 });

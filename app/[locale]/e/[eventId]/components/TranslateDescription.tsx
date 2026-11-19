@@ -1,137 +1,122 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { sanitizeHtmlClient } from "@utils/sanitize";
 import { captureException } from "@sentry/nextjs";
 import { translateDescription } from "../actions";
-import { processDescription } from "@utils/text-processing";
-import { isNonDefaultLocale } from "@utils/i18n-routing";
-import type { AppLocale } from "types/i18n";
 import Button from "@components/ui/common/button";
+import DescriptionLayout, {
+  DESCRIPTION_BODY_CLASS,
+} from "@components/ui/common/description/DescriptionLayout";
+import type { DescriptionTranslation, TranslateDescriptionProps } from "types/props";
 
+const ERROR_DETAILS: Record<string, string> = {
+  "missing-key": " (API key missing)",
+  empty: " (empty description)",
+  "request-failed": " (API request failed)",
+};
+
+/**
+ * The event description with its translate button. `children` is the
+ * server-rendered body; the translation (sanitized by the server action with
+ * the same pipeline) is rendered in its place, so nothing writes to the DOM by
+ * hand. Next keeps the previous page mounted (hidden) and each page has its own
+ * state. A translation is tied to the `version` of the text it came from, so a
+ * refresh with a new description, or a reply that arrives after it, shows the
+ * new original.
+ */
 export default function TranslateDescription({
   slug,
-  description,
-  locale,
-  targetId = "event-description-body",
-}: {
-  slug: string;
-  description: string;
-  locale?: AppLocale;
-  targetId?: string;
-}) {
+  targetLang,
+  version,
+  introText,
+  children,
+}: TranslateDescriptionProps) {
   const t = useTranslations("Components.Description");
   const [isPending, startTransition] = useTransition();
-  const [translationHtml, setTranslationHtml] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showTranslated, setShowTranslated] = useState(false);
+  const [state, setState] = useState<DescriptionTranslation | null>(null);
+  const translation = state?.version === version ? state : null;
 
-  const targetLang = isNonDefaultLocale(locale) ? locale : null;
-  const originalHtml = useMemo(() => {
-    const processed = processDescription(description || "");
-    return sanitizeHtmlClient(processed);
-  }, [description]);
-
-  if (!targetLang) {
-    // Component only shows on non-default locales when description is in Catalan
-    return null;
-  }
-
-  const targetLabel = t.has(`target.${targetLang}`)
-    ? t(`target.${targetLang}`)
-    : targetLang.toUpperCase();
-
-  const swapHtmlWithFade = (nextHtml: string) => {
-    const el = typeof document !== "undefined" ? document.getElementById(targetId) : null;
-    if (!el) return;
-
-    // Add transition classes once (cheap, idempotent)
-    el.classList.add("transition-opacity", "duration-300", "ease-in-out");
-
-    // Fade out → replace → fade in
-    (el as HTMLElement).style.opacity = "0";
-    window.setTimeout(() => {
-      el.innerHTML = nextHtml;
-      (el as HTMLElement).style.opacity = "1";
-    }, 120);
-  };
-
-  const handleTranslate = () => {
-    setErrorMessage(null);
+  const toggle = () => {
+    if (translation?.html) {
+      setState((prev) =>
+        prev?.version === version ? { ...prev, showing: !prev.showing } : prev,
+      );
+      return;
+    }
     startTransition(async () => {
+      let next: DescriptionTranslation;
       try {
-        // If we already have a translation, just toggle in-place
-        if (translationHtml) {
-          setShowTranslated((prev) => {
-            const next = !prev;
-            swapHtmlWithFade(next ? translationHtml : originalHtml);
-            return next;
-          });
-          return;
-        }
-
-        const result = await translateDescription({ slug, targetLang });
-
-        if (result?.ok && result.translation) {
-          const processed = processDescription(result.translation);
-          const sanitized = sanitizeHtmlClient(processed);
-          setTranslationHtml(sanitized);
-          setShowTranslated(true);
-          swapHtmlWithFade(sanitized);
-          return;
-        }
-
-        setTranslationHtml(null);
-
-        // Show more specific error message if available
-        if (result?.error === "missing-key") {
-          setErrorMessage(t("translateError") + " (API key missing)");
-        } else if (result?.error === "empty") {
-          setErrorMessage(t("translateError") + " (empty description)");
-        } else if (result?.error === "request-failed") {
-          setErrorMessage(t("translateError") + " (API request failed)");
+        const result = await translateDescription({ slug, targetLang, version });
+        if (result.ok && result.translation) {
+          next = { version, html: result.translation, showing: true, error: null };
         } else {
-          setErrorMessage(t("translateError"));
+          const error = !result.ok && result.error === "description-changed"
+            ? t("descriptionChanged")
+            : t("translateError") + (result.ok ? "" : (ERROR_DETAILS[result.error] ?? ""));
+          next = { version, html: null, showing: false, error };
         }
       } catch (error) {
         console.error("Translation error:", error);
-
         if (process.env.NODE_ENV === "production") {
           captureException(error, {
             tags: { feature: "translate-description", error_type: "client-error" },
             extra: { targetLang },
           });
         }
-
-        setTranslationHtml(null);
-        setErrorMessage(t("translateError") + " (unexpected error)");
+        next = {
+          version,
+          html: null,
+          showing: false,
+          error: t("translateError") + " (unexpected error)",
+        };
       }
+      startTransition(() => setState(next));
     });
   };
 
   return (
-    <div className="space-y-1">
-      <Button
-        variant="ghost"
-        onClick={handleTranslate}
-        disabled={isPending}
-        className="btn-sm w-fit normal-case tracking-normal font-normal whitespace-nowrap"
-      >
-        {isPending
-          ? t("translating")
-          : showTranslated && translationHtml
-            ? t("showOriginal")
-            : t("translateCta", { target: targetLabel })}
-      </Button>
-
-      {errorMessage && (
-        <p className="body-normal text-foreground/80">{errorMessage}</p>
+    <DescriptionLayout
+      title={t("title")}
+      introText={introText}
+      actions={
+        <div className="space-y-1">
+          <Button
+            variant="ghost"
+            onClick={toggle}
+            disabled={isPending}
+            className="btn-sm w-fit normal-case tracking-normal font-normal whitespace-nowrap"
+          >
+            {isPending
+              ? t("translating")
+              : translation?.showing
+                ? t("showOriginal")
+                : t("translateCta", { target: t(`target.${targetLang}`) })}
+          </Button>
+          {translation?.error && (
+            <p role="alert" className="body-normal text-muted-foreground">{translation.error}</p>
+          )}
+        </div>
+      }
+    >
+      {translation?.html ? (
+        // After the first toggle each swap remounts and fades in with CSS.
+        <div
+          key={translation.showing ? "translation" : "original"}
+          className="animate-fade-in-fast"
+        >
+          {translation.showing ? (
+            <div
+              className={DESCRIPTION_BODY_CLASS}
+              dangerouslySetInnerHTML={{ __html: translation.html }}
+            />
+          ) : (
+            children
+          )}
+        </div>
+      ) : (
+        children
       )}
-    </div>
+    </DescriptionLayout>
   );
 }
-
-
-
-

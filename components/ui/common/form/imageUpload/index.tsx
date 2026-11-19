@@ -5,12 +5,13 @@ import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ImageUploaderProps } from "types/props";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
-  MAX_UPLOAD_LIMIT_LABEL,
-  MAX_ORIGINAL_FILE_BYTES,
-  MAX_ORIGINAL_LIMIT_LABEL,
+  BYTES_PER_MEGABYTE,
+  IMAGE_UPLOAD_ACCEPT,
 } from "@utils/constants";
 import { isBackendImageType } from "@utils/image-validation";
-import { compressImageIfNeeded } from "@utils/image-optimizer";
+import { imageUploadErrorMessage, loadAndPrepareImage } from "@utils/image-upload";
+import { sendGoogleEvent } from "@utils/analytics";
+
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   value, onUpload, onPreparingChange,
@@ -52,47 +53,37 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   }
 
-  function handleFileValidation(file: File): boolean {
-    if (!isBackendImageType(file.type)) {
-      setError(t("unsupported"));
-      return false;
-    }
-
-    if (file.size > MAX_ORIGINAL_FILE_BYTES) {
-      setError(t("originalTooLarge", { limit: MAX_ORIGINAL_LIMIT_LABEL }));
-      return false;
-    }
-
-    return true;
-  }
-
   const prepareFile = async (file: File): Promise<void> => {
-    if (!handleFileValidation(file)) {
-      return;
-    }
+    const sizeMb = Math.round(file.size / BYTES_PER_MEGABYTE);
     const version = ++selectionVersionRef.current;
     resetMessages();
     setIsPreparing(true);
     onPreparingChange?.(true);
-    setIsOptimizing(file.size > MAX_TOTAL_UPLOAD_BYTES);
+    setIsOptimizing(file.size > MAX_TOTAL_UPLOAD_BYTES || !isBackendImageType(file.type));
     try {
-      let workingFile = file;
-      if (file.size > MAX_TOTAL_UPLOAD_BYTES) {
-        const optimized = await compressImageIfNeeded(file, {
-          maxBytes: MAX_TOTAL_UPLOAD_BYTES,
-        });
-        if (optimized) workingFile = optimized;
-      }
+      const result = await loadAndPrepareImage(file, { maxBytes: MAX_TOTAL_UPLOAD_BYTES });
       if (version !== selectionVersionRef.current) return;
-      if (workingFile.size > MAX_TOTAL_UPLOAD_BYTES) {
-        setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
+      if (!result.ok) {
+        setError(imageUploadErrorMessage(t, result.reason, MAX_TOTAL_UPLOAD_BYTES));
+        sendGoogleEvent("poster_image_blocked", {
+          reason: result.reason,
+          detected_type: result.detectedType ?? "unknown",
+          file_type: file.type || "blank",
+          size_mb: sizeMb,
+        });
         return;
       }
+      sendGoogleEvent("poster_image_prepared", {
+        detected_type: result.detectedType ?? "unknown",
+        // A fitting JPEG/PNG that only got its type fixed keeps its bytes.
+        converted: result.file.size !== file.size,
+        size_mb: sizeMb,
+      });
       // Replacing via Change keeps that button mounted, so only the first upload moves focus.
       if (!hasPreview) pendingFocusRef.current = "change";
-      onUpload(workingFile);
-    } catch (compressionError) {
-      console.error("Image preparation failed", compressionError);
+      onUpload(result.file);
+    } catch (preparationError) {
+      console.error("Image preparation failed", preparationError);
       if (version === selectionVersionRef.current) setError(t("compressFailed"));
     } finally {
       if (version === selectionVersionRef.current) {
@@ -160,7 +151,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         ref={fileSelect}
         id="image"
         type="file"
-        accept="image/png, image/jpeg"
+        accept={IMAGE_UPLOAD_ACCEPT}
         className="hidden"
         aria-labelledby="image-label"
         onChange={(event) => {

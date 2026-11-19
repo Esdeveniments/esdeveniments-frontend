@@ -1,36 +1,33 @@
-import Description from "@components/ui/common/description";
-import React from "react";
+import Description, { DescriptionBody } from "@components/ui/common/description";
+import { isNonDefaultLocale } from "@utils/i18n-routing";
 import TranslateDescription from "./TranslateDescription";
+import { getCacheKey } from "../translation-utils";
 import type { EventDescriptionProps } from "types/event";
 
-const DESCRIPTION_BODY_ID = "event-description-body";
-
-const EventDescription: React.FC<EventDescriptionProps> = ({
+export default function EventDescription({
   slug,
   description,
   introText,
   locale,
   showTranslate,
-}) => {
+}: EventDescriptionProps) {
+  // Descriptions are written in Catalan: offer a translation on es/en only.
+  const targetLang = showTranslate && isNonDefaultLocale(locale) ? locale : null;
+
   return (
     <div className="max-w-none text-foreground min-w-0">
-      <Description
-        description={description}
-        introText={introText}
-        descriptionHtmlId={DESCRIPTION_BODY_ID}
-        headerActions={
-          showTranslate ? (
-            <TranslateDescription
-              slug={slug}
-              description={description}
-              locale={locale}
-              targetId={DESCRIPTION_BODY_ID}
-            />
-          ) : undefined
-        }
-      />
+      {targetLang ? (
+        <TranslateDescription
+          slug={slug}
+          targetLang={targetLang}
+          version={getCacheKey(description || "", targetLang)}
+          introText={introText}
+        >
+          <DescriptionBody description={description} />
+        </TranslateDescription>
+      ) : (
+        <Description description={description} introText={introText} />
+      )}
     </div>
   );
-};
-
-export default EventDescription;
+}
