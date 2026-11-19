@@ -16,8 +16,7 @@ import {
   MAX_SPONSOR_IMAGE_BYTES,
   IMAGE_UPLOAD_ACCEPT,
 } from "@utils/constants";
-import { prepareImageForUpload } from "@utils/image-optimizer";
-import { imageUploadErrorMessage } from "@utils/image-upload-message";
+import { imageUploadErrorMessage, loadAndPrepareImage } from "@utils/image-upload";
 import type {
   SponsorImageUploadResult,
   SponsorImageValidation,
@@ -154,7 +153,7 @@ export default function SponsorImageUpload({
       setIsPreparing(true);
       let prepared: ImageUploadResult;
       try {
-        prepared = await prepareImageForUpload(selectedFile, {
+        prepared = await loadAndPrepareImage(selectedFile, {
           maxBytes: MAX_SPONSOR_IMAGE_BYTES,
         });
       } catch {

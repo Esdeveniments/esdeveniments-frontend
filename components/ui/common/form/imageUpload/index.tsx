@@ -9,8 +9,7 @@ import {
   IMAGE_UPLOAD_ACCEPT,
 } from "@utils/constants";
 import { isBackendImageType } from "@utils/image-validation";
-import { prepareImageForUpload } from "@utils/image-optimizer";
-import { imageUploadErrorMessage } from "@utils/image-upload-message";
+import { imageUploadErrorMessage, loadAndPrepareImage } from "@utils/image-upload";
 import { sendGoogleEvent } from "@utils/analytics";
 
 
@@ -62,7 +61,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     onPreparingChange?.(true);
     setIsOptimizing(file.size > MAX_TOTAL_UPLOAD_BYTES || !isBackendImageType(file.type));
     try {
-      const result = await prepareImageForUpload(file, { maxBytes: MAX_TOTAL_UPLOAD_BYTES });
+      const result = await loadAndPrepareImage(file, { maxBytes: MAX_TOTAL_UPLOAD_BYTES });
       if (version !== selectionVersionRef.current) return;
       if (!result.ok) {
         setError(imageUploadErrorMessage(t, result.reason, MAX_TOTAL_UPLOAD_BYTES));

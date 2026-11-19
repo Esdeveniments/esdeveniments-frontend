@@ -12,8 +12,7 @@ import {
   IMAGE_UPLOAD_ACCEPT,
   MAX_AVATAR_BYTES,
 } from "@utils/constants";
-import { prepareImageForUpload } from "@utils/image-optimizer";
-import { imageUploadErrorMessage } from "@utils/image-upload-message";
+import { imageUploadErrorMessage, loadAndPrepareImage } from "@utils/image-upload";
 import type { EditProfileAvatarProps } from "types/props";
 import type { ImageUploadResult } from "types/upload";
 
@@ -53,7 +52,7 @@ export default function EditProfileAvatar({
       // on Android; the route only takes a JPEG or PNG under 2 MB.
       let prepared: ImageUploadResult;
       try {
-        prepared = await prepareImageForUpload(file, {
+        prepared = await loadAndPrepareImage(file, {
           maxBytes: MAX_AVATAR_BYTES,
           maxDimension: AVATAR_MAX_DIMENSION,
           minDimension: AVATAR_MIN_DIMENSION,
