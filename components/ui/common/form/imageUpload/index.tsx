@@ -3,14 +3,19 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ImageUploaderProps } from "types/props";
+import type { PosterImageFailure } from "types/upload";
 import {
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
   MAX_ORIGINAL_FILE_BYTES,
   MAX_ORIGINAL_LIMIT_LABEL,
+  POSTER_IMAGE_ACCEPT,
 } from "@utils/constants";
 import { isBackendImageType } from "@utils/image-validation";
-import { compressImageIfNeeded } from "@utils/image-optimizer";
+import { preparePosterImage } from "@utils/image-optimizer";
+import { sendGoogleEvent } from "@utils/analytics";
+
+const MB = 1024 * 1024;
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
   value, onUpload, onPreparingChange,
@@ -52,47 +57,43 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   }
 
-  function handleFileValidation(file: File): boolean {
-    if (!isBackendImageType(file.type)) {
-      setError(t("unsupported"));
-      return false;
-    }
-
+  const prepareFile = async (file: File): Promise<void> => {
     if (file.size > MAX_ORIGINAL_FILE_BYTES) {
       setError(t("originalTooLarge", { limit: MAX_ORIGINAL_LIMIT_LABEL }));
-      return false;
-    }
-
-    return true;
-  }
-
-  const prepareFile = async (file: File): Promise<void> => {
-    if (!handleFileValidation(file)) {
+      sendGoogleEvent("poster_image_blocked", {
+        reason: "original_too_large",
+        size_mb: Math.round(file.size / MB),
+      });
       return;
     }
     const version = ++selectionVersionRef.current;
     resetMessages();
     setIsPreparing(true);
     onPreparingChange?.(true);
-    setIsOptimizing(file.size > MAX_TOTAL_UPLOAD_BYTES);
+    setIsOptimizing(file.size > MAX_TOTAL_UPLOAD_BYTES || !isBackendImageType(file.type));
     try {
-      let workingFile = file;
-      if (file.size > MAX_TOTAL_UPLOAD_BYTES) {
-        const optimized = await compressImageIfNeeded(file, {
-          maxBytes: MAX_TOTAL_UPLOAD_BYTES,
-        });
-        if (optimized) workingFile = optimized;
-      }
+      const result = await preparePosterImage(file, { maxBytes: MAX_TOTAL_UPLOAD_BYTES });
       if (version !== selectionVersionRef.current) return;
-      if (workingFile.size > MAX_TOTAL_UPLOAD_BYTES) {
-        setError(t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
+      if (!result.ok) {
+        setError(failureMessage(result.reason));
+        sendGoogleEvent("poster_image_blocked", {
+          reason: result.reason,
+          detected_type: result.detectedType ?? "unknown",
+          file_type: file.type || "blank",
+          size_mb: Math.round(file.size / MB),
+        });
         return;
       }
+      sendGoogleEvent("poster_image_prepared", {
+        detected_type: result.detectedType ?? "unknown",
+        converted: result.file !== file,
+        size_mb: Math.round(file.size / MB),
+      });
       // Replacing via Change keeps that button mounted, so only the first upload moves focus.
       if (!hasPreview) pendingFocusRef.current = "change";
-      onUpload(workingFile);
-    } catch (compressionError) {
-      console.error("Image preparation failed", compressionError);
+      onUpload(result.file);
+    } catch (preparationError) {
+      console.error("Image preparation failed", preparationError);
       if (version === selectionVersionRef.current) setError(t("compressFailed"));
     } finally {
       if (version === selectionVersionRef.current) {
@@ -102,6 +103,19 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       }
     }
   };
+
+  function failureMessage(reason: PosterImageFailure): string {
+    switch (reason) {
+      case "too_large":
+        return t("tooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL });
+      case "heic_undecodable":
+        return t("heicUnsupported");
+      case "encode_failed":
+        return t("compressFailed");
+      default:
+        return t("unreadable");
+    }
+  }
 
   const onChangeImage = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -160,7 +174,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         ref={fileSelect}
         id="image"
         type="file"
-        accept="image/png, image/jpeg"
+        accept={POSTER_IMAGE_ACCEPT}
         className="hidden"
         aria-labelledby="image-label"
         onChange={(event) => {

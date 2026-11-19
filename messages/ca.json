@@ -845,12 +845,14 @@
       "originalTooLarge": "La imatge supera el límit de {limit} MB. Tria'n una de més petita.",
       "tooLarge": "No hem pogut reduir la imatge per sota de {limit} MB. Tria'n una de més petita.",
       "compressFailed": "No hem pogut reduir la imatge. Torna-ho a provar.",
+      "unreadable": "No hem pogut llegir aquesta imatge. Tria'n una altra.",
+      "heicUnsupported": "Aquest navegador no pot obrir fotos HEIC. Tria la foto en JPG o fes-ne una captura de pantalla.",
       "optimizing": "Optimitzant la imatge…",
       "remove": "Elimina la imatge",
       "altPreview": "Imatge",
       "uploadDropCta": "o arrossega-la aquí",
       "selectButton": "Tria una imatge",
-      "formatHelper": "JPG o PNG",
+      "formatHelper": "JPG, PNG, HEIC o WebP",
       "change": "Canvia"
     },
     "HeroCTA": {

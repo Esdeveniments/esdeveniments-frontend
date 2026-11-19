@@ -830,12 +830,14 @@
       "originalTooLarge": "The image is over {limit} MB. Choose a smaller one.",
       "tooLarge": "We couldn't shrink the image below {limit} MB. Choose a smaller one.",
       "compressFailed": "We couldn't shrink the image. Please try again.",
+      "unreadable": "We couldn't read this image. Choose another one.",
+      "heicUnsupported": "This browser can't open HEIC photos. Choose the photo as a JPG or take a screenshot of it.",
       "optimizing": "Optimizing image…",
       "remove": "Remove image",
       "altPreview": "Image",
       "uploadDropCta": "or drag it here",
       "selectButton": "Choose image",
-      "formatHelper": "JPG or PNG",
+      "formatHelper": "JPG, PNG, HEIC or WebP",
       "change": "Change"
     },
     "HeroCTA": {

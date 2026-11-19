@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { FormData } from "types/event";
+import type { PosterImageResult } from "types/upload";
 
 const compress = vi.hoisted(() => vi.fn());
-vi.mock("@utils/image-optimizer", () => ({ compressImageIfNeeded: compress }));
+vi.mock("@utils/image-optimizer", () => ({ preparePosterImage: compress }));
 vi.mock("@components/ui/common/form", async () => ({
   ImageUpload: (await import("@components/ui/common/form/imageUpload")).default,
   Input: () => null, Select: () => null, TextArea: () => null,
@@ -24,7 +25,7 @@ afterEach(() => vi.useRealTimers());
 describe("EventForm image preparation", () => {
   it("blocks Save, preview and explicit submit until the selected cover is ready", async () => {
     vi.useFakeTimers();
-    const pending = Promise.withResolvers<File>();
+    const pending = Promise.withResolvers<PosterImageResult>();
     compress.mockReturnValueOnce(pending.promise);
     const onSubmit = vi.fn();
     const onImage = vi.fn();
@@ -47,7 +48,7 @@ describe("EventForm image preparation", () => {
     fireEvent.submit(screen.getByTestId("event-form"), { submitter: save });
     expect(onSubmit).not.toHaveBeenCalled();
     const ready = new File(["ready"], "ready.jpg", { type: "image/jpeg" });
-    await act(async () => pending.resolve(ready));
+    await act(async () => pending.resolve({ ok: true, file: ready, detectedType: "image/jpeg" }));
     expect(onImage).toHaveBeenCalledWith(ready);
     expect(save).toBeEnabled();
     expect(screen.getByTestId("preview-button")).toBeEnabled();
@@ -57,7 +58,7 @@ describe("EventForm image preparation", () => {
 
   it("clears the preparing flag when the uploader unmounts mid-compression", async () => {
     vi.useFakeTimers();
-    const pending = Promise.withResolvers<File>();
+    const pending = Promise.withResolvers<PosterImageResult>();
     compress.mockReturnValueOnce(pending.promise);
     const onImage = vi.fn();
     render(
@@ -75,7 +76,11 @@ describe("EventForm image preparation", () => {
     expect(screen.getByTestId("publish-button")).toBeDisabled();
     fireEvent.click(screen.getAllByRole("button", { name: /, completat$/ })[0]);
     expect(document.querySelector('input[type="file"]')).toBeNull();
-    await act(async () => pending.resolve(new File(["ready"], "ready.jpg", { type: "image/jpeg" })));
+    await act(async () => pending.resolve({
+      ok: true,
+      file: new File(["ready"], "ready.jpg", { type: "image/jpeg" }),
+      detectedType: "image/jpeg",
+    }));
     expect(onImage).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId("next-button"));
     fireEvent.click(screen.getByTestId("next-button"));
