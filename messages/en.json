@@ -837,7 +837,7 @@
       "altPreview": "Image",
       "uploadDropCta": "or drag it here",
       "selectButton": "Choose image",
-      "formatHelper": "JPG, PNG, HEIC or WebP",
+      "formatHelper": "JPG, PNG or WebP",
       "change": "Change"
     },
     "HeroCTA": {

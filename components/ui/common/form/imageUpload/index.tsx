@@ -87,7 +87,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       }
       sendGoogleEvent("poster_image_prepared", {
         detected_type: result.detectedType ?? "unknown",
-        converted: result.file !== file,
+        // A fitting JPEG/PNG that only got its type fixed keeps its bytes.
+        converted: result.file.size !== file.size,
         size_mb: sizeMb,
       });
       // Replacing via Change keeps that button mounted, so only the first upload moves focus.

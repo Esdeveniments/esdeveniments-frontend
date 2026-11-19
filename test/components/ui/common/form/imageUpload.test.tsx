@@ -199,6 +199,23 @@ describe("ImageUploader file validation", () => {
     expect(screen.getByRole("img")).toHaveAttribute("src", "data:image/jpeg;base64,parent");
   });
 
+  it("doesn't count a JPEG that only got its type fixed as converted", async () => {
+    const onUpload = vi.fn();
+    const picked = createMockFile("IMG_1234", "", 1024 * 1024);
+    const typed = createMockFile("IMG_1234.jpg", "image/jpeg", 1024 * 1024);
+    mockPrepare.mockResolvedValueOnce(ready(typed));
+    renderWithProviders(<ImageUploader value={null} onUpload={onUpload} />);
+
+    pick(picked);
+
+    await waitFor(() => expect(onUpload).toHaveBeenCalledWith(typed));
+    expect(mockSendEvent).toHaveBeenCalledWith("poster_image_prepared", {
+      detected_type: "image/jpeg",
+      converted: false,
+      size_mb: 1,
+    });
+  });
+
   it("opens the picker for any image, HEIC included", () => {
     renderWithProviders(<ImageUploader value={null} onUpload={vi.fn()} />);
     expect(document.querySelector('input[type="file"]')).toHaveAttribute("accept", POSTER_IMAGE_ACCEPT);
