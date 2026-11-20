@@ -457,7 +457,8 @@ export async function buildPlaceByDateEventsPromise({
         : `Esdeveniments ${actualDate} ${place}`,
       undefined,
       locale,
-      pageData.canonical
+      pageData.canonical,
+      noEventsFound ? undefined : eventsResponse?.totalElements
     );
 
     structuredScripts.push({
@@ -469,7 +470,7 @@ export async function buildPlaceByDateEventsPromise({
       title: pageData.title,
       description: pageData.metaDescription,
       url: pageData.canonical,
-      numberOfItems: validEvents.length,
+      mainEntity: itemListSchema ? { "@id": itemListSchema["@id"] } : undefined,
       locale,
     });
 

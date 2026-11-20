@@ -209,7 +209,8 @@ export default async function Page({
         t("itemListTitle", { placeIn, month: monthLabel, year }),
         t("itemListDescription", { placeIn, month: monthLabel, year }),
         locale,
-        toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale)
+        toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale),
+        filteredEvents.length
       )
       : null;
 
@@ -224,7 +225,6 @@ export default async function Page({
     url: toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale),
     breadcrumbs,
     locale,
-    numberOfItems: filteredEvents.length,
     // Reference the ItemList by @id instead of inlining it: it is emitted
     // standalone below, so inlining it here duplicated the event payload.
     mainEntity: eventsItemList

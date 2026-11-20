@@ -289,9 +289,28 @@ jobs:
             *) echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY must be base64 of 16, 24 or 32 bytes (got: $len). Generate one with: openssl rand -base64 32"; exit 1 ;;
           esac
 
-      - name: Compute lowercase image name
+      - name: Compute image metadata and safe tags
         id: meta
-        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          IMAGE="ghcr.io/$(printf '%s' "$REPO" | tr '[:upper:]' '[:lower:]')"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          # Always push the immutable sha-<commit> tag. Only publish the
+          # floating :main / :develop tags for those exact branch refs — never
+          # raw github.ref_name, which lets a branch named `sha-<prod-sha>`
+          # overwrite a pinned production tag or breaks on slashes.
+          {
+            echo "tags<<EOF"
+            echo "${IMAGE}:sha-${SHA}"
+            case "$REF" in
+              refs/heads/main) echo "${IMAGE}:main" ;;
+              refs/heads/develop) echo "${IMAGE}:develop" ;;
+            esac
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -327,9 +346,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ steps.meta.outputs.image }}:${{ github.ref_name }}
-            ${{ steps.meta.outputs.image }}:sha-${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # NEXT_PUBLIC_* are inlined into the client bundle (public by design).

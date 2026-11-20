@@ -710,7 +710,6 @@ export interface CollectionPageOptions {
   url: string;
   breadcrumbs?: BreadcrumbItem[];
   mainEntity?: Record<string, unknown>;
-  numberOfItems?: number;
   locale?: AppLocale;
 }
 
