@@ -101,7 +101,6 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
     url: toLocalizedUrl(`/sitemap/${town}`, locale),
     breadcrumbs,
     locale,
-    numberOfItems: years.length * months.length,
     mainEntity: {
       "@type": "ItemList",
       "@id": `${toLocalizedUrl(`/sitemap/${town}`, locale)}#archivelist`,

@@ -303,7 +303,8 @@ export async function buildPlaceEventsPromise({
             `Esdeveniments ${place}`,
             undefined,
             locale,
-            pageUrl
+            pageUrl,
+            noEventsFound ? undefined : eventsResponse?.totalElements
           ),
         },
       ]

@@ -238,6 +238,8 @@ jobs:
       (needs.e2e-tests.result == 'success' || needs.e2e-tests.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
     permissions:
       contents: read
       packages: write
@@ -289,9 +291,34 @@ jobs:
             *) echo "::error::NEXT_SERVER_ACTIONS_ENCRYPTION_KEY must be base64 of 16, 24 or 32 bytes (got: $len). Generate one with: openssl rand -base64 32"; exit 1 ;;
           esac
 
-      - name: Compute lowercase image name
+      - name: Compute image metadata and safe tags
         id: meta
-        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        env:
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          IMAGE="ghcr.io/$(printf '%s' "$REPO" | tr '[:upper:]' '[:lower:]')"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          # Separate prod (sha-<commit>) and non-prod (staging-sha-<commit>)
+          # tag namespaces so a staging or hotfix build at a commit main
+          # already has can never overwrite the pinned production image. Only
+          # publish floating :main / :develop tags for those exact branch refs.
+          if [ "$REF" = "refs/heads/main" ]; then
+            IMMUTABLE_TAG="sha-${SHA}"
+          else
+            IMMUTABLE_TAG="staging-sha-${SHA}"
+          fi
+          echo "image_tag=${IMMUTABLE_TAG}" >> "$GITHUB_OUTPUT"
+          {
+            echo "tags<<EOF"
+            echo "${IMAGE}:${IMMUTABLE_TAG}"
+            case "$REF" in
+              refs/heads/main) echo "${IMAGE}:main" ;;
+              refs/heads/develop) echo "${IMAGE}:develop" ;;
+            esac
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -327,9 +354,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ steps.meta.outputs.image }}:${{ github.ref_name }}
-            ${{ steps.meta.outputs.image }}:sha-${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # NEXT_PUBLIC_* are inlined into the client bundle (public by design).
@@ -438,14 +463,20 @@ jobs:
       # See docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md.
       - name: Pin Coolify to this commit's immutable image tag
         # skip_ci (emergency deploy) also skips build-and-push above, so no
-        # sha-<commit> image exists to pin to — leave whatever tag is already
+        # immutable image exists to pin to — leave whatever tag is already
         # configured alone and let the webhook redeploy it as-is.
         if: needs.build-and-push.result == 'success'
         env:
           IS_MAIN: ${{ github.ref_name == 'main' }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
         run: |
           if [ -z "$COOLIFY_WEBHOOK_URL" ]; then
             echo "::error::COOLIFY_WEBHOOK_URL secret is required"
+            exit 1
+          fi
+
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "::error::build-and-push did not output image_tag — refusing to deploy on the floating tag"
             exit 1
           fi
 
@@ -466,7 +497,7 @@ jobs:
             -X PATCH "${COOLIFY_API_BASE}/api/v1/applications/${COOLIFY_APP_UUID}" \
             -H "Authorization: Bearer $COOLIFY_TOKEN" \
             -H "Content-Type: application/json" \
-            --data "{\"docker_registry_image_tag\": \"sha-${{ github.sha }}\"}" \
+            --data "{\"docker_registry_image_tag\": \"${IMAGE_TAG}\"}" \
             --max-time 15) || HTTP_CODE="000"
 
           if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
@@ -476,7 +507,7 @@ jobs:
           fi
 
           PINNED_APP_LABEL=$([ "$IS_MAIN" = "true" ] && echo "esdeveniments-production" || echo "esdeveniments-staging")
-          echo "Pinned $PINNED_APP_LABEL to sha-${{ github.sha }}"
+          echo "Pinned $PINNED_APP_LABEL to ${IMAGE_TAG}"
 
       - name: Trigger Coolify deployment
         run: |

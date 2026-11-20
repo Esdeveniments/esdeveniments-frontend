@@ -86,7 +86,6 @@ export default async function Page() {
     url: toLocalizedUrl(PATH, locale),
     breadcrumbs,
     locale,
-    numberOfItems: towns.length || undefined,
   });
 
   return (

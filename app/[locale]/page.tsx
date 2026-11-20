@@ -361,7 +361,6 @@ async function HomeStructuredData({
         title: pageData.title,
         description: pageData.metaDescription,
         url: pageData.canonical,
-        numberOfItems: homepageEvents.length,
         mainEntity: itemListSchema
           ? { "@id": itemListSchema["@id"] }
           : undefined,
