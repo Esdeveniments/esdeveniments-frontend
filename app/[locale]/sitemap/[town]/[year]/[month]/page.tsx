@@ -210,7 +210,7 @@ export default async function Page({
         t("itemListDescription", { placeIn, month: monthLabel, year }),
         locale,
         toLocalizedUrl(`/sitemap/${town}/${year}/${canonicalMonthSlug}`, locale),
-        filteredEvents.length
+        events.totalElements ?? filteredEvents.length
       )
       : null;
 
