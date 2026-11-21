@@ -1181,7 +1181,7 @@ const PublishForm = () => {
             hidden={draft.status === "decision" && !draft.dirty}>
           <div className="w-full stack gap-6">
             <PosterAutofillCard
-              key={editorVersion}
+              key={`autofill-${editorVersion}`}
               currentImageFile={imageFile}
               currentImagePreview={imagePreview}
               isAuthenticated={isAuthenticated}
@@ -1198,7 +1198,7 @@ const PublishForm = () => {
               onBusyChange={setPosterAutofillBusy}
             />
             <EventForm
-              key={editorVersion}
+              key={`form-${editorVersion}`}
               initialStep={wizardStep}
               activeStep={wizardStep}
               onStepChange={handleStepChange}
