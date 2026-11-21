@@ -406,6 +406,7 @@ export async function GET(request: Request) {
   const formatParam = url.searchParams.get("format")?.toLowerCase();
   const preferAvif = formatParam === "avif";
   const preferWebp = formatParam === "webp";
+  const preferJpeg = formatParam === "jpeg" || formatParam === "jpg";
 
   // Clamp values to reasonable limits
   const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
@@ -481,8 +482,12 @@ export async function GET(request: Request) {
       if (!sourceType) continue;
 
       // Skip optimization for very small images (already optimized or icons)
-      // and serve them directly - avoids overhead and potential size increase
-      if (imageBuffer.length < MIN_SIZE_FOR_OPTIMIZATION) {
+      // and serve them directly - avoids overhead and potential size increase,
+      // unless the caller explicitly requested JPEG conversion (e.g. Instagram).
+      if (
+        imageBuffer.length < MIN_SIZE_FOR_OPTIMIZATION &&
+        !(preferJpeg && sourceType !== "image/jpeg")
+      ) {
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
@@ -534,7 +539,14 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (
+        if (preferJpeg) {
+          // Explicit JPEG conversion (e.g. Instagram Graph API rejects PNG/WebP)
+          outputBuffer = await sharpInstance
+            .flatten({ background: { r: 255, g: 255, b: 255 } })
+            .jpeg({ quality, mozjpeg: true })
+            .toBuffer();
+          outputContentType = "image/jpeg";
+        } else if (
           preferAvif ||
           preferWebp ||
           sourceType === "image/webp" ||

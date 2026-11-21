@@ -83,6 +83,29 @@ describe("image proxy responses are cacheable by URL alone", () => {
     expect(isWebp(Buffer.from(await res.arrayBuffer()))).toBe(true);
   });
 
+  it("converts PNG and WebP sources to JPEG when format=jpeg is requested", async () => {
+    const png = await sharp({
+      create: {
+        width: 400,
+        height: 300,
+        channels: 4,
+        background: { r: 10, g: 20, b: 30, alpha: 0.5 },
+      },
+    })
+      .png()
+      .toBuffer();
+    upstream(png, "image/png");
+
+    const res = await proxy("&format=jpeg", "*/*");
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/jpeg");
+    const bytes = Buffer.from(await res.arrayBuffer());
+    expect(bytes[0]).toBe(0xff);
+    expect(bytes[1]).toBe(0xd8);
+    expect(bytes[2]).toBe(0xff);
+  });
+
   // The Cache Rule matches /api/image-proxy by path, so a cacheable failure
   // would be served from the edge for the whole s-maxage.
   it.each([
