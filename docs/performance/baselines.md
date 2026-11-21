@@ -528,3 +528,37 @@ New pages, first measurement. Lab, local build of `feat/festes-majors` (method a
 **Left:** AdSense's scroll handlers (third party), the filter modal render, and gtag.js load tasks of ~200 ms at 4x.
 
 **Next check:** GA4 consent-click INP (`element` empty, `load_state` complete) two weeks after the deploy; CrUX phone INP after it leaves the 28-day window.
+
+## 2026-11-20: all Core Web Vitals green (CrUX + competitors)
+
+First field reading with all three Core Web Vitals passing Google's "good" thresholds on phone.
+
+**Field (CrUX, phone, p75, via `Daily Competitor Benchmark` run `44750006834` on 2026-11-20):**
+
+| Metric | 2026-10-31 | **2026-11-20** | Google "Good" | Target | GA4 mobile good % (Nov 14–20, Spain) |
+|---|---:|---:|---:|---:|---:|
+| **LCP** | 2.58 s | **2.21 s** | ≤ 2.5 s | < 1.5 s | 87.0% (434/499) |
+| **INP** | 189 ms | **190 ms** | ≤ 200 ms | < 150 ms | 80.6% (328/407; 1.7% poor) |
+| **CLS** | 0.28 | **0.02** | ≤ 0.10 | < 0.05 | 98.2% (335/341) |
+
+GA4 mobile supporting vitals (Spain, 2026-11-14 to 2026-11-20): FCP 93.6% good (500/534), TTFB 92.9% good (461/496).
+
+**Competitors (CrUX phone p75 + sitemap/HTML snapshot, 2026-11-20):**
+
+| Site | LCP | INP | CLS | Sitemap events | Home TTFB / KB | Event TTFB / KB |
+|---|---:|---:|---:|---:|---:|---:|
+| **esdeveniments.cat** | **2.21 s** | **190 ms** | **0.02** | 5,043 | 76 ms / 762 KB | 257 ms / 433 KB |
+| vine.cat | 1.07 s | 82 ms | 0.00 | 8,268 | 115 ms / 127 KB | 239 ms / 30 KB |
+| femturisme.cat | 1.67 s | 209 ms | 0.00 | blocked | — | — |
+| surtdecasa.cat | 2.35 s | 153 ms | 0.04 | 90,643 | 775 ms / 275 KB | 1,753 ms / 68 KB |
+| timeout.cat | 1.13 s | 291 ms | 0.07 | — | 262 ms / 353 KB | — |
+| festacatalunya.cat | 3.41 s | 135 ms | 0.05 | 1,989 | 1,347 ms / 2,078 KB | 806 ms / 140 KB |
+| agenda.cultura.gencat.cat | 3.68 s | 326 ms | 0.00 | 1,395 | 93 ms / 59 KB | 2,013 ms / 69 KB |
+
+**Findings:**
+- Phone CLS dropped from 0.28 to **0.02** after turning off AdSense Banner Ads (2026-11-01) and shipping the `BaseLayout` strut (#697), beating the `< 0.05` target.
+- Phone LCP crossed into "good" at **2.21 s** (from 2.58 s).
+- Phone INP sits at **190 ms**, close to the 200 ms boundary; `#835` (deferred consent click) is still entering the 28-day CrUX window.
+- Raw HTML remains heavier than peers (762 KB home, 433 KB event pages vs `vine.cat` 127 / 30 KB), though Cloudflare keeps home TTFB at 76 ms.
+
+**Next check:** CrUX after 2026-11-29 (full post-banner-ads window) and ~2 weeks after `#835` for INP.

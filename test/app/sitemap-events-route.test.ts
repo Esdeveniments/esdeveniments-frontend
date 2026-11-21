@@ -17,6 +17,7 @@ vi.mock("@lib/api/events", () => ({
         title: "Upcoming",
         startDate: tomorrow,
         endDate: tomorrow,
+        imageUrl: "not-a-valid-image-url",
       },
       {
         slug: "upcoming-future-updated-at",
@@ -24,6 +25,7 @@ vi.mock("@lib/api/events", () => ({
         startDate: tomorrow,
         endDate: tomorrow,
         updatedAt: `${tomorrow}T10:00:00Z`,
+        imageUrl: "javascript:alert(1)",
       },
       {
         slug: "upcoming-edited",
@@ -31,6 +33,8 @@ vi.mock("@lib/api/events", () => ({
         startDate: tomorrow,
         endDate: tomorrow,
         updatedAt: "2026-01-02T10:00:00Z",
+        imageUrl:
+          "https://agenda.cultura.gencat.cat/annexos/germà%20petit2.jpg?itok=abc&v=1",
       },
       {
         slug: "expired-long-ago",
@@ -91,5 +95,26 @@ describe("app/sitemap-events/[...parts]/route", () => {
     ]);
     // ca + es + en + x-default on each of the three entries
     expect(xml.match(/hreflang="es" href="[^"]*\/es\/e\/upcoming-edited"/g)).toHaveLength(3);
+  });
+
+  it("percent-encodes non-ASCII image URLs and omits invalid image URLs", async () => {
+    const { GET } = await import("../../app/sitemap-events/[...parts]/route");
+    const context: RouteContext<"/sitemap-events/[...parts]"> = {
+      params: Promise.resolve({ parts: ["1.xml"] }),
+    };
+
+    const response = await GET(new Request("https://x/sitemap-events/1.xml"), context);
+    const xml = await response.text();
+
+    // 3 locale entries for upcoming-edited carry the encoded, XML-escaped image URL.
+    expect(
+      xml.match(
+        /<image:loc>https:\/\/agenda\.cultura\.gencat\.cat\/annexos\/germ%C3%A0%20petit2\.jpg\?itok=abc&amp;v=1<\/image:loc>/g,
+      ),
+    ).toHaveLength(3);
+    // Invalid / non-HTTP(S) image URLs are omitted completely.
+    expect(xml).not.toContain("not-a-valid-image-url");
+    expect(xml).not.toContain("javascript:alert");
+    expect(xml.match(/<image:image>/g)).toHaveLength(3);
   });
 });
