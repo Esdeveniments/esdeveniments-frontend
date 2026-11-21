@@ -48,12 +48,24 @@ async function makeJpegBytes(width: number, height: number, withExif = false): P
 
 function makeMultipartRequest(
   file: File,
-  options?: { sequence?: number; contentLengthOverride?: string; transferEncoding?: string },
+  options?: {
+    sequence?: number;
+    clientId?: string;
+    locale?: string;
+    contentLengthOverride?: string;
+    transferEncoding?: string;
+  },
 ): NextRequest {
   const form = new FormData();
   form.append("imageFile", file);
   if (options?.sequence !== undefined) {
     form.append("sequence", String(options.sequence));
+  }
+  if (options?.clientId !== undefined) {
+    form.append("clientId", options.clientId);
+  }
+  if (options?.locale !== undefined) {
+    form.append("locale", options.locale);
   }
   const probe = new Request("http://localhost:3000/api/events/extract-poster", {
     method: "POST",
@@ -213,20 +225,41 @@ describe("POST /api/events/extract-poster", () => {
     expect(body.code).toBe("model_rejected");
   });
 
-  it("rejects delayed older selection sequences with 409 without calling ai-gateway", async () => {
+  it("rejects delayed older selection sequences from the same clientId with 409, while allowing a new mount clientId at seq 1", async () => {
     const jpeg = await makeJpegBytes(300, 300);
     const reqNewer = await makeMultipartRequest(
       new File([jpeg], "b.jpg", { type: "image/jpeg" }),
-      { sequence: 20 },
+      { sequence: 20, clientId: "tab-alpha" },
     );
     expect((await POST(reqNewer)).status).toBe(200);
 
-    const reqOlder = await makeMultipartRequest(
+    // Delayed older request from the same mount/tab is rejected as stale
+    const reqOlderSameTab = await makeMultipartRequest(
       new File([jpeg], "a.jpg", { type: "image/jpeg" }),
-      { sequence: 10 },
+      { sequence: 10, clientId: "tab-alpha" },
     );
-    expect((await POST(reqOlder)).status).toBe(409);
+    expect((await POST(reqOlderSameTab)).status).toBe(409);
     expect(mocks.completeWithAiGateway).toHaveBeenCalledTimes(1);
+
+    // New mount/tab/reload starts at sequence 1 and must NOT 409
+    const reqNewMount = await makeMultipartRequest(
+      new File([jpeg], "c.jpg", { type: "image/jpeg" }),
+      { sequence: 1, clientId: "tab-beta" },
+    );
+    expect((await POST(reqNewMount)).status).toBe(200);
+    expect(mocks.completeWithAiGateway).toHaveBeenCalledTimes(2);
+  });
+
+  it("forwards the user's locale to the extraction prompt", async () => {
+    const jpeg = await makeJpegBytes(300, 300);
+    const req = await makeMultipartRequest(
+      new File([jpeg], "poster.jpg", { type: "image/jpeg" }),
+      { sequence: 1, clientId: "tab-es", locale: "es" },
+    );
+    expect((await POST(req)).status).toBe(200);
+    const promptText =
+      mocks.completeWithAiGateway.mock.calls[0][0].messages[0].content[0].text;
+    expect(promptText).toContain("idiomatic Spanish");
   });
 
   it("enforces per-account daily scan quota with 429 and Retry-After", async () => {

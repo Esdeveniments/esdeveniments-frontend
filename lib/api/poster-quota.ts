@@ -258,28 +258,29 @@ export async function refundAccountPosterScan(
 
 /**
  * Acquires the single active scan lease for `accountId`, ordering by client
- * selection `sequence` (high-water mark). A delayed older selection is rejected
- * (`null`); a newer selection preempts and aborts any active scan for the same
- * account. Leases auto-expire after 60s so a crash can never lock an account.
+ * selection `sequence` scoped to `clientId` (high-water mark per mount/tab).
+ * A delayed older selection from the same client is rejected (`null`); a scan
+ * from a new page load or another tab (`clientId`) is never rejected by an
+ * earlier session's sequence, while still preempting any active scan lease for
+ * the same account. Leases auto-expire after 60s so a crash never locks out.
  */
 export function acquireAccountScanLease(
   accountId: string,
   sequence: number,
+  clientId = "default",
   nowMs = Date.now(),
 ): PosterLeaseHandle | null {
   const leases = getLeaseMap();
   const highWater = getHighWaterMap();
+  const markKey = `${accountId}:${clientId}`;
 
-  const existingMark = highWater.get(accountId);
+  const existingMark = highWater.get(markKey);
   if (existingMark && existingMark.expiresAt > nowMs && sequence < existingMark.sequence) {
     return null;
   }
 
   const existingLease = leases.get(accountId);
   if (existingLease) {
-    if (existingLease.expiresAt > nowMs && sequence < existingLease.sequence) {
-      return null;
-    }
     if (existingLease.expiresAt > nowMs) {
       existingLease.controller.abort();
     }
@@ -294,7 +295,7 @@ export function acquireAccountScanLease(
     expiresAt: nowMs + LEASE_TTL_MS,
   };
   leases.set(accountId, lease);
-  highWater.set(accountId, {
+  highWater.set(markKey, {
     sequence,
     expiresAt: nowMs + SEQUENCE_RETENTION_MS,
   });

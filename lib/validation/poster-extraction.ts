@@ -14,6 +14,7 @@ import {
   truncateAtWord,
 } from "@utils/string-helpers";
 import type { CategorySummaryResponseDTO } from "types/api/category";
+import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import type {
   PosterExtractedEvent,
   PosterPriceResolution,
@@ -150,15 +151,24 @@ function getMadridDateAnchor(now: Date): { ymd: string; weekday: string; year: n
   return { ymd, weekday, year: Number(ymd.slice(0, 4)) };
 }
 
+const OUTPUT_LANGUAGE_GUIDANCE: Record<AppLocale, string> = {
+  ca: "Write title and description in crisp, natural, idiomatic Catalan (translate Spanish, English, or other poster languages accurately into natural Catalan without castellanismes or anglocismes; keep proper nouns, artist names, and original work titles intact).",
+  es: "Write title and description in crisp, natural, idiomatic Spanish (translate Catalan, English, or other poster languages accurately into natural Spanish; keep proper nouns, artist names, and original work titles intact).",
+  en: "Write title and description in crisp, natural, idiomatic English (translate Catalan, Spanish, or other poster languages accurately into natural English; keep proper nouns, artist names, and original work titles intact).",
+};
+
 /**
  * Builds the deterministic vision prompt anchored to the current date/weekday
- * in Europe/Madrid and the live Esdeveniments.cat category list.
+ * in Europe/Madrid, the user's publish locale (`ca` | `es` | `en`), and the
+ * live Esdeveniments.cat category list.
  */
 export function buildPosterExtractionPrompt(options?: {
   now?: Date;
   categories?: CategorySummaryResponseDTO[];
+  locale?: AppLocale;
 }): string {
   const now = options?.now ?? new Date();
+  const locale = options?.locale ?? DEFAULT_LOCALE;
   const { ymd, weekday } = getMadridDateAnchor(now);
   const categories = options?.categories ?? [];
   const categorySection =
@@ -177,11 +187,11 @@ STRICT ACCURACY RULES:
 3. Return real JSON null for unknown fields — NEVER the literal text "null", "N/A", or "desconegut".
 
 DESCRIPTION CRAFT (for Esdeveniments.cat event pages):
-- Write in crisp, natural, idiomatic Catalan (translate Spanish/English poster text accurately without castellanismes or anglocismes; keep proper nouns, artist names, and original work titles intact).
-- The event page ALREADY displays the title, date, time, venue, and town above the description. Do NOT open with robotic boilerplate like "Aquest esdeveniment se celebrarà el dia…".
+- ${OUTPUT_LANGUAGE_GUIDANCE[locale]}
+- The event page ALREADY displays the title, date, time, venue, and town above the description. Do NOT open with robotic boilerplate like "Aquest esdeveniment se celebrarà el dia…" / "Este evento se celebrará…" / "This event takes place on…".
 - Open with a clear 1–2 sentence hook (under 160 characters) stating what the event actually is and who performs or leads it — this sits above the mobile fold and powers search snippets.
 - Include every concrete fact visible on the poster: artists/speakers, programme or schedule items, entry/registration notes, accessibility, age range (only if printed), and organizers/collaborators.
-- Match length to the poster's actual information: if a poster is sparse, write a brief, honest 1-paragraph summary rather than padding. Never use AI clichés ("experiència inoblidable", "no t'ho perdis", "per a tots els públics" unless printed).
+- Match length to the poster's actual information: if a poster is sparse, write a brief, honest 1-paragraph summary rather than padding. Never use AI clichés ("experiència inoblidable", "no t'ho perdis", "per a tots els públics", "unforgettable experience" unless printed).
 - Formatting: 1 to 3 paragraphs separated by \\n\\n. You may use **bold** sparingly for programme sections. NEVER use Markdown # headings or HTML tags.
 
 DATES & TIMES (Europe/Madrid):

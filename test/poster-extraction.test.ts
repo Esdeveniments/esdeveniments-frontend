@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isAllowedVisionModel } from "@lib/api/ai-gateway";
 import {
   buildPosterExtractionPrompt,
   hasExtractedEventData,
@@ -84,15 +85,34 @@ describe("parseAiJson", () => {
 });
 
 describe("buildPosterExtractionPrompt", () => {
-  it("anchors to Europe/Madrid date and lists allowed category slugs", () => {
-    const prompt = buildPosterExtractionPrompt({
+  it("anchors to Europe/Madrid date, respects locale, and lists allowed category slugs", () => {
+    const promptCa = buildPosterExtractionPrompt({
       now: new Date("2026-11-21T12:00:00Z"),
       categories: CATEGORIES,
     });
-    expect(prompt).toContain("2026-11-21");
-    expect(prompt).toContain("- concerts (Concerts)");
-    expect(prompt).toContain("NEVER use Markdown # headings");
-    expect(prompt).toContain("taquilla inversa");
+    expect(promptCa).toContain("2026-11-21");
+    expect(promptCa).toContain("idiomatic Catalan");
+    expect(promptCa).toContain("- concerts (Concerts)");
+    expect(promptCa).toContain("NEVER use Markdown # headings");
+    expect(promptCa).toContain("taquilla inversa");
+
+    const promptEn = buildPosterExtractionPrompt({
+      now: new Date("2026-11-21T12:00:00Z"),
+      locale: "en",
+    });
+    expect(promptEn).toContain("idiomatic English");
+  });
+});
+
+describe("isAllowedVisionModel", () => {
+  it("accepts Gemini and Gemma 4 vision models and rejects text-only fallbacks", () => {
+    expect(isAllowedVisionModel("gemini/gemini-4-hydrogen")).toBe(true);
+    expect(isAllowedVisionModel("gemini/gemini-3.6-flash")).toBe(true);
+    expect(isAllowedVisionModel("gemini/gemma-4-31b-it")).toBe(true);
+    expect(isAllowedVisionModel("google/gemma-4-26b-a4b-it:free")).toBe(true);
+    expect(isAllowedVisionModel("groq/openai/gpt-oss-120b")).toBe(false);
+    expect(isAllowedVisionModel("deepseek/deepseek-v4-flash")).toBe(false);
+    expect(isAllowedVisionModel(null)).toBe(false);
   });
 });
 

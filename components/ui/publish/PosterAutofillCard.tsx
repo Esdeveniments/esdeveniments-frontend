@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowPathIcon,
@@ -11,23 +11,12 @@ import {
   PhotoIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
-import {
-  IMAGE_UPLOAD_ACCEPT,
-  MAX_TOTAL_UPLOAD_BYTES,
-} from "@utils/constants";
-import { imageUploadErrorMessage, loadAndPrepareImage } from "@utils/image-upload";
-import { sendGoogleEvent } from "@utils/analytics";
-import type {
-  PosterAutofillFieldKey,
-  PosterExtractionApiError,
-  PosterExtractionApiSuccess,
-  PosterExtractionErrorCode,
-  PosterExtractionStatusResponse,
-} from "types/api/poster";
+import { IMAGE_UPLOAD_ACCEPT, MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
+import { imageUploadErrorMessage } from "@utils/image-upload";
+import { usePosterAutofill } from "@components/hooks/usePosterAutofill";
+import type { PosterAutofillFieldKey } from "types/api/poster";
 import type { EventFormStep } from "types/event";
 import type { PosterAutofillCardProps } from "types/props";
-
-const CLIENT_SCAN_TIMEOUT_MS = 52_000;
 
 const FIELD_STEP_MAP: Record<PosterAutofillFieldKey, EventFormStep> = {
   title: 0,
@@ -39,17 +28,6 @@ const FIELD_STEP_MAP: Record<PosterAutofillFieldKey, EventFormStep> = {
   dates: 2,
   price: 2,
 };
-
-function isEditableElement(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return (
-    tag === "INPUT" ||
-    tag === "TEXTAREA" ||
-    tag === "SELECT" ||
-    target.isContentEditable
-  );
-}
 
 export default function PosterAutofillCard({
   currentImageFile,
@@ -69,345 +47,38 @@ export default function PosterAutofillCard({
 }: PosterAutofillCardProps) {
   const t = useTranslations("App.Publish");
   const tImg = useTranslations("Components.ImageUploader");
-
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const sequenceRef = useRef(0);
-  const autoScanConsumedRef = useRef<string | null>(null);
-  const onBusyChangeRef = useRef(onBusyChange);
-
-  useEffect(() => {
-    onBusyChangeRef.current = onBusyChange;
-  });
-
-  const [phase, setPhase] = useState<
-    "idle" | "preparing" | "checking" | "analyzing" | "success" | "empty" | "error"
-  >("idle");
   const [dragOver, setDragOver] = useState(false);
-  const [errorCode, setErrorCode] = useState<PosterExtractionErrorCode | null>(null);
-  const [customError, setCustomError] = useState<string | null>(null);
-  const [filledFields, setFilledFields] = useState<PosterAutofillFieldKey[]>([]);
-  const [unmatchedTown, setUnmatchedTown] = useState<string | null>(null);
-  const [pastDateWarning, setPastDateWarning] = useState(false);
-  const [dateInferredWarning, setDateInferredWarning] = useState(false);
-  const [priceReviewWarning, setPriceReviewWarning] = useState(false);
-  const [multiEventWarning, setMultiEventWarning] = useState(false);
-  const [lastScannedFile, setLastScannedFile] = useState<File | null>(null);
 
-  const isBusy =
-    phase === "preparing" || phase === "checking" || phase === "analyzing";
-
-  useEffect(() => {
-    onBusyChangeRef.current?.(isBusy);
-  }, [isBusy]);
-
-  useEffect(
-    () => () => {
-      abortRef.current?.abort();
-      onBusyChangeRef.current?.(false);
-    },
-    [],
-  );
-
-  const clearFeedback = useCallback(() => {
-    setErrorCode(null);
-    setCustomError(null);
-    setFilledFields([]);
-    setUnmatchedTown(null);
-    setPastDateWarning(false);
-    setDateInferredWarning(false);
-    setPriceReviewWarning(false);
-    setMultiEventWarning(false);
-  }, []);
-
-  const cancelActiveScan = useCallback(() => {
-    sequenceRef.current += 1;
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setPhase("idle");
-    clearFeedback();
-  }, [clearFeedback]);
-
-  const dispatchExtraction = useCallback(
-    async (
-      file: File,
-      seq: number,
-      allowOverwriteOwned = false,
-    ): Promise<void> => {
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
-      const timeoutId = window.setTimeout(
-        () => controller.abort("timeout"),
-        CLIENT_SCAN_TIMEOUT_MS,
-      );
-
-      setPhase("analyzing");
-      setErrorCode(null);
-      setCustomError(null);
-      sendGoogleEvent("publish_poster_autofill_start", { source: "publica" });
-
-      try {
-        const body = new FormData();
-        body.append("imageFile", file);
-        body.append("sequence", String(seq));
-
-        const response = await fetch("/api/events/extract-poster", {
-          method: "POST",
-          body,
-          signal: controller.signal,
-        });
-
-        if (seq !== sequenceRef.current) return;
-
-        if (!response.ok) {
-          let payload: PosterExtractionApiError | null = null;
-          try {
-            payload = (await response.json()) as PosterExtractionApiError;
-          } catch {
-            // Non-JSON error body
-          }
-
-          if (response.status === 401 || payload?.code === "unauthorized") {
-            setPhase("idle");
-            await onRequestAuthForScan(file);
-            return;
-          }
-
-          const code: PosterExtractionErrorCode =
-            payload?.code ??
-            (response.status === 429
-              ? "rate_limited"
-              : response.status === 504 || response.status === 408
-                ? "upstream_timeout"
-                : response.status === 503
-                  ? "not_configured"
-                  : response.status === 413
-                    ? "too_large"
-                    : response.status === 415 || response.status === 400
-                      ? "invalid_image"
-                      : "upstream_error");
-
-          setErrorCode(code);
-          setPhase("error");
-          sendGoogleEvent("publish_poster_autofill_error", {
-            source: "publica",
-            code,
-          });
-          return;
-        }
-
-        const data = (await response.json()) as PosterExtractionApiSuccess;
-        if (seq !== sequenceRef.current) return;
-
-        setLastScannedFile(file);
-
-        if (!data.hasData) {
-          clearFeedback();
-          setPhase("empty");
-          sendGoogleEvent("publish_poster_autofill_empty", {
-            source: "publica",
-          });
-          return;
-        }
-
-        const applied = onExtractionApplied(data.extracted, {
-          allowOverwriteOwned,
-        });
-        setFilledFields(applied.filledFields);
-        setUnmatchedTown(applied.unmatchedTown);
-        setPastDateWarning(applied.pastDate);
-        setDateInferredWarning(applied.dateInferred);
-        setPriceReviewWarning(applied.priceNeedsReview);
-        setMultiEventWarning(applied.isMultiEvent);
-        setPhase(applied.filledFields.length > 0 ? "success" : "empty");
-
-        sendGoogleEvent("publish_poster_autofill_success", {
-          source: "publica",
-          filled_count: applied.filledFields.length,
-          has_unmatched_town: Boolean(applied.unmatchedTown),
-        });
-      } catch (err) {
-        if (seq !== sequenceRef.current) return;
-        const timedOut = controller.signal.reason === "timeout";
-        if (controller.signal.aborted && !timedOut) {
-          setPhase("idle");
-          return;
-        }
-        const code: PosterExtractionErrorCode = timedOut
-          ? "upstream_timeout"
-          : "network_error";
-        setErrorCode(code);
-        setPhase("error");
-        sendGoogleEvent("publish_poster_autofill_error", {
-          source: "publica",
-          code,
-          message: err instanceof Error ? err.name : "unknown",
-        });
-      } finally {
-        window.clearTimeout(timeoutId);
-        if (abortRef.current === controller) {
-          abortRef.current = null;
-        }
-      }
-    },
-    [clearFeedback, onExtractionApplied, onRequestAuthForScan],
-  );
-
-  const checkAvailabilityAndScan = useCallback(
-    async (
-      file: File,
-      seq: number,
-      allowOverwriteOwned = false,
-    ): Promise<void> => {
-      setPhase("checking");
-      setErrorCode(null);
-      setCustomError(null);
-
-      try {
-        const statusRes = await fetch("/api/events/extract-poster", {
-          method: "GET",
-          cache: "no-store",
-        });
-        if (seq !== sequenceRef.current) return;
-
-        if (statusRes.ok) {
-          const status = (await statusRes.json()) as PosterExtractionStatusResponse;
-          if (seq !== sequenceRef.current) return;
-
-          if (status.state === "disabled") {
-            setErrorCode("not_configured");
-            setPhase("error");
-            return;
-          }
-          if (status.state === "app_limit" || status.state === "account_limit") {
-            setErrorCode("rate_limited");
-            setPhase("error");
-            return;
-          }
-          if (!status.signedIn) {
-            setPhase("idle");
-            await onRequestAuthForScan(file);
-            return;
-          }
-        }
-      } catch {
-        // Fall through to POST or auth check if status check hit a transient blip.
-        if (seq !== sequenceRef.current) return;
-        if (!isAuthenticated) {
-          setErrorCode("network_error");
-          setPhase("error");
-          return;
-        }
-      }
-
-      if (seq !== sequenceRef.current) return;
-      await dispatchExtraction(file, seq, allowOverwriteOwned);
-    },
-    [dispatchExtraction, isAuthenticated, onRequestAuthForScan],
-  );
-
-  const handleSelectedFile = useCallback(
-    async (rawFile: File): Promise<void> => {
-      if (disabled || isAuthLoading) return;
-      const seq = ++sequenceRef.current;
-      abortRef.current?.abort();
-      clearFeedback();
-      setPhase("preparing");
-
-      try {
-        const prepared = await loadAndPrepareImage(rawFile, {
-          maxBytes: MAX_TOTAL_UPLOAD_BYTES,
-        });
-        if (seq !== sequenceRef.current) return;
-
-        if (!prepared.ok) {
-          setCustomError(
-            imageUploadErrorMessage(tImg, prepared.reason, MAX_TOTAL_UPLOAD_BYTES),
-          );
-          setPhase("error");
-          return;
-        }
-
-        // Attach immediately so Step 3 already has the optimized poster.
-        onPosterPrepared(prepared.file);
-        await checkAvailabilityAndScan(prepared.file, seq, false);
-      } catch {
-        if (seq !== sequenceRef.current) return;
-        setCustomError(tImg("compressFailed"));
-        setPhase("error");
-      }
-    },
-    [
-      checkAvailabilityAndScan,
-      clearFeedback,
-      disabled,
-      isAuthLoading,
-      onPosterPrepared,
-      tImg,
-    ],
-  );
-
-  // One-shot auto-extraction when returning from a verified Logto scan redirect.
-  useEffect(() => {
-    if (
-      !autoScanIntentId ||
-      autoScanConsumedRef.current === autoScanIntentId ||
-      disabled ||
-      isAuthLoading ||
-      !isAuthenticated ||
-      !currentImageFile
-    ) {
-      return;
-    }
-    autoScanConsumedRef.current = autoScanIntentId;
-    onAutoScanHandled?.();
-    const seq = ++sequenceRef.current;
-    void dispatchExtraction(currentImageFile, seq, false);
-  }, [
-    autoScanIntentId,
+  const {
+    phase,
+    isBusy,
+    errorCode,
+    imagePrepFailure,
+    filledFields,
+    unmatchedTown,
+    pastDateWarning,
+    dateInferredWarning,
+    priceReviewWarning,
+    multiEventWarning,
+    lastScannedFile,
+    cancelActiveScan,
+    handleSelectedFile,
+    handleAnalyzeExisting,
+    handleUndoClick,
+  } = usePosterAutofill({
     currentImageFile,
-    disabled,
-    dispatchExtraction,
-    isAuthLoading,
     isAuthenticated,
+    isAuthLoading,
+    disabled,
+    autoScanIntentId,
     onAutoScanHandled,
-  ]);
-
-  // Image-only paste support (ignores text pastes and pastes inside form fields).
-  useEffect(() => {
-    const onPaste = (event: ClipboardEvent) => {
-      if (disabled || isBusy || isEditableElement(event.target)) return;
-      const items = event.clipboardData?.items;
-      if (!items) return;
-      for (const item of Array.from(items)) {
-        if (item.type.startsWith("image/")) {
-          const pasted = item.getAsFile();
-          if (pasted) {
-            event.preventDefault();
-            void handleSelectedFile(pasted);
-            return;
-          }
-        }
-      }
-    };
-    window.addEventListener("paste", onPaste);
-    return () => window.removeEventListener("paste", onPaste);
-  }, [disabled, handleSelectedFile, isBusy]);
-
-  const handleAnalyzeExisting = () => {
-    if (!currentImageFile || disabled || isBusy) return;
-    const seq = ++sequenceRef.current;
-    const isReread = lastScannedFile === currentImageFile;
-    void checkAvailabilityAndScan(currentImageFile, seq, isReread);
-  };
-
-  const handleUndoClick = () => {
-    onUndo();
-    setPhase("idle");
-    clearFeedback();
-    sendGoogleEvent("publish_poster_autofill_undo", { source: "publica" });
-  };
+    onRequestAuthForScan,
+    onPosterPrepared,
+    onExtractionApplied,
+    onUndo,
+    onBusyChange,
+  });
 
   const openFilePicker = () => {
     if (disabled || isBusy) return;
@@ -417,8 +88,8 @@ export default function PosterAutofillCard({
     }
   };
 
-  const errorMessage = customError
-    ? customError
+  const errorMessage = imagePrepFailure
+    ? imageUploadErrorMessage(tImg, imagePrepFailure, MAX_TOTAL_UPLOAD_BYTES)
     : errorCode === "not_configured"
       ? t("posterAutofill.errorUnavailable")
       : errorCode === "rate_limited"
@@ -625,7 +296,6 @@ export default function PosterAutofillCard({
           </div>
         </div>
 
-        {/* Honest live status region while preparing or scanning */}
         {isBusy && (
           <div
             role="status"
@@ -656,7 +326,6 @@ export default function PosterAutofillCard({
           </div>
         )}
 
-        {/* Extracted fields summary + review chips */}
         {phase === "success" && filledFields.length > 0 && (
           <div
             role="status"
@@ -685,7 +354,6 @@ export default function PosterAutofillCard({
           </div>
         )}
 
-        {/* Contextual uncertainty notices (only shown when real uncertainty exists) */}
         {phase === "success" &&
           (unmatchedTown ||
             dateInferredWarning ||
@@ -718,7 +386,6 @@ export default function PosterAutofillCard({
             </ul>
           )}
 
-        {/* Empty / non-poster notice */}
         {phase === "empty" && (
           <p
             role="status"
@@ -730,7 +397,6 @@ export default function PosterAutofillCard({
           </p>
         )}
 
-        {/* Error alert */}
         {phase === "error" && errorMessage && (
           <p
             role="alert"

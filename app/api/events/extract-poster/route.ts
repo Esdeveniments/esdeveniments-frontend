@@ -31,6 +31,7 @@ import {
 } from "@utils/auth-cookies";
 import { MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
 import { detectImageType, isBackendImageType } from "@utils/image-validation";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "types/i18n";
 import type {
   PosterExtractionApiError,
   PosterExtractionApiSuccess,
@@ -40,6 +41,21 @@ import type {
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 // Multipart framing envelope slack (boundary + part headers + CRLFs).
 const MAX_POSTER_REQUEST_BYTES = MAX_TOTAL_UPLOAD_BYTES + 8192;
+const CLIENT_ID_RE = /^[a-zA-Z0-9_-]{4,64}$/;
+
+function parseRequestLocale(raw: FormDataEntryValue | null): AppLocale {
+  if (
+    typeof raw === "string" &&
+    (SUPPORTED_LOCALES as readonly string[]).includes(raw)
+  ) {
+    return raw as AppLocale;
+  }
+  return DEFAULT_LOCALE;
+}
+
+function parseClientId(raw: FormDataEntryValue | null): string {
+  return typeof raw === "string" && CLIENT_ID_RE.test(raw) ? raw : "default";
+}
 
 async function readAuthenticatedSession(request: NextRequest) {
   const idToken = readTokenFromRequest(request, ID_TOKEN_COOKIE);
@@ -269,6 +285,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     typeof rawSeq === "string" && /^\d+$/.test(rawSeq)
       ? Number(rawSeq)
       : Date.now();
+  const clientId = parseClientId(form.get("clientId"));
+  const locale = parseRequestLocale(form.get("locale"));
 
   // Normalize & strip EXIF/GPS behind bounded Sharp concurrency pool.
   const inputBuffer = Buffer.from(await file.arrayBuffer());
@@ -295,8 +313,9 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   // Acquire sequence-ordered account scan lease (preempts older in-flight scan;
-  // rejects delayed stale selections without burning quota).
-  const lease = acquireAccountScanLease(accountId, parsedSeq);
+  // rejects delayed stale selections from the same client without burning quota,
+  // while allowing a new mount/tab clientId to start cleanly at seq 1).
+  const lease = acquireAccountScanLease(accountId, parsedSeq, clientId);
   if (!lease) {
     return attachRefreshedCookies(
       errorResponse(409, {
@@ -324,7 +343,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     const categories = await fetchCategories();
-    const prompt = buildPosterExtractionPrompt({ categories });
+    const prompt = buildPosterExtractionPrompt({ categories, locale });
     const dataUrl = `data:${normalized.mimeType};base64,${normalized.buffer.toString("base64")}`;
     const signal = AbortSignal.any([request.signal, lease.signal]);
 

@@ -79,7 +79,9 @@ export function isAllowedVisionModel(model: string | null): boolean {
   return (
     normalized.startsWith("gemini/") ||
     normalized.startsWith("gemini-") ||
-    normalized.startsWith("google/gemini-")
+    normalized.startsWith("google/gemini-") ||
+    normalized.startsWith("gemma-4") ||
+    normalized.startsWith("google/gemma-4")
   );
 }
 

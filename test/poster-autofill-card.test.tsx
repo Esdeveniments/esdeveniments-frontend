@@ -18,6 +18,7 @@ vi.mock("@utils/analytics", () => ({
 }));
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "ca",
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
     values ? `${key}:${JSON.stringify(values)}` : key,
 }));
@@ -215,6 +216,36 @@ describe("PosterAutofillCard", () => {
 
     await waitFor(() =>
       expect(onRequestAuthForScan).toHaveBeenCalledWith(sampleFile),
+    );
+  });
+
+  it("shows network error instead of image compression error when lazy optimizer chunk fails to fetch", async () => {
+    mocks.loadAndPrepareImage.mockRejectedValueOnce(
+      new TypeError("Failed to fetch dynamically imported module"),
+    );
+
+    render(
+      <PosterAutofillCard
+        currentImageFile={null}
+        currentImagePreview={null}
+        isAuthenticated={true}
+        isAuthLoading={false}
+        onRequestAuthForScan={vi.fn()}
+        onPosterPrepared={vi.fn()}
+        onExtractionApplied={vi.fn()}
+        canUndo={false}
+        onUndo={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("poster-autofill-input"), {
+      target: { files: [sampleFile] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("poster-autofill-error")).toHaveTextContent(
+        "posterAutofill.errorNetwork",
+      ),
     );
   });
 });
