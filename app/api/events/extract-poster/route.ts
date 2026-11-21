@@ -57,6 +57,49 @@ function parseClientId(raw: FormDataEntryValue | null): string {
   return typeof raw === "string" && CLIENT_ID_RE.test(raw) ? raw : "default";
 }
 
+/**
+ * Reads the request body up to `maxBytes` so a spoofed Content-Length header
+ * cannot force `request.formData()` to buffer an unbounded upload in memory.
+ */
+async function readBoundedBody(
+  request: NextRequest,
+  maxBytes: number,
+): Promise<
+  | { ok: true; body: Uint8Array<ArrayBuffer> }
+  | { ok: false; reason: "too_large" | "invalid" }
+> {
+  const stream = request.body;
+  if (!stream) return { ok: false, reason: "invalid" };
+
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return { ok: false, reason: "too_large" };
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return { ok: false, reason: "invalid" };
+  }
+
+  const combined = new Uint8Array(new ArrayBuffer(total));
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { ok: true, body: combined };
+}
+
 async function readAuthenticatedSession(request: NextRequest) {
   const idToken = readTokenFromRequest(request, ID_TOKEN_COOKIE);
   const refreshToken = readTokenFromRequest(request, REFRESH_TOKEN_COOKIE);
@@ -240,8 +283,28 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   let form: FormData;
+  const bounded = await readBoundedBody(request, MAX_POSTER_REQUEST_BYTES);
+  if (!bounded.ok) {
+    return attachRefreshedCookies(
+      errorResponse(
+        bounded.reason === "too_large" ? 413 : 400,
+        {
+          error:
+            bounded.reason === "too_large"
+              ? "Poster image is too large"
+              : "Invalid form data",
+          code: bounded.reason === "too_large" ? "too_large" : "invalid_image",
+        },
+      ),
+    );
+  }
   try {
-    form = await request.formData();
+    const rawContentType = request.headers.get("content-type") ?? "";
+    form = await new Request(request.url, {
+      method: "POST",
+      headers: { "content-type": rawContentType },
+      body: bounded.body,
+    }).formData();
   } catch {
     return attachRefreshedCookies(
       errorResponse(400, {
@@ -374,8 +437,8 @@ export async function POST(request: NextRequest): Promise<Response> {
         );
       }
 
-      // Refund the account charge when upstream failed without producing a result.
-      await refundAccountPosterScan(accountId);
+      // Refund the account charge against the exact day it was charged.
+      await refundAccountPosterScan(accountId, quota.chargedDay);
 
       if (aiResult.reason === "not_configured") {
         return attachRefreshedCookies(
@@ -402,7 +465,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     if (!isAllowedVisionModel(aiResult.model)) {
-      await refundAccountPosterScan(accountId);
+      await refundAccountPosterScan(accountId, quota.chargedDay);
       return attachRefreshedCookies(
         errorResponse(503, {
           error: "Vision model unavailable",
@@ -415,7 +478,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
       rawJson = parseAiJson(aiResult.content);
     } catch {
-      await refundAccountPosterScan(accountId);
+      await refundAccountPosterScan(accountId, quota.chargedDay);
       return attachRefreshedCookies(
         errorResponse(502, {
           error: "Could not parse AI extraction output",
@@ -428,7 +491,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       allowedCategories: categories,
     });
     if (!extracted) {
-      await refundAccountPosterScan(accountId);
+      await refundAccountPosterScan(accountId, quota.chargedDay);
       return attachRefreshedCookies(
         errorResponse(502, {
           error: "AI extraction output did not match expected schema",

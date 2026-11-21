@@ -127,3 +127,62 @@ export async function cacheSetJson(
     console.warn("[redis-cache] set failed:", error);
   }
 }
+
+/**
+ * Atomic integer counter increment with TTL on first creation (or if key lacks
+ * expiry). Returns `null` when Redis is unavailable so callers can fall back.
+ */
+export async function cacheIncrWithTtl(
+  key: string,
+  ttlSeconds: number,
+): Promise<{ count: number; ttlSeconds: number } | null> {
+  try {
+    const client = await getClient();
+    if (!client) return null;
+    const count = await client.incr(key);
+    let ttl = await client.ttl(key);
+    if (count === 1 || ttl < 0) {
+      await client.expire(key, ttlSeconds);
+      ttl = ttlSeconds;
+    }
+    return { count, ttlSeconds: Math.max(1, ttl) };
+  } catch (error) {
+    console.warn("[redis-cache] incr failed:", error);
+    return null;
+  }
+}
+
+/** Atomic decrement (clamped at 0) for rollback/refund of integer counters. */
+export async function cacheDecrClampZero(key: string): Promise<boolean> {
+  try {
+    const client = await getClient();
+    if (!client) return false;
+    const next = await client.decr(key);
+    if (next < 0) {
+      await client.set(key, "0", { KEEPTTL: true });
+    }
+    return true;
+  } catch (error) {
+    console.warn("[redis-cache] decr failed:", error);
+    return false;
+  }
+}
+
+/** Read-only lookup of an integer counter + remaining TTL in seconds. */
+export async function cacheGetCounter(
+  key: string,
+): Promise<{ count: number; ttlSeconds: number } | null> {
+  try {
+    const client = await getClient();
+    if (!client) return null;
+    const [raw, ttl] = await Promise.all([client.get(key), client.ttl(key)]);
+    if (raw === null) return { count: 0, ttlSeconds: 0 };
+    const count = Number(raw);
+    return {
+      count: Number.isFinite(count) ? count : 0,
+      ttlSeconds: Math.max(1, ttl > 0 ? ttl : 60),
+    };
+  } catch {
+    return null;
+  }
+}

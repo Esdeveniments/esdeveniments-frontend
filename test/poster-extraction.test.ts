@@ -5,6 +5,7 @@ import {
   hasExtractedEventData,
   parseAiJson,
   parsePosterExtraction,
+  POSTER_EXTRACTION_JSON_SCHEMA,
   resolvePosterPrice,
 } from "@lib/validation/poster-extraction";
 import {
@@ -101,6 +102,13 @@ describe("buildPosterExtractionPrompt", () => {
       locale: "en",
     });
     expect(promptEn).toContain("idiomatic English");
+
+    const props = POSTER_EXTRACTION_JSON_SCHEMA.properties as Record<
+      string,
+      { description: string }
+    >;
+    expect(props.title.description).not.toContain("in Catalan");
+    expect(props.description.description).not.toContain("in Catalan");
   });
 });
 
@@ -126,11 +134,19 @@ describe("resolvePosterPrice", () => {
     });
   });
 
-  it("maps donation-based taquilla inversa to unknown with review flag (never free)", () => {
+  it("maps donation-based taquilla inversa (even with a suggested amount) to unknown with review flag (never free or paid)", () => {
     expect(resolvePosterPrice("Taquilla inversa")).toEqual({
       priceType: "unknown",
       priceAmount: "",
       originalPrice: "Taquilla inversa",
+      needsReview: true,
+    });
+    expect(
+      resolvePosterPrice("Taquilla inversa (aportació recomanada 5 €)"),
+    ).toEqual({
+      priceType: "unknown",
+      priceAmount: "",
+      originalPrice: "Taquilla inversa (aportació recomanada 5 €)",
       needsReview: true,
     });
   });
@@ -234,13 +250,19 @@ describe("parsePosterExtraction", () => {
     expect(allDay?.endDate).toBe("2027-05-31T23:59");
     expect(allDay?.dateInferred).toBe(true);
 
-    // Impossible calendar date is dropped
+    // Impossible calendar date is dropped (both bare and with explicit UTC offset)
     const badDate = parsePosterExtraction(
       { startDate: "2026-02-31T10:00", endDate: null },
       { now: anchor },
     );
     expect(badDate?.startDate).toBeNull();
     expect(badDate?.endDate).toBeNull();
+
+    const badOffsetDate = parsePosterExtraction(
+      { startDate: "2026-02-31T10:00:00Z", endDate: null },
+      { now: anchor },
+    );
+    expect(badOffsetDate?.startDate).toBeNull();
 
     // Valid leap day passes
     const leapDay = parsePosterExtraction(

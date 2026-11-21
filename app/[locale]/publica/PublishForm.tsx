@@ -183,8 +183,9 @@ const PublishForm = () => {
   const [publishAfterReturn, setPublishAfterReturn] = useState<PublishResumeIntent | null>(null);
   const [verifiedScanIntentId, setVerifiedScanIntentId] = useState<string | null>(null);
   const [undoRecord, setUndoRecord] = useState<PosterAutofillUndoRecord | null>(null);
+  const [pendingExtraction, setPendingExtraction] =
+    useState<PosterExtractedEvent | null>(null);
   const userOwnedFieldsRef = useRef<Set<PosterAutofillFieldKey>>(new Set());
-  const pendingExtractionRef = useRef<PosterExtractedEvent | null>(null);
   const autofillRunIdRef = useRef(0);
   const formRef = useRef(form);
   useEffect(() => {
@@ -210,8 +211,9 @@ const PublishForm = () => {
     setPublishAfterReturn(null);
     setVerifiedScanIntentId(null);
     setUndoRecord(null);
+    setPendingExtraction(null);
+    setPosterAutofillBusy(false);
     userOwnedFieldsRef.current.clear();
-    pendingExtractionRef.current = null;
     setIsRedirecting(false);
     submittedRef.current = false;
     formStartedRef.current = false;
@@ -231,8 +233,9 @@ const PublishForm = () => {
       setError(null);
       setIsRedirecting(false);
       setUndoRecord(null);
+      setPendingExtraction(null);
+      setPosterAutofillBusy(false);
       userOwnedFieldsRef.current.clear();
-      pendingExtractionRef.current = null;
       setEditorVersion((version) => version + 1);
       autoDatesRef.current = false;
       setForm({ ...emptyForm, ...createDefaultDates(), ...saved.form });
@@ -533,11 +536,12 @@ const PublishForm = () => {
 
       // Keep extraction for deferred reconciliation if town/category catalogs
       // were still loading when the AI response arrived.
-      pendingExtractionRef.current =
+      setPendingExtraction(
         (isLoadingCities && Boolean(extracted.town)) ||
-        (isLoadingCategories && extracted.categories.length > 0)
+          (isLoadingCategories && extracted.categories.length > 0)
           ? extracted
-          : null;
+          : null,
+      );
 
       return {
         filledFields: result.filledFields,
@@ -560,11 +564,9 @@ const PublishForm = () => {
     ],
   );
 
-  // Reconcile pending town/categories if catalogs finish loading after AI reply.
-  const reconcilePendingExtraction = useEffectEvent(() => {
-    const pending = pendingExtractionRef.current;
-    if (!pending || isLoadingCities || isLoadingCategories) return;
-    pendingExtractionRef.current = null;
+  // Reconcile pending town/categories when either catalogs or extraction resolve.
+  const reconcilePendingExtraction = useEffectEvent((pending: PosterExtractedEvent) => {
+    setPendingExtraction(null);
     const current = formRef.current;
     const reconciled = applyPosterExtractionToForm({
       currentForm: current,
@@ -606,10 +608,10 @@ const PublishForm = () => {
   });
 
   useEffect(() => {
-    if (!isLoadingCities && !isLoadingCategories) {
-      reconcilePendingExtraction();
+    if (pendingExtraction && !isLoadingCities && !isLoadingCategories) {
+      queueMicrotask(() => reconcilePendingExtraction(pendingExtraction));
     }
-  }, [isLoadingCities, isLoadingCategories]);
+  }, [pendingExtraction, isLoadingCities, isLoadingCategories]);
 
   const handlePosterUndo = useCallback(() => {
     if (!undoRecord) return;
@@ -623,7 +625,7 @@ const PublishForm = () => {
     formRef.current = nextForm;
     setForm(nextForm);
     setUndoRecord(null);
-    pendingExtractionRef.current = null;
+    setPendingExtraction(null);
     markEdited();
   }, [markEdited, undoRecord]);
 
@@ -800,7 +802,7 @@ const PublishForm = () => {
   };
 
   const onSubmit = async () => {
-    if (handingOff || isPending || creatingRef.current || submittedRef.current || isAuthLoading || draft.ownerChanged) return;
+    if (handingOff || isPending || posterAutofillBusy || creatingRef.current || submittedRef.current || isAuthLoading || draft.ownerChanged) return;
     if (draft.status === "decision" || draft.failure?.reason === "stale") {
       setError(t("draftResolveBeforePublish"));
       return;
@@ -1079,7 +1081,7 @@ const PublishForm = () => {
           setOpen={setShowPreview}
           title={tForm("previewModalTitle")}
           actionButton={isPending && !isRedirecting ? tForm("publishing") : submitLabel}
-          actionButtonDisabled={isDraftLocked || isFormDisabled || isPending || isSubmitDisabled || imagePreparing}
+          actionButtonDisabled={isDraftLocked || isFormDisabled || isPending || isSubmitDisabled || imagePreparing || posterAutofillBusy}
           actionButtonAnalyticsAction={submitAnalyticsAction}
           onActionButtonClick={async () => {
             await onSubmit();
@@ -1161,6 +1163,7 @@ const PublishForm = () => {
             hidden={draft.status === "decision" && !draft.dirty}>
           <div className="w-full stack gap-6">
             <PosterAutofillCard
+              key={editorVersion}
               currentImageFile={imageFile}
               currentImagePreview={imagePreview}
               isAuthenticated={isAuthenticated}

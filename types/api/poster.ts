@@ -168,6 +168,8 @@ export interface PosterQuotaAdmission {
   allowed: boolean;
   reason?: "attempt_limit" | "account_limit" | "app_limit";
   retryAfterSec?: number;
+  /** Europe/Madrid YYYY-MM-DD day key charged, carried to refunds across midnight. */
+  chargedDay?: string;
 }
 
 export interface PosterLeaseHandle {

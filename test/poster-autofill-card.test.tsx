@@ -248,4 +248,60 @@ describe("PosterAutofillCard", () => {
       ),
     );
   });
+
+  it("surfaces detected unmatched town warning even when zero fields were filled", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ state: "available", signedIn: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            extracted: { ...EXTRACTED, title: null, description: null, startDate: null, endDate: null, location: null, price: null, priceResolution: null, categories: [], town: "Vila Desconeguda" },
+            hasData: true,
+            model: "gemini/gemini-3.6-flash",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const onExtractionApplied = vi.fn().mockReturnValue({
+      filledFields: [],
+      unmatchedTown: "Vila Desconeguda",
+      pastDate: false,
+      dateInferred: false,
+      priceNeedsReview: false,
+      isMultiEvent: false,
+    });
+
+    render(
+      <PosterAutofillCard
+        currentImageFile={sampleFile}
+        currentImagePreview="data:image/jpeg;base64,abc"
+        isAuthenticated={true}
+        isAuthLoading={false}
+        onRequestAuthForScan={vi.fn()}
+        onPosterPrepared={vi.fn()}
+        onExtractionApplied={onExtractionApplied}
+        canUndo={false}
+        onUndo={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("poster-autofill-input"), {
+      target: { files: [sampleFile] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("poster-autofill-warnings")).toHaveTextContent(
+        "Vila Desconeguda",
+      ),
+    );
+    expect(screen.queryByTestId("poster-autofill-empty")).not.toBeInTheDocument();
+  });
 });

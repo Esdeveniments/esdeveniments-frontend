@@ -61,12 +61,12 @@ export const POSTER_EXTRACTION_JSON_SCHEMA: Record<string, unknown> = {
     title: {
       type: ["string", "null"],
       description:
-        "Clear, specific event title in Catalan (max 90 chars). Null if unreadable or not an event poster.",
+        "Clear, specific event title in the output language requested by the prompt (max 90 chars). Null if unreadable or not an event poster.",
     },
     description: {
       type: ["string", "null"],
       description:
-        "Factual, natural Catalan description (1 to 3 concise paragraphs separated by \\n\\n) capturing only details visible on the poster. Lead with what the event is (do not waste the first sentence repeating date/town boilerplate). Plain text or sparing **bold** only; never Markdown # headings or HTML. Never invent details or clichés. Null if not an event poster.",
+        "Factual, natural description in the output language requested by the prompt (1 to 3 concise paragraphs separated by \\n\\n) capturing only details visible on the poster. Lead with what the event is (do not waste the first sentence repeating date/town boilerplate). Plain text or sparing **bold** only; never Markdown # headings or HTML. Never invent details or clichés. Null if not an event poster.",
     },
     startDate: {
       type: ["string", "null"],
@@ -330,9 +330,17 @@ function parsePosterDateToken(
   const cleaned = cleanOptionalText(raw);
   if (!cleaned) return null;
 
-  // Explicit timezone offset (Z or +/-HH:mm): convert to Europe/Madrid wall time
-  // instead of blindly stripping the offset.
+  // Explicit timezone offset (Z or +/-HH:mm): validate the calendar date FIRST
+  // (JS Date silently rolls impossible dates like 2026-02-31 into March!), then
+  // convert to Europe/Madrid wall time.
   if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(cleaned)) {
+    const datePrefixMatch = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(cleaned);
+    if (!datePrefixMatch) return null;
+    try {
+      splitLocalDateTime(`${datePrefixMatch[1]}T${datePrefixMatch[2]}`);
+    } catch {
+      return null;
+    }
     const converted = formatUtcInstantInMadrid(new Date(cleaned));
     if (!converted) return null;
     const year = Number(converted.date.slice(0, 4));
@@ -448,8 +456,10 @@ export function resolvePosterPrice(
   }
   const paidAmounts = euroMatches.filter((amount) => amount > 0);
 
-  // Donation-based entry with no fixed paid tier is never "free".
-  if (DONATION_PRICE_RE.test(normalized) && paidAmounts.length === 0) {
+  // Donation-based entry ("taquilla inversa", "aportació voluntària", including
+  // suggested amounts like "Taquilla inversa (aportació recomanada 5 €)") is
+  // never a fixed paid ticket or free admission.
+  if (DONATION_PRICE_RE.test(normalized)) {
     return {
       priceType: "unknown",
       priceAmount: "",

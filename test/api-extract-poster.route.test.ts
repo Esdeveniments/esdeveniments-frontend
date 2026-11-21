@@ -179,6 +179,15 @@ describe("POST /api/events/extract-poster", () => {
     });
     const spoofedReq = await makeMultipartRequest(fakeFile);
     expect((await POST(spoofedReq)).status).toBe(415);
+
+    // Spoofed small Content-Length header on an oversized streamed payload -> 413
+    const oversized = new Uint8Array(2 * 1024 * 1024 + 20_000);
+    oversized.set([0xff, 0xd8, 0xff], 0);
+    const spoofedLengthReq = await makeMultipartRequest(
+      new File([oversized], "huge.jpg", { type: "image/jpeg" }),
+      { contentLengthOverride: "1000" },
+    );
+    expect((await POST(spoofedLengthReq)).status).toBe(413);
     expect(mocks.completeWithAiGateway).not.toHaveBeenCalled();
   });
 

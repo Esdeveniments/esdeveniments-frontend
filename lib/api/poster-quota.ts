@@ -1,6 +1,10 @@
 import "server-only";
 import { TIMEZONE_MADRID } from "@utils/constants";
-import { cacheGetJson, cacheSetJson } from "@lib/cache/redis-client";
+import {
+  cacheDecrClampZero,
+  cacheGetCounter,
+  cacheIncrWithTtl,
+} from "@lib/cache/redis-client";
 import type {
   PosterActiveLease,
   PosterAvailabilityState,
@@ -19,11 +23,14 @@ const GLOBAL_SCANS_PER_MINUTE = 8;
 const GLOBAL_SCANS_PER_DAY = 150;
 const LEASE_TTL_MS = 60_000;
 const SEQUENCE_RETENTION_MS = 5 * 60 * 1000;
+const PRUNE_INTERVAL_MS = 60_000;
 
 const globalStore = globalThis as unknown as {
   __posterQuotaMemory?: Map<string, PosterQuotaCounterRecord>;
   __posterActiveLeases?: Map<string, PosterActiveLease>;
   __posterHighWater?: Map<string, PosterHighWaterEntry>;
+  __posterQuotaLastPrune?: number;
+  __posterQuotaLock?: Promise<void>;
 };
 
 function getMemoryMap(): Map<string, PosterQuotaCounterRecord> {
@@ -45,6 +52,34 @@ function getHighWaterMap(): Map<string, PosterHighWaterEntry> {
     globalStore.__posterHighWater = new Map();
   }
   return globalStore.__posterHighWater;
+}
+
+/** Lazy periodic cleanup of expired entries so long-running containers stay bounded. */
+function pruneExpiredStores(nowMs: number): void {
+  const lastPrune = globalStore.__posterQuotaLastPrune ?? 0;
+  if (nowMs - lastPrune < PRUNE_INTERVAL_MS) return;
+  globalStore.__posterQuotaLastPrune = nowMs;
+
+  for (const [key, entry] of getMemoryMap()) {
+    if (entry.resetAt <= nowMs) getMemoryMap().delete(key);
+  }
+  for (const [key, entry] of getHighWaterMap()) {
+    if (entry.expiresAt <= nowMs) getHighWaterMap().delete(key);
+  }
+  for (const [key, entry] of getLeaseMap()) {
+    if (entry.expiresAt <= nowMs) getLeaseMap().delete(key);
+  }
+}
+
+/** Serializes quota check/charge/rollback operations within the Node process. */
+function withQuotaLock<T>(fn: () => Promise<T>): Promise<T> {
+  const previous = globalStore.__posterQuotaLock ?? Promise.resolve();
+  let release!: () => void;
+  const next = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  globalStore.__posterQuotaLock = previous.then(() => next);
+  return previous.then(fn).finally(() => release());
 }
 
 function getMadridDayKey(now = new Date()): string {
@@ -70,11 +105,18 @@ function getSecondsUntilNextMadridMidnight(now = new Date()): number {
   return Math.max(60, 86_400 - (h * 3600 + m * 60 + s));
 }
 
-async function readCounter(key: string, nowMs: number): Promise<PosterQuotaCounterRecord | null> {
-  const redisRecord = await cacheGetJson<PosterQuotaCounterRecord>(key);
-  if (redisRecord && redisRecord.resetAt > nowMs) {
-    getMemoryMap().set(key, redisRecord);
-    return redisRecord;
+async function readCounter(
+  key: string,
+  nowMs: number,
+): Promise<PosterQuotaCounterRecord | null> {
+  pruneExpiredStores(nowMs);
+  const redisCounter = await cacheGetCounter(key);
+  if (redisCounter !== null) {
+    if (redisCounter.count <= 0) return null;
+    return {
+      count: redisCounter.count,
+      resetAt: nowMs + redisCounter.ttlSeconds * 1000,
+    };
   }
   const memRecord = getMemoryMap().get(key);
   if (memRecord && memRecord.resetAt > nowMs) {
@@ -83,34 +125,43 @@ async function readCounter(key: string, nowMs: number): Promise<PosterQuotaCount
   return null;
 }
 
-async function writeCounter(key: string, record: PosterQuotaCounterRecord, nowMs: number): Promise<void> {
-  getMemoryMap().set(key, record);
-  const ttlSec = Math.max(1, Math.ceil((record.resetAt - nowMs) / 1000));
-  await cacheSetJson(key, record, ttlSec);
-}
-
 async function incrementCounter(
   key: string,
   windowMs: number,
   nowMs: number,
 ): Promise<PosterQuotaCounterRecord> {
-  const existing = await readCounter(key, nowMs);
+  pruneExpiredStores(nowMs);
+  const ttlSeconds = Math.max(1, Math.ceil(windowMs / 1000));
+  const redisResult = await cacheIncrWithTtl(key, ttlSeconds);
+  if (redisResult !== null) {
+    const record: PosterQuotaCounterRecord = {
+      count: redisResult.count,
+      resetAt: nowMs + redisResult.ttlSeconds * 1000,
+    };
+    getMemoryMap().set(key, record);
+    return record;
+  }
+
+  const existing = getMemoryMap().get(key);
   const next: PosterQuotaCounterRecord =
     existing && existing.resetAt > nowMs
       ? { count: existing.count + 1, resetAt: existing.resetAt }
       : { count: 1, resetAt: nowMs + windowMs };
-  await writeCounter(key, next, nowMs);
+  getMemoryMap().set(key, next);
   return next;
 }
 
 async function decrementCounter(key: string, nowMs: number): Promise<void> {
-  const existing = await readCounter(key, nowMs);
-  if (!existing || existing.count <= 0) return;
-  await writeCounter(
-    key,
-    { count: existing.count - 1, resetAt: existing.resetAt },
-    nowMs,
-  );
+  const decrementedRedis = await cacheDecrClampZero(key);
+  const existing = getMemoryMap().get(key);
+  if (existing && existing.resetAt > nowMs && existing.count > 0) {
+    getMemoryMap().set(key, {
+      count: existing.count - 1,
+      resetAt: existing.resetAt,
+    });
+  } else if (!decrementedRedis) {
+    getMemoryMap().delete(key);
+  }
 }
 
 function accountDayKey(accountId: string, day: string): string {
@@ -173,87 +224,95 @@ export async function checkPosterQuotaAvailability(
  * Pre-dispatch upload attempt meter: bounds every authenticated POST (even
  * corrupt/invalid uploads) at 20 requests / 10 min per account.
  */
-export async function checkUploadAttemptLimit(
+export function checkUploadAttemptLimit(
   accountId: string,
   now = new Date(),
 ): Promise<PosterQuotaAdmission> {
-  const nowMs = now.getTime();
-  const record = await incrementCounter(
-    accountAttemptKey(accountId),
-    ATTEMPTS_WINDOW_MS,
-    nowMs,
-  );
-  if (record.count > ATTEMPTS_MAX_PER_WINDOW) {
-    return {
-      allowed: false,
-      reason: "attempt_limit",
-      retryAfterSec: Math.max(1, Math.ceil((record.resetAt - nowMs) / 1000)),
-    };
-  }
-  return { allowed: true };
+  return withQuotaLock(async () => {
+    const nowMs = now.getTime();
+    const record = await incrementCounter(
+      accountAttemptKey(accountId),
+      ATTEMPTS_WINDOW_MS,
+      nowMs,
+    );
+    if (record.count > ATTEMPTS_MAX_PER_WINDOW) {
+      return {
+        allowed: false,
+        reason: "attempt_limit",
+        retryAfterSec: Math.max(1, Math.ceil((record.resetAt - nowMs) / 1000)),
+      };
+    }
+    return { allowed: true };
+  });
 }
 
 /**
- * Charges a scan dispatch against per-account daily, global per-minute, and
- * global daily budgets. Rolls back already-incremented counters if a later
- * limit fails so rejected requests never burn quota.
+ * Atomically charges a scan dispatch against per-account daily, global
+ * per-minute, and global daily budgets. Uses Redis atomic INCR/DECR when Redis
+ * is available and serializes in-process fallback access. Returns `chargedDay`
+ * so midnight-crossing refunds decrement the exact day that was charged.
  */
-export async function chargePosterScan(
+export function chargePosterScan(
   accountId: string,
   now = new Date(),
 ): Promise<PosterQuotaAdmission> {
-  const nowMs = now.getTime();
-  const day = getMadridDayKey(now);
-  const dayWindowMs = getSecondsUntilNextMadridMidnight(now) * 1000;
+  return withQuotaLock(async () => {
+    const nowMs = now.getTime();
+    const day = getMadridDayKey(now);
+    const dayWindowMs = getSecondsUntilNextMadridMidnight(now) * 1000;
 
-  const globalDay = await incrementCounter(globalDayKey(day), dayWindowMs, nowMs);
-  if (globalDay.count > GLOBAL_SCANS_PER_DAY) {
-    await decrementCounter(globalDayKey(day), nowMs);
-    return {
-      allowed: false,
-      reason: "app_limit",
-      retryAfterSec: Math.max(1, Math.ceil((globalDay.resetAt - nowMs) / 1000)),
-    };
-  }
+    const globalDay = await incrementCounter(globalDayKey(day), dayWindowMs, nowMs);
+    if (globalDay.count > GLOBAL_SCANS_PER_DAY) {
+      await decrementCounter(globalDayKey(day), nowMs);
+      return {
+        allowed: false,
+        reason: "app_limit",
+        retryAfterSec: Math.max(1, Math.ceil((globalDay.resetAt - nowMs) / 1000)),
+      };
+    }
 
-  const globalMin = await incrementCounter(globalMinuteKey(), 60_000, nowMs);
-  if (globalMin.count > GLOBAL_SCANS_PER_MINUTE) {
-    await decrementCounter(globalMinuteKey(), nowMs);
-    await decrementCounter(globalDayKey(day), nowMs);
-    return {
-      allowed: false,
-      reason: "app_limit",
-      retryAfterSec: Math.max(1, Math.ceil((globalMin.resetAt - nowMs) / 1000)),
-    };
-  }
+    const globalMin = await incrementCounter(globalMinuteKey(), 60_000, nowMs);
+    if (globalMin.count > GLOBAL_SCANS_PER_MINUTE) {
+      await decrementCounter(globalMinuteKey(), nowMs);
+      await decrementCounter(globalDayKey(day), nowMs);
+      return {
+        allowed: false,
+        reason: "app_limit",
+        retryAfterSec: Math.max(1, Math.ceil((globalMin.resetAt - nowMs) / 1000)),
+      };
+    }
 
-  const acctDay = await incrementCounter(
-    accountDayKey(accountId, day),
-    dayWindowMs,
-    nowMs,
-  );
-  if (acctDay.count > ACCOUNT_SCANS_PER_DAY) {
-    await decrementCounter(accountDayKey(accountId, day), nowMs);
-    await decrementCounter(globalMinuteKey(), nowMs);
-    await decrementCounter(globalDayKey(day), nowMs);
-    return {
-      allowed: false,
-      reason: "account_limit",
-      retryAfterSec: Math.max(1, Math.ceil((acctDay.resetAt - nowMs) / 1000)),
-    };
-  }
+    const acctDay = await incrementCounter(
+      accountDayKey(accountId, day),
+      dayWindowMs,
+      nowMs,
+    );
+    if (acctDay.count > ACCOUNT_SCANS_PER_DAY) {
+      await decrementCounter(accountDayKey(accountId, day), nowMs);
+      await decrementCounter(globalMinuteKey(), nowMs);
+      await decrementCounter(globalDayKey(day), nowMs);
+      return {
+        allowed: false,
+        reason: "account_limit",
+        retryAfterSec: Math.max(1, Math.ceil((acctDay.resetAt - nowMs) / 1000)),
+      };
+    }
 
-  return { allowed: true };
+    return { allowed: true, chargedDay: day };
+  });
 }
 
-/** Refunds the per-account daily charge when the upstream AI fails without a result. */
-export async function refundAccountPosterScan(
+/** Refunds the per-account daily charge against the exact day that was charged. */
+export function refundAccountPosterScan(
   accountId: string,
+  chargedDay?: string,
   now = new Date(),
 ): Promise<void> {
-  const nowMs = now.getTime();
-  const day = getMadridDayKey(now);
-  await decrementCounter(accountDayKey(accountId, day), nowMs);
+  return withQuotaLock(async () => {
+    const nowMs = now.getTime();
+    const day = chargedDay ?? getMadridDayKey(now);
+    await decrementCounter(accountDayKey(accountId, day), nowMs);
+  });
 }
 
 /**
@@ -270,6 +329,7 @@ export function acquireAccountScanLease(
   clientId = "default",
   nowMs = Date.now(),
 ): PosterLeaseHandle | null {
+  pruneExpiredStores(nowMs);
   const leases = getLeaseMap();
   const highWater = getHighWaterMap();
   const markKey = `${accountId}:${clientId}`;
@@ -317,4 +377,6 @@ export function resetPosterQuotaStateForTests(): void {
   globalStore.__posterQuotaMemory?.clear();
   globalStore.__posterActiveLeases?.clear();
   globalStore.__posterHighWater?.clear();
+  globalStore.__posterQuotaLastPrune = 0;
+  globalStore.__posterQuotaLock = undefined;
 }

@@ -77,10 +77,15 @@ export function usePosterAutofill({
   const clientIdRef = useRef<string | null>(null);
   const sequenceRef = useRef(0);
   const autoScanConsumedRef = useRef<string | null>(null);
+  const activeScanFileRef = useRef<File | null>(null);
   const onBusyChangeRef = useRef(onBusyChange);
+  const onExtractionAppliedRef = useRef(onExtractionApplied);
+  const onRequestAuthForScanRef = useRef(onRequestAuthForScan);
 
   useEffect(() => {
     onBusyChangeRef.current = onBusyChange;
+    onExtractionAppliedRef.current = onExtractionApplied;
+    onRequestAuthForScanRef.current = onRequestAuthForScan;
   });
 
   const getClientId = () => {
@@ -113,11 +118,25 @@ export function usePosterAutofill({
 
   useEffect(
     () => () => {
+      sequenceRef.current += 1;
+      activeScanFileRef.current = null;
       abortRef.current?.abort();
       onBusyChangeRef.current?.(false);
     },
     [],
   );
+
+  // Cancel any in-flight scan if an external uploader (Step 3 ImageUpload)
+  // replaces or removes the poster while scanning is in progress.
+  useEffect(() => {
+    const activeFile = activeScanFileRef.current;
+    if (!activeFile || currentImageFile === activeFile) return;
+    sequenceRef.current += 1;
+    activeScanFileRef.current = null;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    queueMicrotask(() => setPhase("idle"));
+  }, [currentImageFile]);
 
   const clearFeedback = useCallback(() => {
     setErrorCode(null);
@@ -132,6 +151,7 @@ export function usePosterAutofill({
 
   const cancelActiveScan = useCallback(() => {
     sequenceRef.current += 1;
+    activeScanFileRef.current = null;
     abortRef.current?.abort();
     abortRef.current = null;
     setPhase("idle");
@@ -147,6 +167,7 @@ export function usePosterAutofill({
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
+      activeScanFileRef.current = file;
       const timeoutId = window.setTimeout(
         () => controller.abort("timeout"),
         CLIENT_SCAN_TIMEOUT_MS,
@@ -179,10 +200,11 @@ export function usePosterAutofill({
           } catch {
             // Non-JSON error body
           }
+          if (seq !== sequenceRef.current) return;
 
           if (response.status === 401 || payload?.code === "unauthorized") {
             setPhase("idle");
-            await onRequestAuthForScan(file);
+            await onRequestAuthForScanRef.current(file);
             return;
           }
 
@@ -223,7 +245,7 @@ export function usePosterAutofill({
           return;
         }
 
-        const applied = onExtractionApplied(data.extracted, {
+        const applied = onExtractionAppliedRef.current(data.extracted, {
           allowOverwriteOwned,
         });
         setFilledFields(applied.filledFields);
@@ -232,7 +254,14 @@ export function usePosterAutofill({
         setDateInferredWarning(applied.dateInferred);
         setPriceReviewWarning(applied.priceNeedsReview);
         setMultiEventWarning(applied.isMultiEvent);
-        setPhase(applied.filledFields.length > 0 ? "success" : "empty");
+        const hasAnyGuidance =
+          applied.filledFields.length > 0 ||
+          Boolean(applied.unmatchedTown) ||
+          applied.pastDate ||
+          applied.dateInferred ||
+          applied.priceNeedsReview ||
+          applied.isMultiEvent;
+        setPhase(hasAnyGuidance ? "success" : "empty");
 
         sendGoogleEvent("publish_poster_autofill_success", {
           source: "publica",
@@ -260,10 +289,11 @@ export function usePosterAutofill({
         window.clearTimeout(timeoutId);
         if (abortRef.current === controller) {
           abortRef.current = null;
+          activeScanFileRef.current = null;
         }
       }
     },
-    [clearFeedback, locale, onExtractionApplied, onRequestAuthForScan],
+    [clearFeedback, locale],
   );
 
   const checkAvailabilityAndScan = useCallback(
@@ -272,6 +302,7 @@ export function usePosterAutofill({
       seq: number,
       allowOverwriteOwned = false,
     ): Promise<void> => {
+      activeScanFileRef.current = file;
       setPhase("checking");
       setErrorCode(null);
       setImagePrepFailure(null);
@@ -288,24 +319,28 @@ export function usePosterAutofill({
           if (seq !== sequenceRef.current) return;
 
           if (status.state === "disabled") {
+            activeScanFileRef.current = null;
             setErrorCode("not_configured");
             setPhase("error");
             return;
           }
           if (status.state === "app_limit" || status.state === "account_limit") {
+            activeScanFileRef.current = null;
             setErrorCode("rate_limited");
             setPhase("error");
             return;
           }
           if (!status.signedIn) {
+            activeScanFileRef.current = null;
             setPhase("idle");
-            await onRequestAuthForScan(file);
+            await onRequestAuthForScanRef.current(file);
             return;
           }
         }
       } catch {
         if (seq !== sequenceRef.current) return;
         if (!isAuthenticated) {
+          activeScanFileRef.current = null;
           setErrorCode("network_error");
           setPhase("error");
           return;
@@ -315,7 +350,7 @@ export function usePosterAutofill({
       if (seq !== sequenceRef.current) return;
       await dispatchExtraction(file, seq, allowOverwriteOwned);
     },
-    [dispatchExtraction, isAuthenticated, onRequestAuthForScan],
+    [dispatchExtraction, isAuthenticated],
   );
 
   const handleSelectedFile = useCallback(
