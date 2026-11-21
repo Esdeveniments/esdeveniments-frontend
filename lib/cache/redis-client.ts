@@ -158,8 +158,8 @@ export async function cacheDecrClampZero(key: string): Promise<boolean> {
     const client = await getClient();
     if (!client) return false;
     const next = await client.decr(key);
-    if (next < 0) {
-      await client.set(key, "0", { KEEPTTL: true });
+    if (next <= 0) {
+      await client.del(key);
     }
     return true;
   } catch (error) {
