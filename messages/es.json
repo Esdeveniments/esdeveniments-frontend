@@ -444,7 +444,6 @@
         "errorInvalidImage": "Imagen ilegible. Prueba con un JPG o PNG.",
         "errorNetwork": "Sin conexión. Inténtalo de nuevo.",
         "errorGeneric": "No se ha podido leer el cartel. Hemos guardado la imagen.",
-        "privacyNote": "Sin GPS · IA Gemini",
         "fields": {
           "title": "Título",
           "description": "Descripción",
@@ -1142,6 +1141,8 @@
       "clear": "Borrar fechas"
     },
     "DatePicker": {
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
       "startTime": "Hora de inicio",
       "endTime": "Hora de fin",
       "dateAndTime": "Fecha y hora",

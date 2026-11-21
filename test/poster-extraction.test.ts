@@ -385,5 +385,22 @@ describe("matchCityOption and poster-autofill form merging", () => {
     expect(undone.nextForm.region).toBeNull();
     expect(undone.nextForm.title).toBe("Títol de l'usuari");
     expect(undone.restoredAutoDates).toBe(true);
+
+    // Explicit rescan / poster replacement (preserveUserValues: false) refills
+    // even previously user-owned fields cleanly.
+    const rescanned = applyPosterExtractionToForm({
+      currentForm: editedForm,
+      extracted,
+      cityOptions: CITY_OPTIONS,
+      cityToRegionOptionMap: CITY_TO_REGION,
+      categories: CATEGORIES,
+      autoDates: false,
+      userOwnedFields: new Set(["title", "dates", "location"]),
+      preserveUserValues: false,
+    });
+    expect(rescanned.nextForm.title).toBe("Títol IA");
+    expect(rescanned.nextForm.location).toBe("Teatre Auditori");
+    expect(rescanned.nextForm.startDate).toBe("2027-03-10T19:00");
+    expect(rescanned.filledFields).toContain("dates");
   });
 });

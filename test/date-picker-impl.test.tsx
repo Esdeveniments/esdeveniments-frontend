@@ -78,13 +78,28 @@ describe("DatePickerImpl", () => {
   });
 
   describe("initial rendering", () => {
-    it("renders the label, an inline calendar and both time inputs", () => {
+    it("renders the label, an inline calendar, date inputs, and both time inputs", () => {
       render(<DatePickerImpl {...baseProps} />);
 
       expect(screen.getByText("Data i hora")).toBeInTheDocument();
       expect(screen.getByRole("grid")).toBeInTheDocument();
+      expect(screen.getByLabelText("Data d'inici")).toHaveValue("2026-03-07");
+      expect(screen.getByLabelText("Data de fi")).toHaveValue("2026-03-07");
       expect(screen.getByLabelText("Hora d'inici")).toHaveValue("10:00");
       expect(screen.getByLabelText("Hora de fi")).toHaveValue("11:00");
+    });
+
+    it("updates multi-month ranges directly via the start/end date inputs", () => {
+      render(<Harness {...baseProps} />);
+
+      fireEvent.change(screen.getByLabelText("Data de fi"), {
+        target: { value: "2026-06-30" },
+      });
+
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-06-30", 11, 0),
+      );
     });
 
     it("does not render all-day toggle by default", () => {

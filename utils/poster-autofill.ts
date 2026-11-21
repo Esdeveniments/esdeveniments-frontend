@@ -199,7 +199,7 @@ export function applyPosterExtractionToForm(
   } = options;
 
   const isUserOwned = (field: PosterAutofillFieldKey) =>
-    Boolean(userOwnedFields?.has(field));
+    preserveUserValues && Boolean(userOwnedFields?.has(field));
 
   const nextForm = { ...currentForm };
   const filledFields: PosterAutofillFieldKey[] = [];

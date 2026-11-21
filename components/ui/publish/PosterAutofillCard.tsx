@@ -303,18 +303,13 @@ export default function PosterAutofillCard({
             data-testid="poster-autofill-status"
             className="flex-between flex-wrap gap-2 rounded-input border border-border/60 bg-muted px-3 py-2"
           >
-            <div className="min-w-0">
-              <span className="body-small font-medium text-foreground-strong">
-                {phase === "preparing"
-                  ? t("posterAutofill.statusPreparing")
-                  : phase === "checking"
-                    ? t("posterAutofill.statusChecking")
-                    : t("posterAutofill.statusAnalyzing")}
-              </span>
-              <span className="ml-2 body-small text-muted-foreground">
-                {t("posterAutofill.privacyNote")}
-              </span>
-            </div>
+            <span className="body-small font-medium text-foreground-strong">
+              {phase === "preparing"
+                ? t("posterAutofill.statusPreparing")
+                : phase === "checking"
+                  ? t("posterAutofill.statusChecking")
+                  : t("posterAutofill.statusAnalyzing")}
+            </span>
             <button
               type="button"
               onClick={cancelActiveScan}

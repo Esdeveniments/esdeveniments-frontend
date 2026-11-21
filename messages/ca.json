@@ -444,7 +444,6 @@
         "errorInvalidImage": "Imatge no llegible. Prova amb un JPG o PNG.",
         "errorNetwork": "Sense connexió. Torna-ho a provar.",
         "errorGeneric": "No s'ha pogut llegir el cartell. Hem desat la imatge.",
-        "privacyNote": "Sense GPS · IA Gemini",
         "fields": {
           "title": "Títol",
           "description": "Descripció",
@@ -1157,6 +1156,8 @@
       "clear": "Esborra les dates"
     },
     "DatePicker": {
+      "startDate": "Data d'inici",
+      "endDate": "Data de fi",
       "startTime": "Hora d'inici",
       "endTime": "Hora de fi",
       "dateAndTime": "Data i hora",

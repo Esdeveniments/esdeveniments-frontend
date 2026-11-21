@@ -444,7 +444,6 @@
         "errorInvalidImage": "Unreadable image. Try a JPG or PNG.",
         "errorNetwork": "Connection failed. Try again.",
         "errorGeneric": "Couldn't scan poster. Image kept.",
-        "privacyNote": "No GPS · Gemini AI",
         "fields": {
           "title": "Title",
           "description": "Description",
@@ -1142,6 +1141,8 @@
       "clear": "Clear dates"
     },
     "DatePicker": {
+      "startDate": "Start date",
+      "endDate": "End date",
       "startTime": "Start time",
       "endTime": "End time",
       "dateAndTime": "Date and time",

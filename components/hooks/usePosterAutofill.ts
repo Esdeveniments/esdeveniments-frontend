@@ -108,6 +108,7 @@ export function usePosterAutofill({
   const [priceReviewWarning, setPriceReviewWarning] = useState(false);
   const [multiEventWarning, setMultiEventWarning] = useState(false);
   const [lastScannedFile, setLastScannedFile] = useState<File | null>(null);
+  const lastScannedFileRef = useRef<File | null>(null);
 
   const isBusy =
     phase === "preparing" || phase === "checking" || phase === "analyzing";
@@ -234,6 +235,7 @@ export function usePosterAutofill({
         const data = (await response.json()) as PosterExtractionApiSuccess;
         if (seq !== sequenceRef.current) return;
 
+        lastScannedFileRef.current = file;
         setLastScannedFile(file);
 
         if (!data.hasData) {
@@ -375,7 +377,11 @@ export function usePosterAutofill({
 
         // Attach immediately so Step 3 already has the optimized poster.
         onPosterPrepared(prepared.file);
-        await checkAvailabilityAndScan(prepared.file, seq, false);
+        // First scan preserves anything the user typed beforehand; replacing or
+        // re-uploading a poster after an earlier scan overwrites with the new poster
+        // (and stays 1-click reversible via Undo).
+        const isRescanOrReplace = lastScannedFileRef.current !== null;
+        await checkAvailabilityAndScan(prepared.file, seq, isRescanOrReplace);
       } catch (prepError) {
         if (seq !== sequenceRef.current) return;
         if (isChunkOrNetworkLoadError(prepError)) {

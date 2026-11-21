@@ -360,7 +360,16 @@ const PublishForm = () => {
     value: FormData[K]
   ) => {
     trackFieldInteraction(String(name));
-    markFieldUserOwned(formKeyToAutofillField(name));
+    const autofillField = formKeyToAutofillField(name);
+    const isCleared =
+      value === "" ||
+      value === null ||
+      (Array.isArray(value) && value.length === 0);
+    if (autofillField && isCleared) {
+      userOwnedFieldsRef.current.delete(autofillField);
+    } else {
+      markFieldUserOwned(autofillField);
+    }
     if (name === "startDate" || name === "endDate" || name === "isAllDay") {
       autoDatesRef.current = false;
       const ended = t("dateEnded");
@@ -379,7 +388,11 @@ const PublishForm = () => {
 
   const handleTownChange = (town: Option | null) => {
     trackFieldInteraction("town");
-    markFieldUserOwned("town");
+    if (town) {
+      markFieldUserOwned("town");
+    } else {
+      userOwnedFieldsRef.current.delete("town");
+    }
 
     setForm((prev) => {
       const next = { ...prev, town };
@@ -520,6 +533,11 @@ const PublishForm = () => {
 
       if (result.filledFields.length > 0) {
         markEdited();
+        if (!preserveUserValues) {
+          for (const field of result.filledFields) {
+            userOwnedFieldsRef.current.delete(field);
+          }
+        }
         if (result.appliedDates) {
           autoDatesRef.current = false;
         }

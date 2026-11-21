@@ -100,13 +100,15 @@ export default function DatePickerImpl({
 
   const startDate = toDate(initialStartDate);
   const endDate = computeEndDate(startDate, initialEndDate, isAllDay);
-  // New events start today or later. An edited event may already have started,
-  // so its original start day stays selectable.
-  const [firstDay] = useState(() => {
+  const startYmd = toYMD(startDate);
+  const endYmd = toYMD(endDate);
+  // New events start today or later. An edited or AI-extracted event may
+  // already have started, so its original start day stays selectable.
+  const [initialFloor] = useState(() => {
     const today = toYMD(nowInMadrid());
-    const start = toYMD(startDate);
-    return start < today ? start : today;
+    return startYmd < today ? startYmd : today;
   });
+  const firstDay = startYmd < initialFloor ? startYmd : initialFloor;
   const allDaySwitchId = `${idPrefix}-all-day-switch`;
 
   const handleRangeChange = (from: string, to: string) => {
@@ -124,6 +126,17 @@ export default function DatePickerImpl({
 
     onChange("startDate", toLocalDateTimeString(newStart));
     onChange("endDate", toLocalDateTimeString(newEnd));
+  };
+
+  const handleStartDayInput = (nextStartYmd: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextStartYmd)) return;
+    const nextEndYmd = endYmd >= nextStartYmd ? endYmd : nextStartYmd;
+    handleRangeChange(nextStartYmd, nextEndYmd);
+  };
+
+  const handleEndDayInput = (nextEndYmd: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextEndYmd)) return;
+    handleRangeChange(startYmd, nextEndYmd < startYmd ? startYmd : nextEndYmd);
   };
 
   const handleStartTimeChange = (time: string) => {
@@ -184,12 +197,47 @@ export default function DatePickerImpl({
       </div>
 
       <DateRangeCalendar
-        fromDate={toYMD(startDate)}
-        toDate={toYMD(endDate)}
+        fromDate={startYmd}
+        toDate={endYmd}
         minDate={firstDay}
         required={required}
         onChange={handleRangeChange}
       />
+
+      <div className="flex flex-col sm:flex-row gap-4 w-full">
+        <div className="w-full sm:flex-1 sm:min-w-0">
+          <label
+            htmlFor={`${idPrefix}-start-date`}
+            className="text-sm text-muted-foreground mb-1.5 block font-medium"
+          >
+            {t("startDate")}
+          </label>
+          <input
+            id={`${idPrefix}-start-date`}
+            type="date"
+            value={startYmd}
+            min={firstDay}
+            onChange={(e) => handleStartDayInput(e.target.value)}
+            className="input input-lg"
+          />
+        </div>
+        <div className="w-full sm:flex-1 sm:min-w-0">
+          <label
+            htmlFor={`${idPrefix}-end-date`}
+            className="text-sm text-muted-foreground mb-1.5 block font-medium"
+          >
+            {t("endDate")}
+          </label>
+          <input
+            id={`${idPrefix}-end-date`}
+            type="date"
+            value={endYmd}
+            min={startYmd}
+            onChange={(e) => handleEndDayInput(e.target.value)}
+            className="input input-lg"
+          />
+        </div>
+      </div>
 
       {!isAllDay && (
         <div className="flex flex-col sm:flex-row gap-4 w-full">
