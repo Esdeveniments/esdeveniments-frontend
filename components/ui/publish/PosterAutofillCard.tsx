@@ -529,44 +529,99 @@ export default function PosterAutofillCard({
         }}
       />
 
-      <div className="card-body stack">
-        <div className="flex items-start gap-3">
-          {hasExistingPoster && currentImagePreview ? (
-            <div className="relative h-20 w-16 sm:h-24 sm:w-20 shrink-0 overflow-hidden rounded-input bg-muted poster-thumb-outline">
-              <img
-                src={currentImagePreview}
-                alt={t("posterAutofill.thumbAlt")}
-                className="h-full w-full object-cover"
-              />
-              {showScanOverlay && (
-                <div className="poster-scan-beam" aria-hidden="true" />
-              )}
-            </div>
-          ) : (
-            <div
-              className={`flex-center h-11 w-11 shrink-0 rounded-input border transition-[border-color,background-color,transform] duration-200 ${
-                dragOver
-                  ? "border-primary/40 bg-primary/10 -translate-y-0.5"
-                  : "border-border/60 bg-muted"
-              }`}
-              aria-hidden="true"
-            >
-              <PhotoIcon className="h-5 w-5 text-foreground" />
-            </div>
-          )}
+      <div className="card-body stack gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap">
+          <div className="flex min-w-0 items-center gap-3">
+            {hasExistingPoster && currentImagePreview ? (
+              <div className="relative h-14 w-12 sm:h-16 sm:w-14 shrink-0 overflow-hidden rounded-input bg-muted poster-thumb-outline">
+                <img
+                  src={currentImagePreview}
+                  alt={t("posterAutofill.thumbAlt")}
+                  className="h-full w-full object-cover"
+                />
+                {showScanOverlay && (
+                  <div className="poster-scan-beam" aria-hidden="true" />
+                )}
+              </div>
+            ) : (
+              <div
+                className={`flex-center h-10 w-10 shrink-0 rounded-input border transition-[border-color,background-color,transform] duration-200 ${
+                  dragOver
+                    ? "border-primary/40 bg-primary/10 -translate-y-0.5"
+                    : "border-border/60 bg-muted"
+                }`}
+                aria-hidden="true"
+              >
+                <PhotoIcon className="h-5 w-5 text-foreground" />
+              </div>
+            )}
 
-          <div className="min-w-0 flex-1 stack gap-1.5">
-            <div className="flex items-center gap-2">
-              {statusIcon}
-              <h2 className="heading-4 text-foreground-strong">
-                {t("posterAutofill.heading")}
-              </h2>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                {statusIcon}
+                <h2 className="body-normal font-semibold text-foreground-strong">
+                  {t("posterAutofill.heading")}
+                </h2>
+              </div>
+              <p className="body-small text-muted-foreground">
+                {isAuthenticated || isAuthLoading
+                  ? t("posterAutofill.description")
+                  : t("posterAutofill.descriptionGuest")}
+              </p>
             </div>
-            <p className="body-small text-muted-foreground">
-              {isAuthenticated || isAuthLoading
-                ? t("posterAutofill.description")
-                : t("posterAutofill.descriptionGuest")}
-            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={openFilePicker}
+              disabled={disabled || isBusy || isAuthLoading}
+              data-testid="poster-autofill-pick"
+              className="btn-neutral btn-sm normal-case tracking-normal font-medium active:scale-[0.96] transition-transform duration-100"
+            >
+              {hasExistingPoster
+                ? t("posterAutofill.changeButton")
+                : t("posterAutofill.pickButton")}
+            </button>
+
+            {hasExistingPoster &&
+              !isBusy &&
+              (phase === "idle" ||
+                canRetry ||
+                phase === "success" ||
+                phase === "empty") && (
+                <button
+                  type="button"
+                  onClick={handleAnalyzeExisting}
+                  disabled={disabled || isAuthLoading}
+                  data-testid="poster-autofill-analyze-existing"
+                  className="btn-ghost btn-sm normal-case tracking-normal font-medium text-foreground active:scale-[0.96] transition-transform duration-100"
+                >
+                  <ArrowPathIcon
+                    className="h-4 w-4 mr-1 shrink-0"
+                    aria-hidden="true"
+                  />
+                  {lastScannedFile === currentImageFile
+                    ? t("posterAutofill.rereadButton")
+                    : t("posterAutofill.analyzeExistingButton")}
+                </button>
+              )}
+
+            {canUndo && !isBusy && (
+              <button
+                type="button"
+                onClick={handleUndoClick}
+                disabled={disabled}
+                data-testid="poster-autofill-undo"
+                className="btn-ghost btn-sm normal-case tracking-normal font-medium text-muted-foreground active:scale-[0.96] transition-transform duration-100"
+              >
+                <ArrowUturnLeftIcon
+                  className="h-4 w-4 mr-1 shrink-0"
+                  aria-hidden="true"
+                />
+                {t("posterAutofill.undoButton")}
+              </button>
+            )}
           </div>
         </div>
 
@@ -578,13 +633,18 @@ export default function PosterAutofillCard({
             data-testid="poster-autofill-status"
             className="flex-between flex-wrap gap-2 rounded-input border border-border/60 bg-muted px-3 py-2"
           >
-            <span className="body-small font-medium text-foreground-strong">
-              {phase === "preparing"
-                ? t("posterAutofill.statusPreparing")
-                : phase === "checking"
-                  ? t("posterAutofill.statusChecking")
-                  : t("posterAutofill.statusAnalyzing")}
-            </span>
+            <div className="min-w-0">
+              <span className="body-small font-medium text-foreground-strong">
+                {phase === "preparing"
+                  ? t("posterAutofill.statusPreparing")
+                  : phase === "checking"
+                    ? t("posterAutofill.statusChecking")
+                    : t("posterAutofill.statusAnalyzing")}
+              </span>
+              <span className="ml-2 body-small text-muted-foreground">
+                {t("posterAutofill.privacyNote")}
+              </span>
+            </div>
             <button
               type="button"
               onClick={cancelActiveScan}
@@ -680,53 +740,6 @@ export default function PosterAutofillCard({
             {errorMessage}
           </p>
         )}
-
-        {/* Action row: secondary emphasis so EventForm's btn-primary stays sole CTA */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={openFilePicker}
-            disabled={disabled || isBusy || isAuthLoading}
-            data-testid="poster-autofill-pick"
-            className="btn-neutral btn-sm normal-case tracking-normal font-medium active:scale-[0.96] transition-transform duration-100"
-          >
-            {hasExistingPoster
-              ? t("posterAutofill.changeButton")
-              : t("posterAutofill.pickButton")}
-          </button>
-
-          {hasExistingPoster && !isBusy && (phase === "idle" || canRetry || phase === "success" || phase === "empty") && (
-            <button
-              type="button"
-              onClick={handleAnalyzeExisting}
-              disabled={disabled || isAuthLoading}
-              data-testid="poster-autofill-analyze-existing"
-              className="btn-ghost btn-sm normal-case tracking-normal font-medium text-foreground active:scale-[0.96] transition-transform duration-100"
-            >
-              <ArrowPathIcon className="h-4 w-4 mr-1.5 shrink-0" aria-hidden="true" />
-              {lastScannedFile === currentImageFile
-                ? t("posterAutofill.rereadButton")
-                : t("posterAutofill.analyzeExistingButton")}
-            </button>
-          )}
-
-          {canUndo && !isBusy && (
-            <button
-              type="button"
-              onClick={handleUndoClick}
-              disabled={disabled}
-              data-testid="poster-autofill-undo"
-              className="btn-ghost btn-sm normal-case tracking-normal font-medium text-muted-foreground active:scale-[0.96] transition-transform duration-100"
-            >
-              <ArrowUturnLeftIcon className="h-4 w-4 mr-1.5 shrink-0" aria-hidden="true" />
-              {t("posterAutofill.undoButton")}
-            </button>
-          )}
-        </div>
-
-        <p className="body-small text-muted-foreground">
-          {t("posterAutofill.privacyNote")}
-        </p>
       </div>
     </section>
   );
