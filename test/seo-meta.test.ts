@@ -285,7 +285,7 @@ describe("generateWebPageSchema with breadcrumbs", () => {
 });
 
 describe("generateCollectionPageSchema with breadcrumbs", () => {
-  it("includes breadcrumb list when provided", () => {
+  it("includes breadcrumb list and omits non-standard numberOfItems", () => {
     const breadcrumbs: BreadcrumbItem[] = [
       { name: "Inici", url: siteUrl },
       { name: "Arxiu", url: `${siteUrl}/sitemap` },
@@ -296,11 +296,13 @@ describe("generateCollectionPageSchema with breadcrumbs", () => {
       description: "Test description",
       url: `${siteUrl}/collection`,
       breadcrumbs,
-      numberOfItems: 10,
+      mainEntity: { "@id": `${siteUrl}/collection#itemlist` },
     });
 
     expect(schema.breadcrumb).toBeDefined();
     expect(schema.breadcrumb?.itemListElement).toHaveLength(2);
+    expect(schema.mainEntity).toEqual({ "@id": `${siteUrl}/collection#itemlist` });
+    expect("numberOfItems" in schema).toBe(false);
   });
 });
 
@@ -314,10 +316,46 @@ describe("generateItemListStructuredData", () => {
 
     const list = generateItemListStructuredData(events, "Agenda", undefined, "en");
 
+    expect(list?.numberOfItems).toBe(2);
     expect(list?.itemListElement).toEqual([
       { "@type": "ListItem", position: 1, url: `${siteUrl}/en/e/concert-a`, name: "Concert A" },
       { "@type": "ListItem", position: 2, url: `${siteUrl}/en/e/fira-b`, name: "Fira B" },
     ]);
+  });
+
+  it("uses totalItems for numberOfItems when paginated total exceeds page slice", () => {
+    const events = [
+      { slug: "concert-a", title: "Concert A", location: "Palau" },
+      { slug: "fira-b", title: "Fira B", location: "Plaça" },
+    ] as EventSummaryResponseDTO[];
+
+    const list = generateItemListStructuredData(
+      events,
+      "Agenda",
+      undefined,
+      "ca",
+      `${siteUrl}/barcelona/avui`,
+      59
+    );
+
+    expect(list?.numberOfItems).toBe(59);
+    expect(list?.itemListElement).toHaveLength(2);
+  });
+
+  it("falls back to events.length when totalItems is smaller or invalid", () => {
+    const events = [
+      { slug: "concert-a", title: "Concert A", location: "Palau" },
+      { slug: "fira-b", title: "Fira B", location: "Plaça" },
+    ] as EventSummaryResponseDTO[];
+
+    expect(
+      generateItemListStructuredData(events, "Agenda", undefined, "ca", undefined, 1)
+        ?.numberOfItems
+    ).toBe(2);
+    expect(
+      generateItemListStructuredData(events, "Agenda", undefined, "ca", undefined, Number.NaN)
+        ?.numberOfItems
+    ).toBe(2);
   });
 });
 

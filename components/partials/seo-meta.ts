@@ -64,6 +64,7 @@ export function generateItemListStructuredData(
   description?: string,
   locale?: AppLocale,
   pageUrl?: string,
+  totalItems?: number,
 ) {
   if (!events || events.length === 0) return null;
 
@@ -76,6 +77,14 @@ export function generateItemListStructuredData(
     events.slice(0, 20),
     localeToUse,
   );
+  // Schema.org defines ItemList.numberOfItems as the total count across a
+  // paginated list, even when itemListElement carries only the first page.
+  const numberOfItems =
+    typeof totalItems === "number" &&
+    Number.isFinite(totalItems) &&
+    totalItems > events.length
+      ? Math.floor(totalItems)
+      : events.length;
 
   return {
     "@context": "https://schema.org",
@@ -86,7 +95,7 @@ export function generateItemListStructuredData(
     url: itemListIdBase,
     name: listName,
     description: description ?? listName,
-    numberOfItems: events.length,
+    numberOfItems,
     itemListElement: itemListElements,
   };
 }
@@ -323,7 +332,6 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
     url,
     breadcrumbs,
     mainEntity,
-    numberOfItems,
     locale,
   } = options;
 
@@ -353,7 +361,6 @@ export function generateCollectionPageSchema(options: CollectionPageOptions) {
     },
     ...(breadcrumbs && { breadcrumb: generateBreadcrumbList(breadcrumbs) }),
     ...(mainEntity && { mainEntity }),
-    ...(numberOfItems && { numberOfItems }),
   };
 }
 

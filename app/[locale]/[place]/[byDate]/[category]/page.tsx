@@ -452,22 +452,25 @@ async function buildCategoryEventsPromise({
       ? `${categoryName} ${filters.place}`
       : `Esdeveniments ${filters.place}`;
 
+    const itemListSchema = generateItemListStructuredData(
+      validEvents,
+      label,
+      undefined,
+      locale,
+      pageData.canonical,
+      noEventsFound ? undefined : eventsResponse?.totalElements
+    );
+
     structuredScripts.push({
       id: `events-${filters.place}-${filters.byDate}-${filters.category}`,
-      data: generateItemListStructuredData(
-        validEvents,
-        label,
-        undefined,
-        locale,
-        pageData.canonical
-      ),
+      data: itemListSchema,
     });
 
     const collectionSchema = generateCollectionPageSchema({
       title: pageData.title,
       description: pageData.metaDescription,
       url: pageData.canonical,
-      numberOfItems: validEvents.length,
+      mainEntity: itemListSchema ? { "@id": itemListSchema["@id"] } : undefined,
       locale,
     });
 

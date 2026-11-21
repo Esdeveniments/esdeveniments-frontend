@@ -115,4 +115,58 @@ describe("buildPlaceEventsPromise", () => {
     expect(result.noEventsFound).toBe(false);
     expect(result.serverHasMore).toBe(true);
   });
+
+  it("forwards totalElements to ItemList schema only when primary results exist", async () => {
+    const { generateItemListStructuredData } = await import(
+      "@components/partials/seo-meta"
+    );
+    const itemListMock = vi.mocked(generateItemListStructuredData);
+    const eventA = buildEvent({ id: "a", slug: "a" });
+
+    fetchEventsWithFallbackMock.mockResolvedValueOnce({
+      eventsResponse: {
+        ...emptyResponse,
+        content: [eventA],
+        totalElements: 59,
+        totalPages: 2,
+        last: false,
+      },
+      events: [eventA],
+      noEventsFound: false,
+    });
+
+    await buildPlaceEventsPromise({ place: "barcelona" });
+
+    expect(itemListMock).toHaveBeenLastCalledWith(
+      expect.any(Array),
+      "Esdeveniments barcelona",
+      undefined,
+      DEFAULT_LOCALE,
+      expect.stringContaining("/barcelona"),
+      59
+    );
+
+    fetchEventsWithFallbackMock.mockResolvedValueOnce({
+      eventsResponse: {
+        ...emptyResponse,
+        content: [eventA],
+        totalElements: 400,
+        totalPages: 10,
+        last: false,
+      },
+      events: [eventA],
+      noEventsFound: true,
+    });
+
+    await buildPlaceEventsPromise({ place: "tiny-village" });
+
+    expect(itemListMock).toHaveBeenLastCalledWith(
+      expect.any(Array),
+      "Esdeveniments tiny-village",
+      undefined,
+      DEFAULT_LOCALE,
+      expect.stringContaining("/tiny-village"),
+      undefined
+    );
+  });
 });

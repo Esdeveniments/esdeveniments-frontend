@@ -107,12 +107,14 @@ export function buildFestaMajorSchemas({
 }) {
   const url = toLocalizedUrl(data.canonicalPath, locale);
   const acts = data.town?.acts ?? [];
+  const linkedActs = acts.filter((act) => actHasPage(act, data.today));
   const itemList = generateItemListStructuredData(
-    acts.filter((act) => actHasPage(act, data.today)).slice(0, MAX_JSON_LD_ACTS),
+    linkedActs.slice(0, MAX_JSON_LD_ACTS),
     title,
     description,
     locale,
     url,
+    linkedActs.length,
   );
   const collection = generateCollectionPageSchema({
     title,
@@ -120,7 +122,6 @@ export function buildFestaMajorSchemas({
     url,
     breadcrumbs,
     locale,
-    numberOfItems: acts.length || data.region?.towns.length || undefined,
     mainEntity: itemList ? { "@id": itemList["@id"] } : undefined,
   });
   return { collection, itemList };

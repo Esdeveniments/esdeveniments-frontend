@@ -33,14 +33,6 @@ export default async function FestivityPageView({
   // Selects the season's wording ("el Nadal passat", "el Carnaval passat").
   const season = { type: getFestivityType(slug).messageKey };
   const pageUrl = toLocalizedUrl(path, locale);
-  const collection = generateCollectionPageSchema({
-    title,
-    description: metaDescription,
-    url: pageUrl,
-    breadcrumbs,
-    locale,
-    numberOfItems: upcoming.length || undefined,
-  });
   const itemList = generateItemListStructuredData(
     upcoming,
     title,
@@ -48,6 +40,14 @@ export default async function FestivityPageView({
     locale,
     pageUrl,
   );
+  const collection = generateCollectionPageSchema({
+    title,
+    description: metaDescription,
+    url: pageUrl,
+    breadcrumbs,
+    mainEntity: itemList ? { "@id": itemList["@id"] } : undefined,
+    locale,
+  });
   const priorityIndex = upcoming.findIndex(hasCardImage);
   const isEmpty = upcoming.length + past.length + pending.length === 0;
 

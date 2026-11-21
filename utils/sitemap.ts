@@ -10,6 +10,20 @@ function expandLocaleVersions(field: SitemapField): SitemapField[] {
   return [...locs].map((loc) => ({ ...field, loc }));
 }
 
+function normalizeSitemapImageUrl(rawUrl: string): string | null {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
 export function buildSitemap(
   fields: SitemapField[],
   options: BuildSitemapOptions = {}
@@ -50,10 +64,14 @@ export function buildSitemap(
             .join("");
         }
 
-        if (includeImage && field.image) {
+        const imageLoc =
+          includeImage && field.image
+            ? normalizeSitemapImageUrl(field.image.loc)
+            : null;
+        if (imageLoc) {
           xml +=
             `    <image:image>\n` +
-            `      <image:loc>${escapeXml(field.image.loc)}</image:loc>\n` +
+            `      <image:loc>${escapeXml(imageLoc)}</image:loc>\n` +
             `    </image:image>\n`;
         }
 
