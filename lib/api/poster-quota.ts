@@ -172,8 +172,12 @@ function globalDayKey(day: string): string {
   return `poster:scan:global:${day}`;
 }
 
-function globalMinuteKey(): string {
-  return "poster:scan:global:rpm";
+function globalMinuteKey(nowMs: number): string {
+  return `poster:scan:global:rpm:${Math.floor(nowMs / 60_000)}`;
+}
+
+function getMinuteWindowRemainingMs(nowMs: number): number {
+  return Math.max(1_000, 60_000 - (nowMs % 60_000));
 }
 
 function accountAttemptKey(accountId: string): string {
@@ -199,7 +203,7 @@ export async function checkPosterQuotaAvailability(
     };
   }
 
-  const globalMin = await readCounter(globalMinuteKey(), nowMs);
+  const globalMin = await readCounter(globalMinuteKey(nowMs), nowMs);
   if (globalMin && globalMin.count >= GLOBAL_SCANS_PER_MINUTE) {
     return {
       state: "app_limit",
@@ -271,9 +275,14 @@ export function chargePosterScan(
       };
     }
 
-    const globalMin = await incrementCounter(globalMinuteKey(), 60_000, nowMs);
+    const minuteKey = globalMinuteKey(nowMs);
+    const globalMin = await incrementCounter(
+      minuteKey,
+      getMinuteWindowRemainingMs(nowMs),
+      nowMs,
+    );
     if (globalMin.count > GLOBAL_SCANS_PER_MINUTE) {
-      await decrementCounter(globalMinuteKey(), nowMs);
+      await decrementCounter(minuteKey, nowMs);
       await decrementCounter(globalDayKey(day), nowMs);
       return {
         allowed: false,
@@ -289,7 +298,7 @@ export function chargePosterScan(
     );
     if (acctDay.count > ACCOUNT_SCANS_PER_DAY) {
       await decrementCounter(accountDayKey(accountId, day), nowMs);
-      await decrementCounter(globalMinuteKey(), nowMs);
+      await decrementCounter(minuteKey, nowMs);
       await decrementCounter(globalDayKey(day), nowMs);
       return {
         allowed: false,

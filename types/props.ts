@@ -49,6 +49,8 @@ export interface PosterAutofillCardProps {
     | Promise<import("./api/poster").PosterExtractionAppliedSummary>;
   /** Whether an Undo record with at least one still-owned field is available. */
   canUndo: boolean;
+  /** Unmatched town surfaced asynchronously after deferred catalog loading finishes. */
+  deferredUnmatchedTown?: string | null;
   /** Surgically revert only fields still owned by the last autofill. */
   onUndo: () => void;
   /** Inform the parent while image preparation or AI extraction is running. */
@@ -547,6 +549,8 @@ export interface DateRangeCalendarProps {
   onChange: (from: string, to: string) => void;
   /** First selectable day as YYYY-MM-DD (default: today in Madrid) */
   minDate?: string;
+  /** Optional YYYY-MM-DD target whose month should be brought into view */
+  focusDate?: string;
   /** Never let the user clear the range */
   required?: boolean;
 }

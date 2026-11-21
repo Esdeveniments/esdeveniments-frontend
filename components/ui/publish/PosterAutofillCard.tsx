@@ -47,6 +47,7 @@ export default function PosterAutofillCard({
   onPosterPrepared,
   onExtractionApplied,
   canUndo,
+  deferredUnmatchedTown = null,
   onUndo,
   onBusyChange,
 }: PosterAutofillCardProps) {
@@ -116,13 +117,20 @@ export default function PosterAutofillCard({
         ? t("posterAutofill.statusChecking")
         : t("posterAutofill.statusAnalyzing");
 
+  const effectiveUnmatchedTown =
+    unmatchedTown ??
+    (phase === "success" || phase === "empty" ? deferredUnmatchedTown : null);
+
+  const effectivePhase =
+    phase === "empty" && effectiveUnmatchedTown ? "success" : phase;
+
   const heading = isBusy
     ? busyHeading
-    : phase === "success"
+    : effectivePhase === "success"
       ? t("posterAutofill.headingSuccess")
-      : phase === "empty"
+      : effectivePhase === "empty"
         ? t("posterAutofill.headingEmpty")
-        : phase === "error"
+        : effectivePhase === "error"
           ? t("posterAutofill.headingError")
           : t("posterAutofill.heading");
 
@@ -135,9 +143,9 @@ export default function PosterAutofillCard({
       : t("posterAutofill.descriptionGuest");
 
   const hasWarnings =
-    phase === "success" &&
+    effectivePhase === "success" &&
     Boolean(
-      unmatchedTown ||
+      effectiveUnmatchedTown ||
         dateInferredWarning ||
         pastDateWarning ||
         priceReviewWarning ||
@@ -145,19 +153,19 @@ export default function PosterAutofillCard({
     );
 
   const statusIcon =
-    phase === "success" ? (
+    effectivePhase === "success" ? (
       <CheckCircleIcon
         key="success"
         className="h-5 w-5 text-success-dark shrink-0 poster-icon-swap"
         aria-hidden="true"
       />
-    ) : phase === "error" ? (
+    ) : effectivePhase === "error" ? (
       <ExclamationTriangleIcon
         key="error"
         className="h-5 w-5 text-error-dark shrink-0 poster-icon-swap"
         aria-hidden="true"
       />
-    ) : phase === "empty" ? (
+    ) : effectivePhase === "empty" ? (
       <ExclamationTriangleIcon
         key="empty"
         className="h-5 w-5 text-warning-dark shrink-0 poster-icon-swap"
@@ -179,7 +187,7 @@ export default function PosterAutofillCard({
     <section
       aria-label={t("posterAutofill.heading")}
       data-testid="poster-autofill-card"
-      data-phase={phase}
+      data-phase={effectivePhase}
       onDragOver={(event) => {
         if (disabled || isBusy) return;
         event.preventDefault();
@@ -198,7 +206,7 @@ export default function PosterAutofillCard({
       className={`card-bordered transition-[border-color,background-color,box-shadow] duration-200 ${
         dragOver
           ? "border-primary bg-primary/5 shadow-md"
-          : phase === "success"
+          : effectivePhase === "success"
             ? "border-success-border bg-success-light/40"
             : "bg-background"
       }`}
@@ -263,13 +271,13 @@ export default function PosterAutofillCard({
                 </p>
               )}
 
-              {phase === "idle" && (
+              {effectivePhase === "idle" && (
                 <p className="body-small text-muted-foreground">
                   {idleSubtitle}
                 </p>
               )}
 
-              {phase === "success" && (
+              {effectivePhase === "success" && (
                 <p
                   role="status"
                   aria-live="polite"
@@ -288,7 +296,7 @@ export default function PosterAutofillCard({
                 </p>
               )}
 
-              {phase === "empty" && (
+              {effectivePhase === "empty" && (
                 <p
                   role="status"
                   aria-live="polite"
@@ -299,7 +307,7 @@ export default function PosterAutofillCard({
                 </p>
               )}
 
-              {phase === "error" && errorMessage && (
+              {effectivePhase === "error" && errorMessage && (
                 <p
                   role="alert"
                   data-testid="poster-autofill-error"
@@ -323,7 +331,7 @@ export default function PosterAutofillCard({
               >
                 {t("posterAutofill.cancelButton")}
               </Button>
-            ) : phase === "success" ? (
+            ) : effectivePhase === "success" ? (
               <>
                 <Button
                   key="pick"
@@ -431,10 +439,10 @@ export default function PosterAutofillCard({
             data-testid="poster-autofill-warnings"
             className="stack gap-1 rounded-input border border-warning-border bg-warning-light px-3 py-2 body-small text-warning-dark"
           >
-            {unmatchedTown && (
+            {effectiveUnmatchedTown && (
               <li>
                 {t("posterAutofill.warningUnmatchedTown", {
-                  town: unmatchedTown,
+                  town: effectiveUnmatchedTown,
                 })}
               </li>
             )}

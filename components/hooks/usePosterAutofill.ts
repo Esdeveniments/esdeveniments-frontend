@@ -78,11 +78,13 @@ export function usePosterAutofill({
   const sequenceRef = useRef(0);
   const autoScanConsumedRef = useRef<string | null>(null);
   const activeScanFileRef = useRef<File | null>(null);
+  const currentImageFileRef = useRef<File | null>(currentImageFile);
   const onBusyChangeRef = useRef(onBusyChange);
   const onExtractionAppliedRef = useRef(onExtractionApplied);
   const onRequestAuthForScanRef = useRef(onRequestAuthForScan);
 
   useEffect(() => {
+    currentImageFileRef.current = currentImageFile;
     onBusyChangeRef.current = onBusyChange;
     onExtractionAppliedRef.current = onExtractionApplied;
     onRequestAuthForScanRef.current = onRequestAuthForScan;
@@ -359,6 +361,7 @@ export function usePosterAutofill({
     async (rawFile: File): Promise<void> => {
       if (disabled || isAuthLoading) return;
       const seq = ++sequenceRef.current;
+      const initialPosterFile = currentImageFileRef.current;
       abortRef.current?.abort();
       clearFeedback();
       setPhase("preparing");
@@ -368,6 +371,12 @@ export function usePosterAutofill({
           maxBytes: MAX_TOTAL_UPLOAD_BYTES,
         });
         if (seq !== sequenceRef.current) return;
+        // If Step 3 attached a different poster while this file was preparing,
+        // keep the organizer's newer selection and drop this stale preparation.
+        if (currentImageFileRef.current !== initialPosterFile) {
+          setPhase("idle");
+          return;
+        }
 
         if (!prepared.ok) {
           setImagePrepFailure(prepared.reason);
@@ -376,6 +385,7 @@ export function usePosterAutofill({
         }
 
         // Attach immediately so Step 3 already has the optimized poster.
+        currentImageFileRef.current = prepared.file;
         onPosterPrepared(prepared.file);
         // First scan preserves anything the user typed beforehand; replacing or
         // re-uploading a poster after an earlier scan overwrites with the new poster

@@ -290,6 +290,7 @@ const PublishForm = () => {
     verifiedScanIntentId,
     clearVerifiedScanIntent,
     canUndo: canUndoPosterAutofill,
+    deferredUnmatchedTown,
     resetPosterAutofill,
     trackFormFieldOwnership,
     handlePosterPrepared,
@@ -915,6 +916,7 @@ const PublishForm = () => {
               onPosterPrepared={handlePosterPrepared}
               onExtractionApplied={handlePosterExtractionApplied}
               canUndo={canUndoPosterAutofill}
+              deferredUnmatchedTown={deferredUnmatchedTown}
               onUndo={handlePosterUndo}
               onBusyChange={setPosterAutofillBusy}
             />

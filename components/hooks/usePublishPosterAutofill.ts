@@ -11,6 +11,7 @@ import {
 } from "@utils/constants";
 import type { FormData } from "types/event";
 import type {
+  PendingPosterExtraction,
   PosterAutofillFieldKey,
   PosterAutofillUndoRecord,
   PosterExtractedEvent,
@@ -116,7 +117,10 @@ export function usePublishPosterAutofill({
   const [undoRecord, setUndoRecord] =
     useState<PosterAutofillUndoRecord | null>(null);
   const [pendingExtraction, setPendingExtraction] =
-    useState<PosterExtractedEvent | null>(null);
+    useState<PendingPosterExtraction | null>(null);
+  const [deferredUnmatchedTown, setDeferredUnmatchedTown] = useState<
+    string | null
+  >(null);
   const userOwnedFieldsRef = useRef<Set<PosterAutofillFieldKey>>(new Set());
   const autofillRunIdRef = useRef(0);
   const formRef = useRef(form);
@@ -166,6 +170,7 @@ export function usePublishPosterAutofill({
       }
       setUndoRecord(null);
       setPendingExtraction(null);
+      setDeferredUnmatchedTown(null);
       setPosterAutofillBusy(false);
       userOwnedFieldsRef.current.clear();
     },
@@ -176,33 +181,31 @@ export function usePublishPosterAutofill({
     setVerifiedScanIntentId(null);
   }, []);
 
-  const markFieldUserOwned = useCallback(
-    (field: PosterAutofillFieldKey | null) => {
-      if (!field) return;
-      userOwnedFieldsRef.current.add(field);
-      setUndoRecord((current) => {
-        if (!current || !current.ownedFields.has(field)) return current;
-        const remaining = new Set(current.ownedFields);
-        remaining.delete(field);
-        return remaining.size > 0
-          ? { ...current, ownedFields: remaining }
-          : null;
-      });
-    },
-    [],
-  );
+  const releaseUndoOwnership = useCallback((field: PosterAutofillFieldKey) => {
+    setUndoRecord((current) => {
+      if (!current || !current.ownedFields.has(field)) return current;
+      const remaining = new Set(current.ownedFields);
+      remaining.delete(field);
+      return remaining.size > 0
+        ? { ...current, ownedFields: remaining }
+        : null;
+    });
+  }, []);
 
   const trackFormFieldOwnership = useCallback(
     (name: keyof FormData, isCleared: boolean) => {
       const autofillField = formKeyToAutofillField(name);
       if (!autofillField) return;
+      // Every user edit (including clearing a field) takes ownership away from
+      // Undo so Undo never restores an old value over an explicit clear.
+      releaseUndoOwnership(autofillField);
       if (isCleared) {
         userOwnedFieldsRef.current.delete(autofillField);
       } else {
-        markFieldUserOwned(autofillField);
+        userOwnedFieldsRef.current.add(autofillField);
       }
     },
-    [markFieldUserOwned],
+    [releaseUndoOwnership],
   );
 
   const handlePosterPrepared = useCallback(
@@ -330,12 +333,13 @@ export function usePublishPosterAutofill({
         });
       }
 
-      // Keep extraction for deferred reconciliation if town/category catalogs
-      // were still loading when the AI response arrived.
+      // Keep extraction + overwrite policy for deferred reconciliation if
+      // town/category catalogs were still loading when the AI response arrived.
+      setDeferredUnmatchedTown(null);
       setPendingExtraction(
         (isLoadingCities && Boolean(extracted.town)) ||
           (isLoadingCategories && extracted.categories.length > 0)
-          ? extracted
+          ? { extracted, preserveUserValues }
           : null,
       );
 
@@ -364,7 +368,7 @@ export function usePublishPosterAutofill({
 
   // Reconcile pending town/categories once catalogs finish loading.
   const reconcilePendingExtraction = useEffectEvent(
-    (pending: PosterExtractedEvent) => {
+    (pending: PendingPosterExtraction) => {
       setPendingExtraction(null);
       if (!cachedPosterAutofillModule) return;
       const current = formRef.current;
@@ -372,7 +376,7 @@ export function usePublishPosterAutofill({
         {
           currentForm: current,
           extracted: {
-            ...pending,
+            ...pending.extracted,
             title: null,
             description: null,
             url: null,
@@ -387,11 +391,19 @@ export function usePublishPosterAutofill({
           categories,
           autoDates: autoDatesRef.current,
           userOwnedFields: userOwnedFieldsRef.current,
-          preserveUserValues: true,
+          preserveUserValues: pending.preserveUserValues,
         },
       );
+      if (reconciled.unmatchedTown) {
+        setDeferredUnmatchedTown(reconciled.unmatchedTown);
+      }
       if (reconciled.filledFields.length === 0) return;
       markEdited();
+      if (!pending.preserveUserValues) {
+        for (const field of reconciled.filledFields) {
+          userOwnedFieldsRef.current.delete(field);
+        }
+      }
       formRef.current = reconciled.nextForm;
       setForm(reconciled.nextForm);
       setUndoRecord((prev) => {
@@ -430,6 +442,7 @@ export function usePublishPosterAutofill({
     setForm(nextForm);
     setUndoRecord(null);
     setPendingExtraction(null);
+    setDeferredUnmatchedTown(null);
     markEdited();
   }, [autoDatesRef, markEdited, setForm, undoRecord]);
 
@@ -439,6 +452,7 @@ export function usePublishPosterAutofill({
     verifiedScanIntentId,
     clearVerifiedScanIntent,
     canUndo: Boolean(undoRecord && undoRecord.ownedFields.size > 0),
+    deferredUnmatchedTown,
     resetPosterAutofill,
     trackFormFieldOwnership,
     handlePosterPrepared,

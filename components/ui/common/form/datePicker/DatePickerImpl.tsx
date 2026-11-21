@@ -112,6 +112,9 @@ export default function DatePickerImpl({
   const allDaySwitchId = `${idPrefix}-all-day-switch`;
   const [startDraft, setStartDraft] = useState<string | null>(null);
   const [endDraft, setEndDraft] = useState<string | null>(null);
+  const [calendarFocusDate, setCalendarFocusDate] = useState<string | undefined>(
+    undefined,
+  );
 
   const isPlausibleYmd = (value: string) => /^[1-9]\d{3}-\d{2}-\d{2}$/.test(value);
 
@@ -140,6 +143,7 @@ export default function DatePickerImpl({
       return;
     }
     const nextEndYmd = endYmd >= nextStartYmd ? endYmd : nextStartYmd;
+    setCalendarFocusDate(nextStartYmd);
     handleRangeChange(nextStartYmd, nextEndYmd);
   };
 
@@ -149,6 +153,7 @@ export default function DatePickerImpl({
     setStartDraft(null);
     if (isPlausibleYmd(candidate)) {
       const nextEndYmd = endYmd >= candidate ? endYmd : candidate;
+      setCalendarFocusDate(candidate);
       handleRangeChange(candidate, nextEndYmd);
     }
   };
@@ -158,6 +163,7 @@ export default function DatePickerImpl({
       setEndDraft(nextEndYmd);
       return;
     }
+    setCalendarFocusDate(nextEndYmd);
     handleRangeChange(startYmd, nextEndYmd);
   };
 
@@ -166,7 +172,9 @@ export default function DatePickerImpl({
     const candidate = endDraft;
     setEndDraft(null);
     if (isPlausibleYmd(candidate)) {
-      handleRangeChange(startYmd, candidate < startYmd ? startYmd : candidate);
+      const clampedEnd = candidate < startYmd ? startYmd : candidate;
+      setCalendarFocusDate(clampedEnd);
+      handleRangeChange(startYmd, clampedEnd);
     }
   };
 
@@ -231,6 +239,7 @@ export default function DatePickerImpl({
         fromDate={startYmd}
         toDate={endYmd}
         minDate={firstDay}
+        focusDate={calendarFocusDate}
         required={required}
         onChange={handleRangeChange}
       />

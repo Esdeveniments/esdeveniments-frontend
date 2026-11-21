@@ -100,6 +100,8 @@ describe("DatePickerImpl", () => {
         "endDate",
         expectedLocalTime("2026-06-30", 11, 0),
       );
+      // Calendar brings the edited end month into view
+      expect(dayButton("2026-06-30")).toBeInTheDocument();
     });
 
     it("does not clamp partial keyboard year or day values until a valid end date is typed or blurred", () => {

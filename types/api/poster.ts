@@ -139,6 +139,11 @@ export interface PosterExtractionAppliedSummary {
   isMultiEvent: boolean;
 }
 
+export interface PendingPosterExtraction {
+  extracted: PosterExtractedEvent;
+  preserveUserValues: boolean;
+}
+
 /**
  * Revision-based Undo record: stores the exact pre-autofill values per field
  * group plus the set of fields still owned by that autofill run. Editing any

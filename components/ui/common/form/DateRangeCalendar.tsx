@@ -44,6 +44,7 @@ export default function DateRangeCalendar({
   toDate,
   onChange,
   minDate,
+  focusDate,
   required = false,
 }: DateRangeCalendarProps): ReactElement {
   const t = useTranslations("Components.DateRangeCalendar");
@@ -69,12 +70,19 @@ export default function DateRangeCalendar({
     : undefined;
   const firstDay = parseYMD(minDate) ?? nowInMadrid();
 
-  // `defaultMonth` only applies once: follow starts set from outside (chips).
+  // `defaultMonth` only applies once: follow starts set from outside (chips)
+  // and explicit direct-input endpoint edits (`focusDate`).
   const [month, setMonth] = useState<Date>(from ?? firstDay);
   const [shownFrom, setShownFrom] = useState(fromDate);
   if (shownFrom !== fromDate) {
     setShownFrom(fromDate);
     if (from) setMonth(from);
+  }
+  const [shownFocus, setShownFocus] = useState(focusDate);
+  if (shownFocus !== focusDate) {
+    setShownFocus(focusDate);
+    const target = parseYMD(focusDate);
+    if (target) setMonth(target);
   }
 
   const formatDay = (d: Date) =>
