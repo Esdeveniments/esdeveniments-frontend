@@ -82,7 +82,7 @@ describe("PosterAutofillCard", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("extracts poster for signed-in user, shows filled pills & warnings, and triggers Undo", async () => {
+  it("extracts poster for signed-in user, swaps heading to success with only 2 actions, shows warnings, and triggers Undo", async () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValueOnce(
@@ -104,7 +104,7 @@ describe("PosterAutofillCard", () => {
     vi.stubGlobal("fetch", fetchSpy);
 
     const onPosterPrepared = vi.fn();
-    const onExtractionApplied = vi.fn().mockReturnValue({
+    const onExtractionApplied = vi.fn().mockResolvedValue({
       filledFields: ["title", "description", "town", "dates"],
       unmatchedTown: null,
       pastDate: false,
@@ -128,6 +128,11 @@ describe("PosterAutofillCard", () => {
       />,
     );
 
+    // Before scanning, an attached poster offers "Llegeix el cartell" + "Canvia el cartell"
+    expect(
+      screen.getByTestId("poster-autofill-analyze-existing"),
+    ).toHaveTextContent("posterAutofill.analyzeExistingButton");
+
     const input = screen.getByTestId("poster-autofill-input");
     fireEvent.change(input, { target: { files: [sampleFile] } });
 
@@ -135,15 +140,83 @@ describe("PosterAutofillCard", () => {
       expect(screen.getByTestId("poster-autofill-success")).toBeInTheDocument(),
     );
     expect(onPosterPrepared).toHaveBeenCalledWith(sampleFile);
-    expect(onExtractionApplied).toHaveBeenCalledWith(EXTRACTED, {
-      allowOverwriteOwned: false,
-    });
+    expect(onExtractionApplied).toHaveBeenCalledWith(
+      EXTRACTED,
+      expect.objectContaining({ allowOverwriteOwned: false }),
+    );
+
+    // Heading swaps in place to success (no stale idle heading)
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+      "posterAutofill.headingSuccess",
+    );
+    // Only 2 unmistakable actions on success: change poster + undo fields (no reread button)
+    expect(screen.getByTestId("poster-autofill-pick")).toHaveTextContent(
+      "posterAutofill.changeButton",
+    );
+    expect(screen.getByTestId("poster-autofill-undo")).toHaveTextContent(
+      "posterAutofill.undoButton",
+    );
+    expect(
+      screen.queryByTestId("poster-autofill-analyze-existing"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("poster-autofill-retry"),
+    ).not.toBeInTheDocument();
+
     expect(screen.getByTestId("poster-autofill-warnings")).toHaveTextContent(
       "posterAutofill.warningDateInferred",
     );
 
     fireEvent.click(screen.getByTestId("poster-autofill-undo"));
     expect(onUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows retry button only on retryable errors, not on unavailable/invalid errors", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ state: "available", signedIn: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ error: "Timed out", code: "upstream_timeout" }),
+          { status: 504, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    render(
+      <PosterAutofillCard
+        currentImageFile={sampleFile}
+        currentImagePreview="data:image/jpeg;base64,abc"
+        isAuthenticated={true}
+        isAuthLoading={false}
+        onRequestAuthForScan={vi.fn()}
+        onPosterPrepared={vi.fn()}
+        onExtractionApplied={vi.fn()}
+        canUndo={false}
+        onUndo={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("poster-autofill-input"), {
+      target: { files: [sampleFile] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("poster-autofill-error")).toHaveTextContent(
+        "posterAutofill.errorTimeout",
+      ),
+    );
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+      "posterAutofill.headingError",
+    );
+    expect(screen.getByTestId("poster-autofill-retry")).toHaveTextContent(
+      "posterAutofill.retryButton",
+    );
   });
 
   it("does not redirect guest to Logto when AI status is disabled", async () => {

@@ -107,7 +107,6 @@ export function usePosterAutofill({
   const [dateInferredWarning, setDateInferredWarning] = useState(false);
   const [priceReviewWarning, setPriceReviewWarning] = useState(false);
   const [multiEventWarning, setMultiEventWarning] = useState(false);
-  const [lastScannedFile, setLastScannedFile] = useState<File | null>(null);
   const lastScannedFileRef = useRef<File | null>(null);
 
   const isBusy =
@@ -236,7 +235,6 @@ export function usePosterAutofill({
         if (seq !== sequenceRef.current) return;
 
         lastScannedFileRef.current = file;
-        setLastScannedFile(file);
 
         if (!data.hasData) {
           clearFeedback();
@@ -247,9 +245,11 @@ export function usePosterAutofill({
           return;
         }
 
-        const applied = onExtractionAppliedRef.current(data.extracted, {
+        const applied = await onExtractionAppliedRef.current(data.extracted, {
           allowOverwriteOwned,
+          isStale: () => seq !== sequenceRef.current,
         });
+        if (seq !== sequenceRef.current) return;
         setFilledFields(applied.filledFields);
         setUnmatchedTown(applied.unmatchedTown);
         setPastDateWarning(applied.pastDate);
@@ -451,8 +451,12 @@ export function usePosterAutofill({
   const handleAnalyzeExisting = () => {
     if (!currentImageFile || disabled || isBusy) return;
     const seq = ++sequenceRef.current;
-    const isReread = lastScannedFile === currentImageFile;
-    void checkAvailabilityAndScan(currentImageFile, seq, isReread);
+    // Retry after a failed replace keeps overwrite intent from an earlier scan;
+    // scanning a manually attached poster (or re-reading after Undo) respects
+    // fields the user already typed.
+    const allowOverwriteOwned =
+      phase === "error" && lastScannedFileRef.current !== null;
+    void checkAvailabilityAndScan(currentImageFile, seq, allowOverwriteOwned);
   };
 
   const handleUndoClick = () => {
@@ -473,7 +477,6 @@ export function usePosterAutofill({
     dateInferredWarning,
     priceReviewWarning,
     multiEventWarning,
-    lastScannedFile,
     cancelActiveScan,
     handleSelectedFile,
     handleAnalyzeExisting,

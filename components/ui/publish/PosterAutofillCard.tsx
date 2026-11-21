@@ -11,23 +11,29 @@ import {
   PhotoIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
+import Button from "@components/ui/common/button";
 import { IMAGE_UPLOAD_ACCEPT, MAX_TOTAL_UPLOAD_BYTES } from "@utils/constants";
 import { imageUploadErrorMessage } from "@utils/image-upload";
 import { usePosterAutofill } from "@components/hooks/usePosterAutofill";
-import type { PosterAutofillFieldKey } from "types/api/poster";
-import type { EventFormStep } from "types/event";
+import type { PosterExtractionErrorCode } from "types/api/poster";
 import type { PosterAutofillCardProps } from "types/props";
 
-const FIELD_STEP_MAP: Record<PosterAutofillFieldKey, EventFormStep> = {
-  title: 0,
-  description: 0,
-  url: 0,
-  town: 1,
-  location: 1,
-  categories: 1,
-  dates: 2,
-  price: 2,
+const ERROR_MESSAGE_KEYS: Record<PosterExtractionErrorCode, string> = {
+  not_configured: "posterAutofill.errorUnavailable",
+  unauthorized: "posterAutofill.errorGeneric",
+  rate_limited: "posterAutofill.errorRateLimited",
+  overloaded: "posterAutofill.errorBusy",
+  upstream_timeout: "posterAutofill.errorTimeout",
+  invalid_image: "posterAutofill.errorInvalidImage",
+  too_large: "posterAutofill.errorInvalidImage",
+  network_error: "posterAutofill.errorNetwork",
+  upstream_error: "posterAutofill.errorGeneric",
+  model_rejected: "posterAutofill.errorGeneric",
+  no_event_data: "posterAutofill.errorGeneric",
 };
+
+const ACTION_BTN_CLASSES =
+  "btn-sm normal-case tracking-normal font-medium active:scale-[0.96] transition-transform duration-100";
 
 export default function PosterAutofillCard({
   currentImageFile,
@@ -40,7 +46,6 @@ export default function PosterAutofillCard({
   onRequestAuthForScan,
   onPosterPrepared,
   onExtractionApplied,
-  onNavigateStep,
   canUndo,
   onUndo,
   onBusyChange,
@@ -61,7 +66,6 @@ export default function PosterAutofillCard({
     dateInferredWarning,
     priceReviewWarning,
     multiEventWarning,
-    lastScannedFile,
     cancelActiveScan,
     handleSelectedFile,
     handleAnalyzeExisting,
@@ -90,25 +94,14 @@ export default function PosterAutofillCard({
 
   const errorMessage = imagePrepFailure
     ? imageUploadErrorMessage(tImg, imagePrepFailure, MAX_TOTAL_UPLOAD_BYTES)
-    : errorCode === "not_configured"
-      ? t("posterAutofill.errorUnavailable")
-      : errorCode === "rate_limited"
-        ? t("posterAutofill.errorRateLimited")
-        : errorCode === "overloaded"
-          ? t("posterAutofill.errorBusy")
-          : errorCode === "upstream_timeout"
-            ? t("posterAutofill.errorTimeout")
-            : errorCode === "invalid_image" || errorCode === "too_large"
-              ? t("posterAutofill.errorInvalidImage")
-              : errorCode === "network_error"
-                ? t("posterAutofill.errorNetwork")
-                : errorCode
-                  ? t("posterAutofill.errorGeneric")
-                  : null;
+    : errorCode
+      ? t(ERROR_MESSAGE_KEYS[errorCode])
+      : null;
 
   const canRetry =
     phase === "error" &&
     Boolean(currentImageFile) &&
+    !imagePrepFailure &&
     errorCode !== "not_configured" &&
     errorCode !== "invalid_image" &&
     errorCode !== "too_large";
@@ -116,26 +109,40 @@ export default function PosterAutofillCard({
   const hasExistingPoster = Boolean(currentImageFile && currentImagePreview);
   const showScanOverlay = phase === "analyzing" || phase === "checking";
 
-  const fieldLabel = (field: PosterAutofillFieldKey): string => {
-    switch (field) {
-      case "title":
-        return t("posterAutofill.fields.title");
-      case "description":
-        return t("posterAutofill.fields.description");
-      case "url":
-        return t("posterAutofill.fields.url");
-      case "town":
-        return t("posterAutofill.fields.town");
-      case "location":
-        return t("posterAutofill.fields.location");
-      case "categories":
-        return t("posterAutofill.fields.categories");
-      case "dates":
-        return t("posterAutofill.fields.dates");
-      case "price":
-        return t("posterAutofill.fields.price");
-    }
-  };
+  const busyHeading =
+    phase === "preparing"
+      ? t("posterAutofill.statusPreparing")
+      : phase === "checking"
+        ? t("posterAutofill.statusChecking")
+        : t("posterAutofill.statusAnalyzing");
+
+  const heading = isBusy
+    ? busyHeading
+    : phase === "success"
+      ? t("posterAutofill.headingSuccess")
+      : phase === "empty"
+        ? t("posterAutofill.headingEmpty")
+        : phase === "error"
+          ? t("posterAutofill.headingError")
+          : t("posterAutofill.heading");
+
+  const idleSubtitle = hasExistingPoster
+    ? isAuthenticated || isAuthLoading
+      ? t("posterAutofill.descriptionReady")
+      : t("posterAutofill.descriptionReadyGuest")
+    : isAuthenticated || isAuthLoading
+      ? t("posterAutofill.description")
+      : t("posterAutofill.descriptionGuest");
+
+  const hasWarnings =
+    phase === "success" &&
+    Boolean(
+      unmatchedTown ||
+        dateInferredWarning ||
+        pastDateWarning ||
+        priceReviewWarning ||
+        multiEventWarning,
+    );
 
   const statusIcon =
     phase === "success" ? (
@@ -150,6 +157,12 @@ export default function PosterAutofillCard({
         className="h-5 w-5 text-error-dark shrink-0 poster-icon-swap"
         aria-hidden="true"
       />
+    ) : phase === "empty" ? (
+      <ExclamationTriangleIcon
+        key="empty"
+        className="h-5 w-5 text-warning-dark shrink-0 poster-icon-swap"
+        aria-hidden="true"
+      />
     ) : (
       <SparklesIcon
         key="sparkle"
@@ -157,6 +170,10 @@ export default function PosterAutofillCard({
         aria-hidden="true"
       />
     );
+
+  const pickLabel = hasExistingPoster
+    ? t("posterAutofill.changeButton")
+    : t("posterAutofill.pickButton");
 
   return (
     <section
@@ -191,7 +208,7 @@ export default function PosterAutofillCard({
         type="file"
         accept={IMAGE_UPLOAD_ACCEPT}
         className="hidden"
-        aria-label={t("posterAutofill.pickButton")}
+        aria-label={pickLabel}
         data-testid="poster-autofill-input"
         disabled={disabled || isBusy}
         onChange={(event) => {
@@ -204,7 +221,7 @@ export default function PosterAutofillCard({
         <div className="flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap">
           <div className="flex min-w-0 items-center gap-3">
             {hasExistingPoster && currentImagePreview ? (
-              <div className="relative h-14 w-12 sm:h-16 sm:w-14 shrink-0 overflow-hidden rounded-input bg-muted poster-thumb-outline">
+              <div className="relative h-14 w-12 shrink-0 overflow-hidden rounded-input bg-muted poster-thumb-outline">
                 <img
                   src={currentImagePreview}
                   alt={t("posterAutofill.thumbAlt")}
@@ -216,7 +233,7 @@ export default function PosterAutofillCard({
               </div>
             ) : (
               <div
-                className={`flex-center h-10 w-10 shrink-0 rounded-input border transition-[border-color,background-color,transform] duration-200 ${
+                className={`flex-center h-14 w-12 shrink-0 rounded-input border transition-[border-color,background-color,transform] duration-200 ${
                   dragOver
                     ? "border-primary/40 bg-primary/10 -translate-y-0.5"
                     : "border-border/60 bg-muted"
@@ -230,178 +247,213 @@ export default function PosterAutofillCard({
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 {statusIcon}
-                <h2 className="body-normal font-semibold text-foreground-strong">
-                  {t("posterAutofill.heading")}
+                <h2
+                  role={isBusy ? "status" : undefined}
+                  aria-live={isBusy ? "polite" : undefined}
+                  data-testid={isBusy ? "poster-autofill-status" : undefined}
+                  className="body-normal font-semibold text-foreground-strong"
+                >
+                  {heading}
                 </h2>
               </div>
-              <p className="body-small text-muted-foreground">
-                {isAuthenticated || isAuthLoading
-                  ? t("posterAutofill.description")
-                  : t("posterAutofill.descriptionGuest")}
-              </p>
+
+              {isBusy && (
+                <p className="body-small text-muted-foreground">
+                  {t("posterAutofill.statusHint")}
+                </p>
+              )}
+
+              {phase === "idle" && (
+                <p className="body-small text-muted-foreground">
+                  {idleSubtitle}
+                </p>
+              )}
+
+              {phase === "success" && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  data-testid={
+                    filledFields.length > 0
+                      ? "poster-autofill-success"
+                      : undefined
+                  }
+                  className="body-small font-medium text-success-dark"
+                >
+                  {filledFields.length > 0
+                    ? t("posterAutofill.successSummary", {
+                        count: filledFields.length,
+                      })
+                    : t("posterAutofill.successWarningsOnly")}
+                </p>
+              )}
+
+              {phase === "empty" && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  data-testid="poster-autofill-empty"
+                  className="body-small text-muted-foreground"
+                >
+                  {t("posterAutofill.emptyResult")}
+                </p>
+              )}
+
+              {phase === "error" && errorMessage && (
+                <p
+                  role="alert"
+                  data-testid="poster-autofill-error"
+                  className="body-small font-medium text-error-dark"
+                >
+                  {errorMessage}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={openFilePicker}
-              disabled={disabled || isBusy || isAuthLoading}
-              data-testid="poster-autofill-pick"
-              className="btn-neutral btn-sm normal-case tracking-normal font-medium active:scale-[0.96] transition-transform duration-100"
-            >
-              {hasExistingPoster
-                ? t("posterAutofill.changeButton")
-                : t("posterAutofill.pickButton")}
-            </button>
-
-            {hasExistingPoster &&
-              !isBusy &&
-              (phase === "idle" ||
-                canRetry ||
-                phase === "success" ||
-                phase === "empty") && (
-                <button
+            {isBusy ? (
+              <Button
+                key="cancel"
+                type="button"
+                variant="ghost"
+                onClick={cancelActiveScan}
+                data-testid="poster-autofill-cancel"
+                className={`${ACTION_BTN_CLASSES} text-muted-foreground`}
+              >
+                {t("posterAutofill.cancelButton")}
+              </Button>
+            ) : phase === "success" ? (
+              <>
+                <Button
+                  key="pick"
                   type="button"
+                  variant="neutral"
+                  onClick={openFilePicker}
+                  disabled={disabled || isAuthLoading}
+                  data-testid="poster-autofill-pick"
+                  className={ACTION_BTN_CLASSES}
+                >
+                  {t("posterAutofill.changeButton")}
+                </Button>
+                {canUndo && (
+                  <Button
+                    key="undo"
+                    type="button"
+                    variant="ghost"
+                    hasIcon
+                    onClick={handleUndoClick}
+                    disabled={disabled}
+                    data-testid="poster-autofill-undo"
+                    className={`${ACTION_BTN_CLASSES} text-muted-foreground`}
+                  >
+                    <ArrowUturnLeftIcon
+                      className="h-4 w-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    {t("posterAutofill.undoButton")}
+                  </Button>
+                )}
+              </>
+            ) : phase === "error" && canRetry ? (
+              <>
+                <Button
+                  key="retry"
+                  type="button"
+                  variant="neutral"
+                  hasIcon
+                  onClick={handleAnalyzeExisting}
+                  disabled={disabled || isAuthLoading}
+                  data-testid="poster-autofill-retry"
+                  className={ACTION_BTN_CLASSES}
+                >
+                  <ArrowPathIcon
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  {t("posterAutofill.retryButton")}
+                </Button>
+                <Button
+                  key="pick"
+                  type="button"
+                  variant="ghost"
+                  onClick={openFilePicker}
+                  disabled={disabled || isAuthLoading}
+                  data-testid="poster-autofill-pick"
+                  className={`${ACTION_BTN_CLASSES} text-foreground`}
+                >
+                  {pickLabel}
+                </Button>
+              </>
+            ) : phase === "idle" && hasExistingPoster ? (
+              <>
+                <Button
+                  key="analyze"
+                  type="button"
+                  variant="neutral"
                   onClick={handleAnalyzeExisting}
                   disabled={disabled || isAuthLoading}
                   data-testid="poster-autofill-analyze-existing"
-                  className="btn-ghost btn-sm normal-case tracking-normal font-medium text-foreground active:scale-[0.96] transition-transform duration-100"
+                  className={ACTION_BTN_CLASSES}
                 >
-                  <ArrowPathIcon
-                    className="h-4 w-4 mr-1 shrink-0"
-                    aria-hidden="true"
-                  />
-                  {lastScannedFile === currentImageFile
-                    ? t("posterAutofill.rereadButton")
-                    : t("posterAutofill.analyzeExistingButton")}
-                </button>
-              )}
-
-            {canUndo && !isBusy && (
-              <button
+                  {t("posterAutofill.analyzeExistingButton")}
+                </Button>
+                <Button
+                  key="pick"
+                  type="button"
+                  variant="ghost"
+                  onClick={openFilePicker}
+                  disabled={disabled || isAuthLoading}
+                  data-testid="poster-autofill-pick"
+                  className={`${ACTION_BTN_CLASSES} text-foreground`}
+                >
+                  {t("posterAutofill.changeButton")}
+                </Button>
+              </>
+            ) : (
+              <Button
+                key="pick"
                 type="button"
-                onClick={handleUndoClick}
-                disabled={disabled}
-                data-testid="poster-autofill-undo"
-                className="btn-ghost btn-sm normal-case tracking-normal font-medium text-muted-foreground active:scale-[0.96] transition-transform duration-100"
+                variant="neutral"
+                onClick={openFilePicker}
+                disabled={disabled || isAuthLoading}
+                data-testid="poster-autofill-pick"
+                className={ACTION_BTN_CLASSES}
               >
-                <ArrowUturnLeftIcon
-                  className="h-4 w-4 mr-1 shrink-0"
-                  aria-hidden="true"
-                />
-                {t("posterAutofill.undoButton")}
-              </button>
+                {pickLabel}
+              </Button>
             )}
           </div>
         </div>
 
-        {isBusy && (
-          <div
-            role="status"
-            aria-live="polite"
-            data-testid="poster-autofill-status"
-            className="flex-between flex-wrap gap-2 rounded-input border border-border/60 bg-muted px-3 py-2"
+        {hasWarnings && (
+          <ul
+            data-testid="poster-autofill-warnings"
+            className="stack gap-1 rounded-input border border-warning-border bg-warning-light px-3 py-2 body-small text-warning-dark"
           >
-            <span className="body-small font-medium text-foreground-strong">
-              {phase === "preparing"
-                ? t("posterAutofill.statusPreparing")
-                : phase === "checking"
-                  ? t("posterAutofill.statusChecking")
-                  : t("posterAutofill.statusAnalyzing")}
-            </span>
-            <button
-              type="button"
-              onClick={cancelActiveScan}
-              data-testid="poster-autofill-cancel"
-              className="btn-ghost btn-sm normal-case tracking-normal font-medium text-muted-foreground active:scale-[0.96] transition-transform duration-100"
-            >
-              {t("posterAutofill.cancelButton")}
-            </button>
-          </div>
-        )}
-
-        {phase === "success" && filledFields.length > 0 && (
-          <div
-            role="status"
-            aria-live="polite"
-            data-testid="poster-autofill-success"
-            className="stack gap-2"
-          >
-            <p className="body-small font-medium text-success-dark">
-              {t("posterAutofill.successSummary", {
-                count: filledFields.length,
-              })}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {filledFields.map((field, index) => (
-                <button
-                  key={field}
-                  type="button"
-                  onClick={() => onNavigateStep?.(FIELD_STEP_MAP[field])}
-                  style={{ animationDelay: `${index * 40}ms` }}
-                  className="badge-default poster-chip-enter hover:border-foreground/40 focus-ring active:scale-[0.96] transition-[border-color,transform] duration-150"
-                >
-                  {fieldLabel(field)}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {phase === "success" &&
-          (unmatchedTown ||
-            dateInferredWarning ||
-            pastDateWarning ||
-            priceReviewWarning ||
-            multiEventWarning) && (
-            <ul
-              data-testid="poster-autofill-warnings"
-              className="stack gap-1 rounded-input border border-warning-border bg-warning-light px-3 py-2 body-small text-warning-dark"
-            >
-              {unmatchedTown && (
-                <li>
-                  {t("posterAutofill.warningUnmatchedTown", {
-                    town: unmatchedTown,
-                  })}
-                </li>
-              )}
-              {dateInferredWarning && (
-                <li>{t("posterAutofill.warningDateInferred")}</li>
-              )}
-              {pastDateWarning && (
-                <li>{t("posterAutofill.warningPastDate")}</li>
-              )}
-              {priceReviewWarning && (
-                <li>{t("posterAutofill.warningPriceReview")}</li>
-              )}
-              {multiEventWarning && (
-                <li>{t("posterAutofill.warningMultiEvent")}</li>
-              )}
-            </ul>
-          )}
-
-        {phase === "empty" && (
-          <p
-            role="status"
-            aria-live="polite"
-            data-testid="poster-autofill-empty"
-            className="body-small text-muted-foreground"
-          >
-            {t("posterAutofill.emptyResult")}
-          </p>
-        )}
-
-        {phase === "error" && errorMessage && (
-          <p
-            role="alert"
-            data-testid="poster-autofill-error"
-            className="body-small font-medium text-error-dark"
-          >
-            {errorMessage}
-          </p>
+            {unmatchedTown && (
+              <li>
+                {t("posterAutofill.warningUnmatchedTown", {
+                  town: unmatchedTown,
+                })}
+              </li>
+            )}
+            {dateInferredWarning && (
+              <li>{t("posterAutofill.warningDateInferred")}</li>
+            )}
+            {pastDateWarning && (
+              <li>{t("posterAutofill.warningPastDate")}</li>
+            )}
+            {priceReviewWarning && (
+              <li>{t("posterAutofill.warningPriceReview")}</li>
+            )}
+            {multiEventWarning && (
+              <li>{t("posterAutofill.warningMultiEvent")}</li>
+            )}
+          </ul>
         )}
       </div>
     </section>
   );
 }
+

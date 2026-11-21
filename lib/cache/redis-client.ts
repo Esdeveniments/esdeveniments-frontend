@@ -128,9 +128,13 @@ export async function cacheSetJson(
   }
 }
 
+const ATOMIC_INCR_WITH_TTL_LUA =
+  "local c = redis.call('INCR', KEYS[1]); local t = redis.call('TTL', KEYS[1]); if c == 1 or t < 0 then redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1])); t = tonumber(ARGV[1]) end; return {c, t}";
+
 /**
  * Atomic integer counter increment with TTL on first creation (or if key lacks
- * expiry). Returns `null` when Redis is unavailable so callers can fall back.
+ * expiry), executed in a single Lua script so a crash can never orphan a key
+ * without expiry. Returns `null` when Redis is unavailable so callers can fall back.
  */
 export async function cacheIncrWithTtl(
   key: string,
@@ -139,13 +143,15 @@ export async function cacheIncrWithTtl(
   try {
     const client = await getClient();
     if (!client) return null;
-    const count = await client.incr(key);
-    let ttl = await client.ttl(key);
-    if (count === 1 || ttl < 0) {
-      await client.expire(key, ttlSeconds);
-      ttl = ttlSeconds;
-    }
-    return { count, ttlSeconds: Math.max(1, ttl) };
+    const raw = (await client.eval(ATOMIC_INCR_WITH_TTL_LUA, {
+      keys: [key],
+      arguments: [String(Math.max(1, Math.trunc(ttlSeconds)))],
+    })) as unknown;
+    if (!Array.isArray(raw) || raw.length < 2) return null;
+    const count = Number(raw[0]);
+    const ttl = Number(raw[1]);
+    if (!Number.isFinite(count)) return null;
+    return { count, ttlSeconds: Math.max(1, Number.isFinite(ttl) ? ttl : ttlSeconds) };
   } catch (error) {
     console.warn("[redis-cache] incr failed:", error);
     return null;

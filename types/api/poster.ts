@@ -130,6 +130,15 @@ export interface PosterAutofillApplyResult {
   appliedDates: boolean;
 }
 
+export interface PosterExtractionAppliedSummary {
+  filledFields: PosterAutofillFieldKey[];
+  unmatchedTown: string | null;
+  pastDate: boolean;
+  dateInferred: boolean;
+  priceNeedsReview: boolean;
+  isMultiEvent: boolean;
+}
+
 /**
  * Revision-based Undo record: stores the exact pre-autofill values per field
  * group plus the set of fields still owned by that autofill run. Editing any

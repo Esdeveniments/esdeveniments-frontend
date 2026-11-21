@@ -102,6 +102,43 @@ describe("DatePickerImpl", () => {
       );
     });
 
+    it("does not clamp partial keyboard year or day values until a valid end date is typed or blurred", () => {
+      render(
+        <Harness
+          {...baseProps}
+          startDate="2026-06-15T10:00"
+          endDate="2026-06-15T11:00"
+        />,
+      );
+
+      const endInput = screen.getByLabelText("Data de fi");
+      for (const partial of ["0002-06-30", "0020-06-30", "0202-06-30"]) {
+        fireEvent.change(endInput, { target: { value: partial } });
+        expect(endInput).toHaveValue(partial);
+        expect(baseProps.onChange).not.toHaveBeenCalled();
+      }
+
+      // Intermediate day below start day (typing "3" on the way to "30") stays untouched
+      fireEvent.change(endInput, { target: { value: "2026-06-03" } });
+      expect(endInput).toHaveValue("2026-06-03");
+      expect(baseProps.onChange).not.toHaveBeenCalled();
+
+      // Completing a valid end date commits immediately
+      fireEvent.change(endInput, { target: { value: "2026-06-30" } });
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-06-30", 11, 0),
+      );
+
+      // Blurring an end date earlier than start clamps to start
+      fireEvent.change(endInput, { target: { value: "2026-06-01" } });
+      fireEvent.blur(endInput);
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-06-15", 11, 0),
+      );
+    });
+
     it("does not render all-day toggle by default", () => {
       render(<DatePickerImpl {...baseProps} />);
       expect(

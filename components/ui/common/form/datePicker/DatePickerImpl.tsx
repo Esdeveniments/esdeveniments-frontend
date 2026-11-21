@@ -110,9 +110,15 @@ export default function DatePickerImpl({
   });
   const firstDay = startYmd < initialFloor ? startYmd : initialFloor;
   const allDaySwitchId = `${idPrefix}-all-day-switch`;
+  const [startDraft, setStartDraft] = useState<string | null>(null);
+  const [endDraft, setEndDraft] = useState<string | null>(null);
+
+  const isPlausibleYmd = (value: string) => /^[1-9]\d{3}-\d{2}-\d{2}$/.test(value);
 
   const handleRangeChange = (from: string, to: string) => {
     if (!from) return;
+    setStartDraft(null);
+    setEndDraft(null);
     const newStart = withDay(from, startDate);
     let newEnd = withDay(to || from, endDate);
 
@@ -129,14 +135,39 @@ export default function DatePickerImpl({
   };
 
   const handleStartDayInput = (nextStartYmd: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextStartYmd)) return;
+    if (!isPlausibleYmd(nextStartYmd)) {
+      setStartDraft(nextStartYmd);
+      return;
+    }
     const nextEndYmd = endYmd >= nextStartYmd ? endYmd : nextStartYmd;
     handleRangeChange(nextStartYmd, nextEndYmd);
   };
 
+  const handleStartDayBlur = () => {
+    if (startDraft === null) return;
+    const candidate = startDraft;
+    setStartDraft(null);
+    if (isPlausibleYmd(candidate)) {
+      const nextEndYmd = endYmd >= candidate ? endYmd : candidate;
+      handleRangeChange(candidate, nextEndYmd);
+    }
+  };
+
   const handleEndDayInput = (nextEndYmd: string) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(nextEndYmd)) return;
-    handleRangeChange(startYmd, nextEndYmd < startYmd ? startYmd : nextEndYmd);
+    if (!isPlausibleYmd(nextEndYmd) || nextEndYmd < startYmd) {
+      setEndDraft(nextEndYmd);
+      return;
+    }
+    handleRangeChange(startYmd, nextEndYmd);
+  };
+
+  const handleEndDayBlur = () => {
+    if (endDraft === null) return;
+    const candidate = endDraft;
+    setEndDraft(null);
+    if (isPlausibleYmd(candidate)) {
+      handleRangeChange(startYmd, candidate < startYmd ? startYmd : candidate);
+    }
   };
 
   const handleStartTimeChange = (time: string) => {
@@ -208,32 +239,34 @@ export default function DatePickerImpl({
         <div className="w-full sm:flex-1 sm:min-w-0">
           <label
             htmlFor={`${idPrefix}-start-date`}
-            className="text-sm text-muted-foreground mb-1.5 block font-medium"
+            className="body-small text-muted-foreground mb-1.5 block font-medium"
           >
             {t("startDate")}
           </label>
           <input
             id={`${idPrefix}-start-date`}
             type="date"
-            value={startYmd}
+            value={startDraft ?? startYmd}
             min={firstDay}
             onChange={(e) => handleStartDayInput(e.target.value)}
+            onBlur={handleStartDayBlur}
             className="input input-lg"
           />
         </div>
         <div className="w-full sm:flex-1 sm:min-w-0">
           <label
             htmlFor={`${idPrefix}-end-date`}
-            className="text-sm text-muted-foreground mb-1.5 block font-medium"
+            className="body-small text-muted-foreground mb-1.5 block font-medium"
           >
             {t("endDate")}
           </label>
           <input
             id={`${idPrefix}-end-date`}
             type="date"
-            value={endYmd}
+            value={endDraft ?? endYmd}
             min={startYmd}
             onChange={(e) => handleEndDayInput(e.target.value)}
+            onBlur={handleEndDayBlur}
             className="input input-lg"
           />
         </div>

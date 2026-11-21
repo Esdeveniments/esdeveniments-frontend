@@ -387,7 +387,6 @@ export interface EventFormProps {
   previewLabel?: string;
   previewTestId?: string;
   initialStep?: EventFormStep;
-  activeStep?: EventFormStep;
   onStepChange?: (step: EventFormStep) => void;
 }
 

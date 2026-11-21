@@ -66,19 +66,17 @@ export const EventForm: React.FC<EventFormProps> = ({
   previewLabel,
   previewTestId,
   initialStep = 0,
-  activeStep,
   onStepChange,
 }) => {
   const t = useTranslations("Utils.Validation");
   const tForm = useTranslations("Components.EventForm");
   // true on the client, false during SSR: marks the form interactive for e2e.
   const isHydrated = useIsClient();
-  const [internalStep, setInternalStep] = useState(initialStep);
-  const step = activeStep ?? internalStep;
+  const [step, setStep] = useState(initialStep);
   const changeStep = (next: number) => {
     if (next === step) return;
     const nextStep = EventFormStepSchema.parse(next);
-    setInternalStep(nextStep);
+    setStep(nextStep);
     onStepChange?.(nextStep);
   };
   const [isImagePreparing, setIsImagePreparing] = useState(false);

@@ -14,13 +14,10 @@ import { toLocalDateTimeString } from "@utils/date-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useImagePreview } from "@components/hooks/useImagePreview";
 import { usePublishDraft } from "@components/hooks/usePublishDraft";
+import { usePublishPosterAutofill } from "@components/hooks/usePublishPosterAutofill";
 import PosterAutofillCard from "@components/ui/publish/PosterAutofillCard";
 import PublishDraftPanel from "@components/ui/publish/PublishDraftPanel";
 import { getPublishDraftWarnings, hasPublishFormEnded } from "@utils/publish-draft-warnings";
-import {
-  applyPosterExtractionToForm,
-  undoPosterAutofill,
-} from "@utils/poster-autofill";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
 import { useCategories } from "@components/hooks/useCategories";
 import { createEventAction } from "./actions";
@@ -30,18 +27,10 @@ import type { E2EEventExtras } from "types/api/event";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
-import type {
-  PosterAutofillFieldKey,
-  PosterAutofillUndoRecord,
-  PosterExtractedEvent,
-  PosterScanIntentRecord,
-} from "types/api/poster";
 import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
-  POSTER_SCAN_INTENT_STORAGE_KEY,
-  POSTER_SCAN_INTENT_TTL_MS,
   PUBLISH_RESUME_PATH,
 } from "@utils/constants";
 import { mapDraftToPreviewEvent } from "@components/ui/EventForm/preview/mapper";
@@ -124,38 +113,6 @@ const isCategoryOption = (
     "label" in category
   );
 
-const formKeyToAutofillField = (
-  name: keyof FormData,
-): PosterAutofillFieldKey | null => {
-  switch (name) {
-    case "title":
-      return "title";
-    case "description":
-      return "description";
-    case "url":
-      return "url";
-    case "town":
-    case "region":
-      return "town";
-    case "location":
-      return "location";
-    case "categories":
-      return "categories";
-    case "startDate":
-    case "endDate":
-    case "startTime":
-    case "endTime":
-    case "isAllDay":
-      return "dates";
-    case "priceType":
-    case "priceAmount":
-    case "originalPrice":
-      return "price";
-    default:
-      return null;
-  }
-};
-
 const PublishForm = () => {
   const t = useTranslations("App.Publish");
   const tForm = useTranslations("Components.EventForm");
@@ -175,22 +132,14 @@ const PublishForm = () => {
   useEffect(() => refreshDefaultDates(), []);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreparing, setImagePreparing] = useState(false);
-  const [posterAutofillBusy, setPosterAutofillBusy] = useState(false);
   const [imagePreview, updateImagePreview] = useImagePreview(null);
   const { user, signIn, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [editorVersion, setEditorVersion] = useState(0);
   const [wizardStep, setWizardStep] = useState<EventFormStep>(0);
   const [publishAfterReturn, setPublishAfterReturn] = useState<PublishResumeIntent | null>(null);
-  const [verifiedScanIntentId, setVerifiedScanIntentId] = useState<string | null>(null);
-  const [undoRecord, setUndoRecord] = useState<PosterAutofillUndoRecord | null>(null);
-  const [pendingExtraction, setPendingExtraction] =
-    useState<PosterExtractedEvent | null>(null);
-  const userOwnedFieldsRef = useRef<Set<PosterAutofillFieldKey>>(new Set());
-  const autofillRunIdRef = useRef(0);
-  const formRef = useRef(form);
-  useEffect(() => {
-    formRef.current = form;
-  }, [form]);
+  const resetPosterAutofillRef = useRef<
+    (options?: { keepScanIntent?: boolean }) => void
+  >(() => {});
   const [continuingPublication, setContinuingPublication] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authStage, setAuthStage] = useState<PublishResumeStage | null>(null);
@@ -209,11 +158,7 @@ const PublishForm = () => {
   const resetEditor = useCallback(() => {
     setWizardStep(0);
     setPublishAfterReturn(null);
-    setVerifiedScanIntentId(null);
-    setUndoRecord(null);
-    setPendingExtraction(null);
-    setPosterAutofillBusy(false);
-    userOwnedFieldsRef.current.clear();
+    resetPosterAutofillRef.current();
     setIsRedirecting(false);
     submittedRef.current = false;
     formStartedRef.current = false;
@@ -232,10 +177,7 @@ const PublishForm = () => {
     onRestore: (saved, resumed, intent) => {
       setError(null);
       setIsRedirecting(false);
-      setUndoRecord(null);
-      setPendingExtraction(null);
-      setPosterAutofillBusy(false);
-      userOwnedFieldsRef.current.clear();
+      resetPosterAutofillRef.current({ keepScanIntent: true });
       setEditorVersion((version) => version + 1);
       autoDatesRef.current = false;
       setForm({ ...emptyForm, ...createDefaultDates(), ...saved.form });
@@ -342,41 +284,64 @@ const PublishForm = () => {
     setWizardStep(step);
   }, [markEdited]);
 
-  const markFieldUserOwned = useCallback((field: PosterAutofillFieldKey | null) => {
-    if (!field) return;
-    userOwnedFieldsRef.current.add(field);
-    setUndoRecord((current) => {
-      if (!current || !current.ownedFields.has(field)) return current;
-      const remaining = new Set(current.ownedFields);
-      remaining.delete(field);
-      return remaining.size > 0
-        ? { ...current, ownedFields: remaining }
-        : null;
-    });
-  }, []);
+  const {
+    posterAutofillBusy,
+    setPosterAutofillBusy,
+    verifiedScanIntentId,
+    clearVerifiedScanIntent,
+    canUndo: canUndoPosterAutofill,
+    resetPosterAutofill,
+    trackFormFieldOwnership,
+    handlePosterPrepared,
+    handleRequestAuthForScan,
+    handlePosterExtractionApplied,
+    handlePosterUndo,
+  } = usePublishPosterAutofill({
+    form,
+    setForm,
+    autoDatesRef,
+    cityOptions,
+    cityToRegionOptionMap,
+    categories,
+    isLoadingCities,
+    isLoadingCategories,
+    isAuthLoading,
+    locale,
+    signIn,
+    prepareResume: draft.prepareResume,
+    draftOwnerChanged: draft.ownerChanged,
+    markEdited,
+    trackFieldInteraction,
+    setImageFile,
+    updateImagePreview,
+    setError,
+    setHandingOff,
+    handoffStartedRef,
+    handedOffRef,
+    draftHandoffFailedMessage: t("draftHandoffFailed"),
+  });
+
+  useEffect(() => {
+    resetPosterAutofillRef.current = resetPosterAutofill;
+  }, [resetPosterAutofill]);
 
   const handleFormChange = useCallback(<K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
     trackFieldInteraction(String(name));
-    const autofillField = formKeyToAutofillField(name);
     const isCleared =
       value === "" ||
       value === null ||
       (Array.isArray(value) && value.length === 0);
-    if (autofillField && isCleared) {
-      userOwnedFieldsRef.current.delete(autofillField);
-    } else {
-      markFieldUserOwned(autofillField);
-    }
+    trackFormFieldOwnership(name, isCleared);
     if (name === "startDate" || name === "endDate" || name === "isAllDay") {
       autoDatesRef.current = false;
       const ended = t("dateEnded");
       setError((current) => (current === ended ? null : current));
     }
     setForm((prev) => ({ ...prev, [name]: value }));
-  }, [trackFieldInteraction, markFieldUserOwned, t]);
+  }, [trackFieldInteraction, trackFormFieldOwnership, t]);
 
   const handleImageChange = (file: File | null) => {
     setError(null);
@@ -388,11 +353,7 @@ const PublishForm = () => {
 
   const handleTownChange = (town: Option | null) => {
     trackFieldInteraction("town");
-    if (town) {
-      markFieldUserOwned("town");
-    } else {
-      userOwnedFieldsRef.current.delete("town");
-    }
+    trackFormFieldOwnership("town", !town);
 
     setForm((prev) => {
       const next = { ...prev, town };
@@ -407,245 +368,6 @@ const PublishForm = () => {
 
   const handleCategoriesChange = (categories: Option[]) =>
     handleFormChange("categories", categories);
-
-  // Verify one-shot Logto scan return (?resume=1&scan=<intentId>). Any load
-  // without a matching scan param deletes stale scan intents so a later manual
-  // Publish login can never trigger an unintended AI scan.
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const scanParam = url.searchParams.get("scan");
-    let rawIntent: string | null = null;
-    try {
-      rawIntent = sessionStorage.getItem(POSTER_SCAN_INTENT_STORAGE_KEY);
-      sessionStorage.removeItem(POSTER_SCAN_INTENT_STORAGE_KEY);
-    } catch {
-      rawIntent = null;
-    }
-
-    if (scanParam) {
-      url.searchParams.delete("scan");
-      window.history.replaceState(window.history.state, "", url);
-    }
-
-    if (!scanParam || !rawIntent) return;
-    try {
-      const parsed = JSON.parse(rawIntent) as PosterScanIntentRecord;
-      const fresh =
-        parsed.intentId === scanParam &&
-        typeof parsed.createdAt === "number" &&
-        Date.now() - parsed.createdAt <= POSTER_SCAN_INTENT_TTL_MS;
-      if (fresh) {
-        queueMicrotask(() => setVerifiedScanIntentId(scanParam));
-      }
-    } catch {
-      // Ignore corrupt intent record.
-    }
-  }, []);
-
-  const handlePosterPrepared = useCallback(
-    (file: File) => {
-      setError(null);
-      trackFieldInteraction("image");
-      setImageFile(file);
-      updateImagePreview(file);
-    },
-    [trackFieldInteraction, updateImagePreview],
-  );
-
-  const handleRequestAuthForScan = useCallback(
-    async (file: File) => {
-      if (isAuthLoading || draft.ownerChanged || handoffStartedRef.current) return;
-      handoffStartedRef.current = true;
-      setHandingOff(true);
-
-      const intentId =
-        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-      const result = await draft.prepareResume("login", "restore", {
-        imageFile: file,
-      });
-      if (!result.ok) {
-        setError(t("draftHandoffFailed"));
-        handoffStartedRef.current = false;
-        setHandingOff(false);
-        return;
-      }
-
-      try {
-        const record: PosterScanIntentRecord = {
-          intentId,
-          createdAt: Date.now(),
-        };
-        sessionStorage.setItem(
-          POSTER_SCAN_INTENT_STORAGE_KEY,
-          JSON.stringify(record),
-        );
-      } catch {
-        // If sessionStorage is unavailable, stay in editor without redirecting.
-        setError(t("draftHandoffFailed"));
-        handoffStartedRef.current = false;
-        setHandingOff(false);
-        return;
-      }
-
-      try {
-        handedOffRef.current = true;
-        const resumePath = getPathname({ href: PUBLISH_RESUME_PATH, locale });
-        const separator = resumePath.includes("?") ? "&" : "?";
-        signIn(`${resumePath}${separator}scan=${encodeURIComponent(intentId)}`);
-      } catch (signInError) {
-        captureException(signInError);
-        try {
-          sessionStorage.removeItem(POSTER_SCAN_INTENT_STORAGE_KEY);
-        } catch {
-          // Ignore storage cleanup error.
-        }
-        handedOffRef.current = false;
-        handoffStartedRef.current = false;
-        setHandingOff(false);
-        setError(t("draftHandoffFailed"));
-      }
-    },
-    [draft, isAuthLoading, locale, signIn, t],
-  );
-
-  const handlePosterExtractionApplied = useCallback(
-    (
-      extracted: PosterExtractedEvent,
-      options?: { allowOverwriteOwned?: boolean },
-    ) => {
-      const current = formRef.current;
-      const previousAutoDates = autoDatesRef.current;
-      const preserveUserValues = !options?.allowOverwriteOwned;
-
-      const result = applyPosterExtractionToForm({
-        currentForm: current,
-        extracted,
-        cityOptions,
-        cityToRegionOptionMap,
-        categories,
-        autoDates: previousAutoDates,
-        userOwnedFields: userOwnedFieldsRef.current,
-        preserveUserValues,
-      });
-
-      if (result.filledFields.length > 0) {
-        markEdited();
-        if (!preserveUserValues) {
-          for (const field of result.filledFields) {
-            userOwnedFieldsRef.current.delete(field);
-          }
-        }
-        if (result.appliedDates) {
-          autoDatesRef.current = false;
-        }
-        formRef.current = result.nextForm;
-        setForm(result.nextForm);
-        const runId = ++autofillRunIdRef.current;
-        setUndoRecord({
-          runId,
-          ownedFields: new Set(result.filledFields),
-          previousForm: current,
-          previousAutoDates,
-        });
-      }
-
-      // Keep extraction for deferred reconciliation if town/category catalogs
-      // were still loading when the AI response arrived.
-      setPendingExtraction(
-        (isLoadingCities && Boolean(extracted.town)) ||
-          (isLoadingCategories && extracted.categories.length > 0)
-          ? extracted
-          : null,
-      );
-
-      return {
-        filledFields: result.filledFields,
-        unmatchedTown: isLoadingCities ? null : result.unmatchedTown,
-        pastDate: Boolean(
-          result.appliedDates && hasPublishFormEnded(result.nextForm),
-        ),
-        dateInferred: Boolean(result.appliedDates && extracted.dateInferred),
-        priceNeedsReview: Boolean(extracted.priceResolution?.needsReview),
-        isMultiEvent: extracted.isMultiEvent,
-      };
-    },
-    [
-      categories,
-      cityOptions,
-      cityToRegionOptionMap,
-      isLoadingCategories,
-      isLoadingCities,
-      markEdited,
-    ],
-  );
-
-  // Reconcile pending town/categories when either catalogs or extraction resolve.
-  const reconcilePendingExtraction = useEffectEvent((pending: PosterExtractedEvent) => {
-    setPendingExtraction(null);
-    const current = formRef.current;
-    const reconciled = applyPosterExtractionToForm({
-      currentForm: current,
-      extracted: {
-        ...pending,
-        title: null,
-        description: null,
-        url: null,
-        location: null,
-        startDate: null,
-        endDate: null,
-        price: null,
-        priceResolution: null,
-      },
-      cityOptions,
-      cityToRegionOptionMap,
-      categories,
-      autoDates: autoDatesRef.current,
-      userOwnedFields: userOwnedFieldsRef.current,
-      preserveUserValues: true,
-    });
-    if (reconciled.filledFields.length === 0) return;
-    markEdited();
-    formRef.current = reconciled.nextForm;
-    setForm(reconciled.nextForm);
-    setUndoRecord((prev) => {
-      if (!prev) {
-        return {
-          runId: ++autofillRunIdRef.current,
-          ownedFields: new Set(reconciled.filledFields),
-          previousForm: current,
-          previousAutoDates: autoDatesRef.current,
-        };
-      }
-      const nextOwned = new Set(prev.ownedFields);
-      for (const field of reconciled.filledFields) nextOwned.add(field);
-      return { ...prev, ownedFields: nextOwned };
-    });
-  });
-
-  useEffect(() => {
-    if (pendingExtraction && !isLoadingCities && !isLoadingCategories) {
-      queueMicrotask(() => reconcilePendingExtraction(pendingExtraction));
-    }
-  }, [pendingExtraction, isLoadingCities, isLoadingCategories]);
-
-  const handlePosterUndo = useCallback(() => {
-    if (!undoRecord) return;
-    const { nextForm, restoredAutoDates } = undoPosterAutofill(
-      formRef.current,
-      undoRecord,
-    );
-    if (restoredAutoDates) {
-      autoDatesRef.current = true;
-    }
-    formRef.current = nextForm;
-    setForm(nextForm);
-    setUndoRecord(null);
-    setPendingExtraction(null);
-    markEdited();
-  }, [markEdited, undoRecord]);
 
   const handleTestUrl = (value: string) => {
     const normalized = normalizeUrl(value);
@@ -1188,19 +910,17 @@ const PublishForm = () => {
               isAuthLoading={isAuthLoading}
               disabled={isDraftLocked || isPending || imagePreparing}
               autoScanIntentId={verifiedScanIntentId}
-              onAutoScanHandled={() => setVerifiedScanIntentId(null)}
+              onAutoScanHandled={clearVerifiedScanIntent}
               onRequestAuthForScan={handleRequestAuthForScan}
               onPosterPrepared={handlePosterPrepared}
               onExtractionApplied={handlePosterExtractionApplied}
-              onNavigateStep={handleStepChange}
-              canUndo={Boolean(undoRecord && undoRecord.ownedFields.size > 0)}
+              canUndo={canUndoPosterAutofill}
               onUndo={handlePosterUndo}
               onBusyChange={setPosterAutofillBusy}
             />
             <EventForm
               key={`form-${editorVersion}`}
               initialStep={wizardStep}
-              activeStep={wizardStep}
               onStepChange={handleStepChange}
               form={form}
               onSubmit={onSubmit}
