@@ -620,6 +620,12 @@ export async function GET(request: Request) {
           .replace(/[^\x20-\x7E]/g, "")
           .slice(0, 100);
 
+        // If the caller explicitly required JPEG and Sharp could not convert a
+        // non-JPEG source, never cache/serve non-JPEG bytes as 200.
+        if (preferJpeg && sniffedType !== "image/jpeg") {
+          return buildPlaceholder(502);
+        }
+
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
