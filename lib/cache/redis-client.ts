@@ -152,15 +152,15 @@ export async function cacheIncrWithTtl(
   }
 }
 
-/** Atomic decrement (clamped at 0) for rollback/refund of integer counters. */
+const ATOMIC_DECR_CLEANUP_LUA =
+  "local v = redis.call('DECR', KEYS[1]); if v <= 0 then redis.call('DEL', KEYS[1]); return 0 end; return v";
+
+/** Atomic decrement + conditional delete (single Lua script) for counter rollback/refund. */
 export async function cacheDecrClampZero(key: string): Promise<boolean> {
   try {
     const client = await getClient();
     if (!client) return false;
-    const next = await client.decr(key);
-    if (next <= 0) {
-      await client.del(key);
-    }
+    await client.eval(ATOMIC_DECR_CLEANUP_LUA, { keys: [key], arguments: [] });
     return true;
   } catch (error) {
     console.warn("[redis-cache] decr failed:", error);
