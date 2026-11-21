@@ -116,10 +116,14 @@ export async function completeWithAiGateway(
 
   const cascade = options.cascade?.trim() || getDefaultCascade();
   const timeoutMs = options.timeoutMs ?? DEFAULT_AI_GATEWAY_TIMEOUT_MS;
+  // Pass a nested server-side cascade budget (45s for 48s timeout) so the
+  // hosted gateway abandons slow failover inside our request deadline.
+  const budgetSeconds = Math.max(5, Math.floor(timeoutMs / 1000) - 3);
   const payload: Record<string, unknown> = {
     model: cascade,
     messages: options.messages,
     temperature: options.temperature ?? 0.1,
+    budget_s: budgetSeconds,
   };
 
   if (options.schema) {
