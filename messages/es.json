@@ -415,7 +415,43 @@
         "shareTitle": "¡Publicado! Ahora compártelo",
         "shareDescription": "Envíalo a tus grupos y contactos: es la forma más rápida de llegar a más gente."
       },
-      "dateEnded": "Este evento ya ha terminado. Revisa las fechas antes de publicarlo."
+      "dateEnded": "Este evento ya ha terminado. Revisa las fechas antes de publicarlo.",
+      "posterAutofill": {
+        "heading": "Rellena con el cartel",
+        "description": "Sube, arrastra o pega la imagen.",
+        "descriptionGuest": "Súbelo e inicia sesión para leerlo.",
+        "descriptionReady": "Lee el cartel para rellenar los campos.",
+        "descriptionReadyGuest": "Inicia sesión para leer el cartel.",
+        "headingSuccess": "Cartel leído",
+        "headingEmpty": "No hemos encontrado datos",
+        "headingError": "No se ha podido leer el cartel",
+        "thumbAlt": "Vista previa del cartel",
+        "pickButton": "Elegir cartel",
+        "changeButton": "Cambiar cartel",
+        "analyzeExistingButton": "Leer cartel",
+        "retryButton": "Volver a intentarlo",
+        "cancelButton": "Cancelar",
+        "undoButton": "Deshacer campos",
+        "statusPreparing": "Preparando el cartel…",
+        "statusChecking": "Comprobando disponibilidad…",
+        "statusAnalyzing": "Leyendo el cartel…",
+        "statusHint": "Los campos se rellenarán automáticamente.",
+        "successSummary": "{count, plural, one {# campo rellenado · Revísalo antes de publicar} other {# campos rellenados · Revísalos antes de publicar}}",
+        "successWarningsOnly": "Revisa los avisos antes de publicar.",
+        "emptyResult": "Hemos guardado el cartel. Rellena los campos a mano.",
+        "warningUnmatchedTown": "Municipio detectado: «{town}». Selecciónalo en ubicación.",
+        "warningDateInferred": "Año deducido del cartel. Comprueba las fechas.",
+        "warningPastDate": "Fecha pasada. Revísala antes de publicar.",
+        "warningPriceReview": "Varias tarifas o taquilla inversa. Revisa el precio.",
+        "warningMultiEvent": "Programa con varios actos. Revisa título y fechas.",
+        "errorUnavailable": "No disponible ahora. Hemos guardado el cartel.",
+        "errorRateLimited": "Límite diario alcanzado. Hemos guardado el cartel.",
+        "errorBusy": "Servicio ocupado. Inténtalo en unos segundos.",
+        "errorTimeout": "Ha tardado demasiado. Inténtalo de nuevo o rellénalo a mano.",
+        "errorInvalidImage": "Imagen ilegible. Prueba con un JPG o PNG.",
+        "errorNetwork": "Sin conexión. Inténtalo de nuevo.",
+        "errorGeneric": "Hemos guardado el cartel. Puedes intentarlo de nuevo o rellenarlo a mano."
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",
@@ -1102,6 +1138,8 @@
       "clear": "Borrar fechas"
     },
     "DatePicker": {
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
       "startTime": "Hora de inicio",
       "endTime": "Hora de fin",
       "dateAndTime": "Fecha y hora",

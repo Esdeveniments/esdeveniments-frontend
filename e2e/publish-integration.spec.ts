@@ -151,10 +151,12 @@ test.describe("Publish integration (staging)", () => {
 
     // ── Step 4: Fill form — Step 2 (image & dates) ──
     // The image travels as the multipart `imageFile` part of POST /events.
-    await page.setInputFiles(
-      'input[type="file"][accept*="image"]',
-      path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
-    );
+    await page
+      .getByTestId("event-form")
+      .locator('input[type="file"]')
+      .setInputFiles(
+        path.join(process.cwd(), "public", "static", "icons", "icon-192x192.png"),
+      );
 
     await pickFutureStartDate(page);
 

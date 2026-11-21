@@ -415,7 +415,43 @@
         "shareTitle": "It's live! Now spread the word",
         "shareDescription": "Send it to your groups and contacts: it's the quickest way to reach more people."
       },
-      "dateEnded": "This event has already ended. Check the dates before you publish it."
+      "dateEnded": "This event has already ended. Check the dates before you publish it.",
+      "posterAutofill": {
+        "heading": "Fill from poster",
+        "description": "Upload, drop, or paste an image.",
+        "descriptionGuest": "Upload and sign in to scan it.",
+        "descriptionReady": "Scan this poster to fill the form.",
+        "descriptionReadyGuest": "Sign in to scan this poster.",
+        "headingSuccess": "Poster scanned",
+        "headingEmpty": "No event details found",
+        "headingError": "Couldn't scan poster",
+        "thumbAlt": "Poster preview",
+        "pickButton": "Choose poster",
+        "changeButton": "Change poster",
+        "analyzeExistingButton": "Scan poster",
+        "retryButton": "Try again",
+        "cancelButton": "Cancel",
+        "undoButton": "Undo fields",
+        "statusPreparing": "Preparing poster…",
+        "statusChecking": "Checking availability…",
+        "statusAnalyzing": "Reading poster…",
+        "statusHint": "Event details will fill automatically.",
+        "successSummary": "{count, plural, one {# field filled · Review before publishing} other {# fields filled · Review before publishing}}",
+        "successWarningsOnly": "Review the notes below before publishing.",
+        "emptyResult": "Poster kept. Fill in the details manually.",
+        "warningUnmatchedTown": "Town found: \"{town}\". Pick it in Location.",
+        "warningDateInferred": "Year inferred from poster. Check the dates.",
+        "warningPastDate": "Date is in the past. Check before publishing.",
+        "warningPriceReview": "Multiple prices or donation entry. Check price.",
+        "warningMultiEvent": "Multi-event programme. Check title and dates.",
+        "errorUnavailable": "Unavailable right now. Poster kept.",
+        "errorRateLimited": "Daily scan limit reached. Poster kept.",
+        "errorBusy": "Scanner is busy. Try again in a few seconds.",
+        "errorTimeout": "Scan timed out. Try again or fill manually.",
+        "errorInvalidImage": "Unreadable image. Try a JPG or PNG.",
+        "errorNetwork": "Connection failed. Try again.",
+        "errorGeneric": "Poster kept. Try again or fill in manually."
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",
@@ -1102,6 +1138,8 @@
       "clear": "Clear dates"
     },
     "DatePicker": {
+      "startDate": "Start date",
+      "endDate": "End date",
       "startTime": "Start time",
       "endTime": "End time",
       "dateAndTime": "Date and time",

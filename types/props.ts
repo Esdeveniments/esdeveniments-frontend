@@ -21,6 +21,73 @@ export interface PublishDraftPanelProps {
   warnings: import("./publish-draft").PublishDraftWarning[];
 }
 
+export interface PosterAutofillCardProps {
+  /** Existing poster already attached to the form, if any. */
+  currentImageFile: File | null;
+  /** Preview URL of the currently attached poster, if any. */
+  currentImagePreview: string | null;
+  /** Whether the user is authenticated (drives copy without extra redirects). */
+  isAuthenticated: boolean;
+  /** Whether auth state is still resolving. */
+  isAuthLoading: boolean;
+  /** Disable interactions while form submission or draft lock is active. */
+  disabled?: boolean;
+  /** One-time scan intent ID from Logto return (?resume=1&scan=<id>), if verified. */
+  autoScanIntentId?: string | null;
+  /** Called after autoScanIntentId has been consumed or dismissed. */
+  onAutoScanHandled?: () => void;
+  /** Save draft + poster and redirect a guest through Logto bound to a scan intent. */
+  onRequestAuthForScan: (file: File) => Promise<void>;
+  /** Called once a picked/dropped poster has been validated and prepared for upload. */
+  onPosterPrepared: (file: File) => void;
+  /** Called when AI extraction returns usable event fields; returns summary for the banner. */
+  onExtractionApplied: (
+    extracted: import("./api/poster").PosterExtractedEvent,
+    options?: { allowOverwriteOwned?: boolean; isStale?: () => boolean }
+  ) =>
+    | import("./api/poster").PosterExtractionAppliedSummary
+    | Promise<import("./api/poster").PosterExtractionAppliedSummary>;
+  /** Whether an Undo record with at least one still-owned field is available. */
+  canUndo: boolean;
+  /** Unmatched town surfaced asynchronously after deferred catalog loading finishes. */
+  deferredUnmatchedTown?: string | null;
+  /** Surgically revert only fields still owned by the last autofill. */
+  onUndo: () => void;
+  /** Inform the parent while image preparation or AI extraction is running. */
+  onBusyChange?: (busy: boolean) => void;
+}
+
+export interface UsePublishPosterAutofillOptions {
+  form: import("./event").FormData;
+  setForm: import("react").Dispatch<
+    import("react").SetStateAction<import("./event").FormData>
+  >;
+  autoDatesRef: import("react").MutableRefObject<boolean>;
+  cityOptions: Option[];
+  cityToRegionOptionMap: Record<string, Option>;
+  categories: import("./api/category").CategorySummaryResponseDTO[];
+  isLoadingCities: boolean;
+  isLoadingCategories: boolean;
+  isAuthLoading: boolean;
+  locale: string;
+  signIn: (returnTo?: string) => void;
+  prepareResume: (
+    stage: import("./publish-draft").PublishResumeStage,
+    action?: import("./publish-draft").PublishResumeAction,
+    override?: Partial<import("./publish-draft").PublishDraftInput>
+  ) => Promise<import("./publish-draft").PublishDraftFlushResult>;
+  draftOwnerChanged: boolean;
+  markEdited: () => void;
+  trackFieldInteraction: (field: string) => void;
+  setImageFile: (file: File | null) => void;
+  updateImagePreview: (file: File | null) => void;
+  setError: (error: string | null) => void;
+  setHandingOff: (value: boolean) => void;
+  handoffStartedRef: import("react").MutableRefObject<boolean>;
+  handedOffRef: import("react").MutableRefObject<boolean>;
+  draftHandoffFailedMessage: string;
+}
+
 /**
  * Return type for useImageRetry hook
  */
@@ -482,6 +549,8 @@ export interface DateRangeCalendarProps {
   onChange: (from: string, to: string) => void;
   /** First selectable day as YYYY-MM-DD (default: today in Madrid) */
   minDate?: string;
+  /** Optional YYYY-MM-DD target whose month should be brought into view */
+  focusDate?: string;
   /** Never let the user clear the range */
   required?: boolean;
 }

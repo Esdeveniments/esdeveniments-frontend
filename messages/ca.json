@@ -415,7 +415,43 @@
         "shareTitle": "Publicat! Ara fes-lo córrer",
         "shareDescription": "Envia'l als teus grups i contactes: és la manera més ràpida d'arribar a més gent."
       },
-      "dateEnded": "Aquest esdeveniment ja s'ha acabat. Revisa les dates abans de publicar-lo."
+      "dateEnded": "Aquest esdeveniment ja s'ha acabat. Revisa les dates abans de publicar-lo.",
+      "posterAutofill": {
+        "heading": "Omple amb el cartell",
+        "description": "Puja, arrossega o enganxa la imatge.",
+        "descriptionGuest": "Puja'l i inicia sessió per llegir-lo.",
+        "descriptionReady": "Llegeix el cartell per omplir els camps.",
+        "descriptionReadyGuest": "Inicia sessió per llegir el cartell.",
+        "headingSuccess": "Cartell llegit",
+        "headingEmpty": "No hi hem trobat dades",
+        "headingError": "No s'ha pogut llegir el cartell",
+        "thumbAlt": "Vista prèvia del cartell",
+        "pickButton": "Tria un cartell",
+        "changeButton": "Canvia el cartell",
+        "analyzeExistingButton": "Llegeix el cartell",
+        "retryButton": "Torna-ho a provar",
+        "cancelButton": "Cancel·la",
+        "undoButton": "Desfés els camps",
+        "statusPreparing": "Preparant el cartell…",
+        "statusChecking": "Comprovant la disponibilitat…",
+        "statusAnalyzing": "Llegint el cartell…",
+        "statusHint": "S'ompliran els camps automàticament.",
+        "successSummary": "{count, plural, one {# camp omplert · Revisa'l abans de publicar} other {# camps omplerts · Revisa'ls abans de publicar}}",
+        "successWarningsOnly": "Revisa els avisos abans de publicar.",
+        "emptyResult": "Hem desat el cartell. Omple els camps manualment.",
+        "warningUnmatchedTown": "Municipi detectat: «{town}». Tria'l a ubicació.",
+        "warningDateInferred": "Any deduït del cartell. Comprova les dates.",
+        "warningPastDate": "Data passada. Revisa-la abans de publicar.",
+        "warningPriceReview": "Diverses tarifes o taquilla inversa. Revisa el preu.",
+        "warningMultiEvent": "Programa amb diversos actes. Revisa títol i dates.",
+        "errorUnavailable": "No disponible ara. Hem desat el cartell.",
+        "errorRateLimited": "Límit diari assolit. Hem desat el cartell.",
+        "errorBusy": "Servei ocupat. Torna-ho a provar d'aquí a uns segons.",
+        "errorTimeout": "Ha trigat massa. Torna-ho a provar o omple-ho a mà.",
+        "errorInvalidImage": "Imatge no llegible. Prova amb un JPG o PNG.",
+        "errorNetwork": "Sense connexió. Torna-ho a provar.",
+        "errorGeneric": "Hem desat el cartell. Pots tornar-ho a provar o omplir els camps a mà."
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",
@@ -1117,6 +1153,8 @@
       "clear": "Esborra les dates"
     },
     "DatePicker": {
+      "startDate": "Data d'inici",
+      "endDate": "Data de fi",
       "startTime": "Hora d'inici",
       "endTime": "Hora de fi",
       "dateAndTime": "Data i hora",

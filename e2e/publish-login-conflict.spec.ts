@@ -69,7 +69,10 @@ for (const scenario of ["empty-account", "guest", "account", "untitled-account",
       await page.keyboard.press("Enter");
       await page.keyboard.press("Escape");
       await page.getByTestId("next-button").click();
-      await page.setInputFiles('input[type="file"]', DEFAULT_IMAGE);
+      await page
+        .getByTestId("event-form")
+        .locator('input[type="file"]')
+        .setInputFiles(DEFAULT_IMAGE);
       await pickEventWhen(page, { startTime: "12:30", endTime: "14:45" });
       await expect(page.getByTestId("draft-save-status")).toHaveText("Saved on this device");
       original = await readSavedDraft(page);

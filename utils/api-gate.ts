@@ -117,6 +117,9 @@ export const PUBLIC_API_EXACT_PATHS = [
   // inside the route handler; Origin check below is the CSRF guard).
   "/api/users/me/profile",
   "/api/users/me/avatar",
+  // AI poster autofill on /publica (GET availability + POST multipart;
+  // authenticated via HttpOnly Logto cookies + Origin CSRF check).
+  "/api/events/extract-poster",
 ];
 
 // GET-only public exact paths. Gated to GET in isPublicApiRequest so a future
@@ -224,6 +227,7 @@ export async function gateApiRequest(
   const MULTIPART_ALLOWLIST = new Set([
     "/api/users/me/avatar",
     "/api/sponsors/image-upload",
+    "/api/events/extract-poster",
   ]);
   const requestContentType = (
     request.headers.get("content-type") || ""
