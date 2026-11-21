@@ -415,7 +415,47 @@
         "shareTitle": "It's live! Now spread the word",
         "shareDescription": "Send it to your groups and contacts: it's the quickest way to reach more people."
       },
-      "dateEnded": "This event has already ended. Check the dates before you publish it."
+      "dateEnded": "This event has already ended. Check the dates before you publish it.",
+      "posterAutofill": {
+        "heading": "Start with the poster",
+        "description": "Upload, drop, or paste your event poster and we'll fill in the fields automatically.",
+        "descriptionGuest": "Upload your poster and sign in to fill in the fields automatically. We'll keep your poster and draft safe.",
+        "thumbAlt": "Uploaded poster preview",
+        "pickButton": "Choose a poster",
+        "changeButton": "Change poster",
+        "analyzeExistingButton": "Read poster",
+        "rereadButton": "Read again",
+        "cancelButton": "Cancel",
+        "undoButton": "Undo",
+        "statusPreparing": "Preparing poster…",
+        "statusChecking": "Checking availability…",
+        "statusAnalyzing": "Reading poster with AI…",
+        "successSummary": "{count, plural, one {Filled # field from the poster. Review it before publishing.} other {Filled # fields from the poster. Review them before publishing.}}",
+        "emptyResult": "We couldn't read event details from this image. Your poster is still attached; you can fill in the form manually.",
+        "warningUnmatchedTown": "Town detected on poster: \"{town}\". Select it in the location step.",
+        "warningDateInferred": "The year was inferred from the poster. Double-check the dates before publishing.",
+        "warningPastDate": "The date read from the poster is in the past. Check it before publishing.",
+        "warningPriceReview": "The poster lists multiple prices or pay-what-you-can entry. Check the price.",
+        "warningMultiEvent": "This looks like a multi-event programme. Check the title and date span.",
+        "errorUnavailable": "Automatic poster reading is unavailable right now. Your poster is attached; you can fill in the form manually.",
+        "errorRateLimited": "You've reached the daily poster-reading limit. Your image is attached; you can complete the form manually.",
+        "errorBusy": "The poster reader is busy right now. Try again in a few seconds.",
+        "errorTimeout": "Reading the poster took too long. Try again or fill in the fields manually.",
+        "errorInvalidImage": "We couldn't read this image. Try a clear JPG or PNG.",
+        "errorNetwork": "Couldn't reach the server. Check your connection and try again.",
+        "errorGeneric": "We couldn't analyse the poster right now. Your image is attached; you can complete the form manually.",
+        "privacyNote": "The image is stripped of GPS metadata and sent to Google Gemini to read the poster text. Always review extracted details.",
+        "fields": {
+          "title": "Title",
+          "description": "Description",
+          "url": "Link",
+          "town": "Town",
+          "location": "Venue",
+          "categories": "Categories",
+          "dates": "Dates",
+          "price": "Price"
+        }
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",

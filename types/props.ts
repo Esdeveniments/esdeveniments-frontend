@@ -21,6 +21,47 @@ export interface PublishDraftPanelProps {
   warnings: import("./publish-draft").PublishDraftWarning[];
 }
 
+export interface PosterAutofillCardProps {
+  /** Existing poster already attached to the form, if any. */
+  currentImageFile: File | null;
+  /** Preview URL of the currently attached poster, if any. */
+  currentImagePreview: string | null;
+  /** Whether the user is authenticated (drives copy without extra redirects). */
+  isAuthenticated: boolean;
+  /** Whether auth state is still resolving. */
+  isAuthLoading: boolean;
+  /** Disable interactions while form submission or draft lock is active. */
+  disabled?: boolean;
+  /** One-time scan intent ID from Logto return (?resume=1&scan=<id>), if verified. */
+  autoScanIntentId?: string | null;
+  /** Called after autoScanIntentId has been consumed or dismissed. */
+  onAutoScanHandled?: () => void;
+  /** Save draft + poster and redirect a guest through Logto bound to a scan intent. */
+  onRequestAuthForScan: (file: File) => Promise<void>;
+  /** Called once a picked/dropped poster has been validated and prepared for upload. */
+  onPosterPrepared: (file: File) => void;
+  /** Called when AI extraction returns usable event fields; returns summary for the banner. */
+  onExtractionApplied: (
+    extracted: import("./api/poster").PosterExtractedEvent,
+    options?: { allowOverwriteOwned?: boolean }
+  ) => {
+    filledFields: import("./api/poster").PosterAutofillFieldKey[];
+    unmatchedTown: string | null;
+    pastDate: boolean;
+    dateInferred: boolean;
+    priceNeedsReview: boolean;
+    isMultiEvent: boolean;
+  };
+  /** Jump directly to a wizard step to review extracted fields. */
+  onNavigateStep?: (step: import("./event").EventFormStep) => void;
+  /** Whether an Undo record with at least one still-owned field is available. */
+  canUndo: boolean;
+  /** Surgically revert only fields still owned by the last autofill. */
+  onUndo: () => void;
+  /** Inform the parent while image preparation or AI extraction is running. */
+  onBusyChange?: (busy: boolean) => void;
+}
+
 /**
  * Return type for useImageRetry hook
  */

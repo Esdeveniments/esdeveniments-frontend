@@ -88,6 +88,8 @@ export const PUBLISH_DRAFT_AUTOSAVE_DELAY_MS = 600;
 export const PUBLISH_RESUME_TTL_MS = 60 * 60 * 1000;
 export const PUBLISH_RESUME_STORAGE_KEY = "publish-resume-v1";
 export const PUBLISH_RESUME_PATH = "/publica?resume=1";
+export const POSTER_SCAN_INTENT_STORAGE_KEY = "poster-scan-intent-v1";
+export const POSTER_SCAN_INTENT_TTL_MS = 30 * 60 * 1000;
 export const POST_PUBLISH_UPSELL_STORAGE_PREFIX = "esdeveniments:post_publish_upsell:";
 export const POST_PUBLISH_UPSELL_TTL_MS = 60 * 60 * 1000;
 export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
@@ -132,6 +134,11 @@ export const MAX_SPONSOR_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_AVATAR_BYTES = MAX_TOTAL_UPLOAD_BYTES;
 export const AVATAR_MAX_DIMENSION = 1024;
 export const AVATAR_MIN_DIMENSION = 256;
+// Compact copy sent to /api/events/extract-poster so mobile uploads stay fast
+// while keeping small poster text sharp for vision models.
+export const MAX_POSTER_AI_BYTES = 1 * 1024 * 1024;
+export const POSTER_AI_MAX_DIMENSION = 1280;
+export const POSTER_AI_MIN_DIMENSION = 768;
 
 export const BYTES_PER_MEGABYTE = 1024 * 1024;
 

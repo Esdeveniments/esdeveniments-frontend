@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createConnection } from "node:net";
 import { connect as tlsConnect } from "node:tls";
 import { isApiUrlConfigured } from "@utils/api-helpers";
+import { isAiGatewayConfigured } from "@lib/api/ai-gateway";
 import { isCloudflarePurgeConfigured } from "@lib/cdn/cloudflare-config";
 import { parseRedisStats, parseRespReplies, respCommand } from "@utils/redis-resp";
 import { safeEqual } from "@utils/safe-equal";
@@ -159,6 +160,7 @@ export async function GET(request: NextRequest) {
         revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
         healthSecretConfigured: Boolean(process.env.HEALTH_SECRET),
         cloudflarePurgeConfigured: isCloudflarePurgeConfigured(),
+        aiGatewayConfigured: isAiGatewayConfigured(),
         redisConfigured,
       },
       buildVersion: process.env.BUILD_VERSION || "unknown",

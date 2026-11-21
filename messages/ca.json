@@ -415,7 +415,47 @@
         "shareTitle": "Publicat! Ara fes-lo córrer",
         "shareDescription": "Envia'l als teus grups i contactes: és la manera més ràpida d'arribar a més gent."
       },
-      "dateEnded": "Aquest esdeveniment ja s'ha acabat. Revisa les dates abans de publicar-lo."
+      "dateEnded": "Aquest esdeveniment ja s'ha acabat. Revisa les dates abans de publicar-lo.",
+      "posterAutofill": {
+        "heading": "Comença pel cartell",
+        "description": "Puja, arrossega o enganxa el cartell i omplirem els camps automàticament.",
+        "descriptionGuest": "Puja el cartell i inicia sessió per omplir els camps automàticament. Conservarem el cartell i l'esborrany.",
+        "thumbAlt": "Vista prèvia del cartell pujat",
+        "pickButton": "Tria un cartell",
+        "changeButton": "Canvia el cartell",
+        "analyzeExistingButton": "Llegeix el cartell",
+        "rereadButton": "Torna a llegir",
+        "cancelButton": "Cancel·la",
+        "undoButton": "Desfés",
+        "statusPreparing": "Preparant el cartell…",
+        "statusChecking": "Comprovant disponibilitat…",
+        "statusAnalyzing": "Llegint el cartell amb IA…",
+        "successSummary": "{count, plural, one {Hem omplert # camp a partir del cartell. Revisa'l abans de publicar.} other {Hem omplert # camps a partir del cartell. Revisa'ls abans de publicar.}}",
+        "emptyResult": "No hem pogut llegir dades d'un esdeveniment en aquesta imatge. Hem conservat el cartell; pots omplir el formulari manualment.",
+        "warningUnmatchedTown": "Municipi detectat al cartell: «{town}». Tria'l al pas d'ubicació.",
+        "warningDateInferred": "L'any s'ha deduït del cartell. Comprova les dates abans de publicar.",
+        "warningPastDate": "La data llegida al cartell ja ha passat. Revisa-la abans de publicar.",
+        "warningPriceReview": "El cartell indica diverses tarifes o taquilla inversa. Revisa el preu.",
+        "warningMultiEvent": "Sembla un programa amb diversos actes. Revisa el títol i les dates.",
+        "errorUnavailable": "L'extracció automàtica no està disponible ara mateix. Hem conservat el cartell; pots omplir el formulari manualment.",
+        "errorRateLimited": "Has arribat al límit diari de lectures de cartells. Hem conservat la imatge; pots completar les dades manualment.",
+        "errorBusy": "El lector de cartells té molta feina ara mateix. Torna-ho a provar d'aquí a uns segons.",
+        "errorTimeout": "La lectura del cartell ha trigat massa. Pots tornar-ho a provar o omplir els camps manualment.",
+        "errorInvalidImage": "No hem pogut llegir aquesta imatge. Prova amb un JPG o PNG clar.",
+        "errorNetwork": "No hem pogut connectar amb el servidor. Revisa la connexió i torna-ho a provar.",
+        "errorGeneric": "No hem pogut analitzar el cartell ara mateix. Hem conservat la imatge; pots completar el formulari manualment.",
+        "privacyNote": "La imatge s'envia sense metadades GPS a Google Gemini per llegir el text del cartell. Revisa sempre les dades.",
+        "fields": {
+          "title": "Títol",
+          "description": "Descripció",
+          "url": "Enllaç",
+          "town": "Municipi",
+          "location": "Lloc",
+          "categories": "Categories",
+          "dates": "Dates",
+          "price": "Preu"
+        }
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",
