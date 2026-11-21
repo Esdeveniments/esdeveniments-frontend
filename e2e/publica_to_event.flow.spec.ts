@@ -79,10 +79,10 @@ async function fillDeterministicPublishSteps(
   await page.getByTestId("next-button").click();
 
   // Step 3: image and dates (the picker's default start is enough here)
-  await page.setInputFiles(
-    'input[type="file"][accept*="image"]',
-    DEFAULT_IMAGE,
-  );
+  await page
+    .getByTestId("event-form")
+    .locator('input[type="file"]')
+    .setInputFiles(DEFAULT_IMAGE);
 }
 
 async function clickPublishAndReadSlug(page: Page): Promise<string> {

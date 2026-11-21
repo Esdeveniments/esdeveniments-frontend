@@ -136,10 +136,10 @@ export async function prepareTestEvent(
   await page.getByTestId("next-button").click();
 
   // Step 2: image & dates. The image travels as the multipart `imageFile`.
-  await page.setInputFiles(
-    'input[type="file"][accept*="image"]',
-    options.imagePath ?? DEFAULT_IMAGE,
-  );
+  await page
+    .getByTestId("event-form")
+    .locator('input[type="file"]')
+    .setInputFiles(options.imagePath ?? DEFAULT_IMAGE);
 
   await pickEventWhen(page, options.when);
 }

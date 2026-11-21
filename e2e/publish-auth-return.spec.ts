@@ -77,7 +77,10 @@ test(`preserves a Spanish ${scenario} draft and real poster across full-document
   await page.keyboard.press("Enter");
   await page.locator("input#location").fill("Parc Central");
   await page.getByTestId("next-button").click();
-  await page.setInputFiles('input[type="file"]', path.join(process.cwd(), "public/static/icons/icon-192x192.png"));
+  await page
+    .getByTestId("event-form")
+    .locator('input[type="file"]')
+    .setInputFiles(path.join(process.cwd(), "public/static/icons/icon-192x192.png"));
   await expect(page.getByTestId("event-form")).toHaveAttribute("data-publish-armed", "true");
   await expect(page.getByTestId("publish-button")).toBeEnabled();
   await page.getByTestId("preview-button").click();
