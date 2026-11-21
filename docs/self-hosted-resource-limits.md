@@ -34,31 +34,38 @@ the container. No rebuild is needed when the Coolify limit changes.
 - Override per environment by setting `NODE_OPTIONS=--max-old-space-size=<MiB>` as a
   Coolify env var; the entrypoint leaves an explicit value untouched.
 
-## Current limits (Coolify, 2026-11-04)
+## Current limits (Coolify, 2026-11-21)
 
-Server: one 8 GB, 4 vCPU box. Read with the Coolify API (`get_application` /
-`get_database`, `limits_*` fields).
+Server: one 8 GB, 4 vCPU box (`k0wkg8ggk44co48ss0gccw8c`, UTC). Sentinel metrics
+on 2026-11-21: **5.25 GB / 8.13 GB RAM (~64.5%)**, **18.2 GB / 40.0 GB disk
+(45.4%)**. Read with the Coolify MCP (`get_application` / `get_database` /
+`get_service`, `limits_*` fields).
 
-| Container | Memory limit | Reservation | Swappiness | CPU limit |
-| --- | --- | --- | --- | --- |
-| Frontend prod | 3g | 1g | 20 | 2 |
-| Frontend staging | 1g | 512m | 60 | 1 |
-| Backend prod | **none** | none | 60 | **none** |
-| Backend pre | 1g | 512m | 20 | 1 |
-| Postgres pro | 2g | 1g | 0 | **1** |
-| Postgres pre | 1g | 256m | 60 | 0.5 |
-| 4× Redis | 512m + 512m + 256m + 256m | 100–150m | 0–60 | 0.2–0.5 |
-| Logto pro / pre | **none** | none | — | **none** |
-| Admin dashboard prod / pre | 384m | 128m | 60 | none (`cpu_shares` 256) |
+| Container | Memory limit | Reservation | Swappiness | CPU limit | CPU shares |
+| --- | --- | --- | --- | --- | --- |
+| Frontend prod (`esdeveniments-production`) | 2g | 1g | 20 | 2 | 1024 |
+| Frontend staging (`esdeveniments-staging`) | 1g | 512m | 60 | 1 | 512 |
+| Backend prod (`esdeveniments-backend-prod`) | 2g | 1g | 20 | 2 | 1024 |
+| Backend pre (`esdeveniments-backend-pre`) | 1g | 512m | 20 | 1 | 512 |
+| Postgres pro (`postgresql-database-pro`) | 2g | 1g | 0 | **1** | 1024 |
+| Postgres pre (`postgresql-database-pre`) | 1g | 256m | 60 | 0.5 | 256 |
+| Redis frontend pro (`maxmemory 450mb`) | 512m | 150m | 60 | 0.5 | 512 |
+| Redis frontend staging (`maxmemory 200mb`) | 256m | 100m | 0 | 0.2 | 256 |
+| Redis backend pro (`maxmemory 256mb`) | 512m | 150m | 0 | 0.5 | 512 |
+| Redis backend pre (`maxmemory 128mb`) | 256m | 100m | 0 | 0.2 | 256 |
+| Admin dashboard prod / pre (×2) | 384m each | 128m each | 60 | none | 256 |
+| Sync worker (`cultural-agenda-sync`) | 768m | 64m | 60 | none | 128 |
+| Logto pro / pre (services) | **none** | none | — | **none** | — |
 
-The admin dashboards (`Esdeveniments/esdeveniments-dashboard`, added
-2026-11-09) idle at ~47 MB each in Coolify Metrics. Server memory went from
-70.4% to 72.1% after both started. They are admin-only and low-traffic, so
-they get the lowest CPU weight.
-
-The capped containers alone add up to ~10 GB, so the box is oversubscribed,
-and backend prod (2 GB in July, lost when the v2 app was created) and Logto
-have no cap at all.
+- The admin dashboards (`Esdeveniments/esdeveniments-dashboard`, added
+  2026-11-09) idle at ~47 MB each.
+- `cultural-agenda-sync` (`Esdeveniments/cultural-agenda-sync`, moved off GitHub
+  Actions on 2026-11-21) is an idle Alpine shell container (~1 MB RSS) that runs
+  staggered Coolify Scheduled Tasks serialized via `flock` so only one Node sync
+  runs at a time, with persistent `/app/data` storage.
+- The capped containers add up to ~12.0 GB of limits (~5.1 GB of reservations),
+  so limits overcommit while reservations stay inside the 8 GB host.
+  Logto pro/pre still have no memory cap.
 
 ### Rules for a single shared box
 
@@ -79,22 +86,20 @@ have no cap at all.
 
 ### Pending changes (in order)
 
-1. Backend prod: memory 2g, reservation 1g, swappiness 20,
-   `MaxRAMPercentage=75` (tracked in Esdeveniments/esdeveniments-backend#52).
-2. Postgres pro: 2 CPUs (1 CPU may add to the slow `/events/categorized`).
-3. Frontend prod: back to 2g unless Metrics shows it above ~1.5 GB.
-4. Staging and pre: CPU weight 512.
-5. Logto pro / pre: 512m each.
-6. Real fix: move staging and pre to a second small server.
+1. Postgres pro: 2 CPUs (still at 1 CPU; may add to slow `/events/categorized`).
+2. Logto pro / pre: 512m memory cap each.
+3. Real fix: move staging and pre to a second small server.
+
+*(Completed since 2026-11-04: Backend prod capped at 2g/1g/swappiness 20, Frontend
+prod back to 2g, staging and pre CPU shares set to 512.)*
 
 ## What to set in Coolify (infra side)
 
 Frontend application → **Resource Limits**:
 
-- **Maximum Memory Limit (hard):** **2 GB** is the target for prod (heap ≈
-  1536 MB at 75%, the rest for `sharp`/buffers/RSS); it is 3 GB today (see
-  above). Staging is at 1 GB. The hard limit is what OOM-kills; pair it with a
-  soft limit (reservation) below it.
+- **Maximum Memory Limit (hard):** **2 GB** for prod (heap ≈ 1536 MB at 75%,
+  the rest for `sharp`/buffers/RSS; live today). Staging is at 1 GB. The hard
+  limit is what OOM-kills; pair it with a soft limit (reservation) below it.
 - **CPU:** 1–2 vCPU is plenty for the current traffic.
 - **Swappiness:** **avoid 10** — use **20–30** for prod (monitored hypothesis,
   not a confirmed fix). Both prod containers crashed at `swappiness=10`
