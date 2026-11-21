@@ -401,11 +401,13 @@ export async function GET(request: Request) {
   // The output depends on the URL only, never on request headers, so
   // Cloudflare can cache one copy per URL. (It ignores Vary: Accept unless a
   // Cache Rule configures Vary.) Callers pick the format in the URL: <picture>
-  // sources pass avif/webp. Without one, WebP and AVIF sources become WebP,
-  // PNG and GIF stay, and the rest become JPEG.
+  // sources pass avif/webp, and social callers can pass jpeg/jpg (flattens alpha
+  // onto white). Without one, WebP and AVIF sources become WebP, PNG and GIF
+  // stay, and the rest become JPEG.
   const formatParam = url.searchParams.get("format")?.toLowerCase();
   const preferAvif = formatParam === "avif";
   const preferWebp = formatParam === "webp";
+  const preferJpeg = formatParam === "jpeg" || formatParam === "jpg";
 
   // Clamp values to reasonable limits
   const width = Math.min(Math.max(requestedWidth, 16), MAX_WIDTH);
@@ -481,8 +483,9 @@ export async function GET(request: Request) {
       if (!sourceType) continue;
 
       // Skip optimization for very small images (already optimized or icons)
-      // and serve them directly - avoids overhead and potential size increase
-      if (imageBuffer.length < MIN_SIZE_FOR_OPTIMIZATION) {
+      // and serve them directly - avoids overhead and potential size increase,
+      // unless the caller explicitly requested JPEG conversion (e.g. Instagram).
+      if (imageBuffer.length < MIN_SIZE_FOR_OPTIMIZATION && !preferJpeg) {
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
@@ -505,8 +508,9 @@ export async function GET(request: Request) {
         const metadata = await sharpInstance.metadata();
         const originalWidth = metadata.width || 0;
 
-        // Skip optimization for animated GIFs to preserve animation
+        // Skip optimization for animated GIFs to preserve animation (unless JPEG was requested)
         const isAnimatedGif =
+          !preferJpeg &&
           sourceType === "image/gif" &&
           (metadata.pages ?? 1) > ANIMATED_GIF_FRAME_THRESHOLD;
 
@@ -534,7 +538,14 @@ export async function GET(request: Request) {
         let outputBuffer: Buffer;
         let outputContentType: string;
 
-        if (
+        if (preferJpeg) {
+          // Explicit JPEG conversion (e.g. Instagram Graph API rejects PNG/WebP)
+          outputBuffer = await sharpInstance
+            .flatten({ background: { r: 255, g: 255, b: 255 } })
+            .jpeg({ quality, mozjpeg: true })
+            .toBuffer();
+          outputContentType = "image/jpeg";
+        } else if (
           preferAvif ||
           preferWebp ||
           sourceType === "image/webp" ||
@@ -608,6 +619,12 @@ export async function GET(request: Request) {
           .replace(/[\r\n\t]/g, " ")
           .replace(/[^\x20-\x7E]/g, "")
           .slice(0, 100);
+
+        // If the caller explicitly required JPEG and Sharp could not convert a
+        // non-JPEG source, never cache/serve non-JPEG bytes as 200.
+        if (preferJpeg && sniffedType !== "image/jpeg") {
+          return buildPlaceholder(502);
+        }
 
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
