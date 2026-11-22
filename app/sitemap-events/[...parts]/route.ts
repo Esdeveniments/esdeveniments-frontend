@@ -1,6 +1,5 @@
 import { siteUrl } from "@config/index";
 import { fetchEvents } from "@lib/api/events";
-import { EventSummaryResponseDTO } from "types/api/event";
 import { buildSitemap } from "@utils/sitemap";
 import type { SitemapField } from "types/sitemap";
 import { buildAlternateLinks } from "@utils/i18n-seo";
@@ -56,15 +55,11 @@ export async function GET(
     });
   }
 
-  const normalizedEvents = JSON.parse(
-    JSON.stringify(events)
-  ) as EventSummaryResponseDTO[];
-
   // Same rule as the page's robots tag (lib/meta.ts): an expired event is
   // noindexed there, so it must not be in the sitemap either.
   const now = new Date();
 
-  const fields: SitemapField[] = normalizedEvents
+  const fields: SitemapField[] = events
     .filter((event) => !event.isAd)
     .filter((event) => !isMalformedEventSlug(event.slug))
     .filter((event) => !isExpiredEventDates(event, now))

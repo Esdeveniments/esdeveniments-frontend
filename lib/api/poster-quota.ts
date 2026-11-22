@@ -74,10 +74,7 @@ function pruneExpiredStores(nowMs: number): void {
 /** Serializes quota check/charge/rollback operations within the Node process. */
 function withQuotaLock<T>(fn: () => Promise<T>): Promise<T> {
   const previous = globalStore.__posterQuotaLock ?? Promise.resolve();
-  let release!: () => void;
-  const next = new Promise<void>((resolve) => {
-    release = resolve;
-  });
+  const { promise: next, resolve: release } = Promise.withResolvers<void>();
   globalStore.__posterQuotaLock = previous.then(() => next);
   return previous.then(fn).finally(() => release());
 }

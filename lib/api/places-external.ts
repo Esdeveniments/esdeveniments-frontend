@@ -71,7 +71,9 @@ export async function fetchPlaceBySlugExternal(
       throw error; // Re-throw HTTP errors
     }
     console.error("fetchPlaceBySlugExternal:", slug, "failed", error);
-    throw new Error(`Network error fetching place ${slug}: ${error}`);
+    throw new Error(`Network error fetching place ${slug}: ${error}`, {
+      cause: error,
+    });
   }
 }
 

@@ -96,7 +96,7 @@ export function selectTopCardStops(
     (stop) => stop.dwell_ms > (cappedDwellById.get(stop.item_id) ?? -1),
   );
   if (fresh.length === 0) return [];
-  const ranked = [...fresh].sort((a, b) => b.dwell_ms - a.dwell_ms);
+  const ranked = fresh.toSorted((a, b) => b.dwell_ms - a.dwell_ms);
   const selected = ranked.slice(0, MAX_REPORTED_STOPS);
   for (const stop of selected) {
     reportedIds.add(stop.item_id);

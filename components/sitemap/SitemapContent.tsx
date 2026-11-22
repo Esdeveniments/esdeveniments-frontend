@@ -21,10 +21,10 @@ export default async function SitemapContent({
   const withLocale = (path: string) => withLocalePath(path, locale);
 
   // Sort regions and cities by stem (ignoring leading Catalan/Aranese articles)
-  const sortedRegions = [...regions].sort((a, b) =>
+  const sortedRegions = regions.toSorted((a, b) =>
     comparePlaceNames(a.name, b.name, "ca")
   );
-  const sortedCities = [...cities].sort((a, b) =>
+  const sortedCities = cities.toSorted((a, b) =>
     comparePlaceNames(a.name, b.name, "ca")
   );
 
