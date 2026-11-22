@@ -49,6 +49,70 @@ describe("useListingAnalytics", () => {
     expect(observed).toEqual(cards);
   });
 
+  it("ignores in-feed inlineSlot items so impression indices and total_cards match card slots", () => {
+    vi.useFakeTimers();
+    let onIntersect: (
+      entries: { isIntersecting: boolean; intersectionRatio: number; target: Element }[],
+    ) => void = () => {};
+    const observed: Element[] = [];
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        constructor(cb: typeof onIntersect) {
+          onIntersect = cb;
+        }
+        observe(el: Element) {
+          observed.push(el);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+
+    const { container } = render(
+      <div data-analytics-container="true">
+        <List
+          events={[{ id: "e1" }, { id: "e2" }, { id: "e3" }]}
+          inlineSlot={<section data-testid="community-strip">strip</section>}
+          inlineSlotAfterIndex={0}
+        >
+          {(event) => (
+            <a
+              href="#"
+              data-analytics-event-id={event.id}
+              data-analytics-event-place-slug="barcelona"
+            >
+              {event.id}
+            </a>
+          )}
+        </List>
+      </div>,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    renderHook(() => useListingAnalytics(root, { place: "barcelona" }));
+
+    expect(observed).toHaveLength(3);
+    expect(observed.every((el) => !el.hasAttribute("data-listing-slot"))).toBe(true);
+
+    onIntersect(observed.map((target) => ({ isIntersecting: true, intersectionRatio: 0.6, target })));
+    vi.advanceTimersByTime(2000);
+
+    expect(sendGoogleEvent).toHaveBeenCalledWith(
+      "card_impression_batch",
+      expect.objectContaining({ visible_cards: 3, total_cards: 3 }),
+    );
+    expect(sendGoogleEvent).toHaveBeenCalledWith(
+      "view_item_list",
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({ item_id: "e1", index: 1 }),
+          expect.objectContaining({ item_id: "e2", index: 2 }),
+          expect.objectContaining({ item_id: "e3", index: 3 }),
+        ],
+      }),
+    );
+  });
+
   it("reports seen events with slots counted across the server and load-more grids", () => {
     vi.useFakeTimers();
     let onIntersect: (

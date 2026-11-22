@@ -27,7 +27,9 @@ export default function List<T extends ListItem = ListEvent>({
             {children(event, index)}
           </li>
           {index === insertAfterIndex ? (
-            <li className="md:col-span-2 xl:col-span-3">{inlineSlot}</li>
+            <li data-listing-slot="" className="md:col-span-2 xl:col-span-3">
+              {inlineSlot}
+            </li>
           ) : null}
         </Fragment>
       ))}
