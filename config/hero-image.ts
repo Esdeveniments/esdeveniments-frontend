@@ -1,6 +1,6 @@
 // Home hero (the LCP image). The <picture> in serverEventsCategorized and the
-// preload links in app/[locale]/page.tsx must use these same values, or the
-// browser downloads the hero twice.
+// ReactDOM.preload() calls in app/[locale]/page.tsx must use these same values,
+// or the browser downloads the hero twice.
 //
 // Phones up to 440px wide get a 1152x1080 centre crop: their hero box is about
 // square, so object-cover already hid the sides of the 16:9 image. `sizes`
@@ -13,7 +13,8 @@
 export const HERO_IMAGE = {
   src: "/static/images/hero-castellers.webp",
   mobile: {
-    // React hoists a preload <link> into <head> only when it has an href.
+    // Required first argument to ReactDOM.preload() (omitted from the emitted
+    // <link> when imageSrcSet is set).
     href: "/static/images/hero-castellers-m800.avif",
     media: "(max-width: 440px)",
     srcSet:

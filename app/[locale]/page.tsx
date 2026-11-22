@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { JSX } from "react";
+import { preload } from "react-dom";
 import { locale as rootLocale } from "next/root-params";
 import { getTranslations } from "next-intl/server";
 import { getCategorizedEvents } from "@lib/api/events";
@@ -118,24 +119,23 @@ export default async function Page({
   const appLocale = requireLocale((await params).locale);
   const heroCopy = await getHeroSkeletonCopy(appLocale);
 
+  // Preload LCP hero image — one hint per <picture> source so each device
+  // preloads only its file. Using ReactDOM.preload avoids the duplicate <link>
+  // React 19 emits when a Server Component renders <link rel="preload"> JSX
+  // with both href and imageSrcSet in the initial shell.
+  for (const source of [HERO_IMAGE.mobile, HERO_IMAGE.desktop]) {
+    preload(source.href, {
+      as: "image",
+      media: source.media,
+      imageSrcSet: source.srcSet,
+      imageSizes: source.sizes,
+      type: source.type,
+      fetchPriority: "high",
+    });
+  }
+
   return (
     <>
-      {/* Preload LCP hero image — React 19 hoists <link> to <head> automatically.
-          One link per <picture> source, so each device preloads only its file. */}
-      {[HERO_IMAGE.mobile, HERO_IMAGE.desktop].map((source) => (
-        <link
-          key={source.media}
-          rel="preload"
-          as="image"
-          href={source.href}
-          media={source.media}
-          imageSrcSet={source.srcSet}
-          imageSizes={source.sizes}
-          type={source.type}
-          fetchPriority="high"
-        />
-      ))}
-
       {/* HomeContent waits on connection(), so this fallback is what users
           see on a first load and on client navigations: keep it visible. */}
       <Suspense

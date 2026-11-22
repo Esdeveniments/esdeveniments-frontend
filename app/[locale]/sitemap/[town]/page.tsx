@@ -128,7 +128,7 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
             <article key={year} className="stack gap-4">
               <h2 className="heading-3">{year}</h2>
               <ul className="stack gap-1">
-                {[...months].reverse().map(({ slug, label }) => {
+                {months.map(({ slug, label }) => {
                   return (
                     <li key={`${year}-${slug}`}>
                       <PressableAnchor
@@ -141,7 +141,7 @@ async function AsyncPage({ params }: Pick<PageProps<"/[locale]/sitemap/[town]">,
                       </PressableAnchor>
                     </li>
                   );
-                }).reverse()}
+                })}
               </ul>
             </article>
           ))}

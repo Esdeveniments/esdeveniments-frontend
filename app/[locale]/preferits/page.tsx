@@ -157,7 +157,7 @@ export default async function PreferitsPage() {
   }
 
   // Guest: cookie store, keyed by slug — unchanged from before this feature.
-  const cookieSlugs = [...(await getFavoritesFromCookies())].reverse();
+  const cookieSlugs = (await getFavoritesFromCookies()).toReversed();
   const fetched = await fetchFavoritesEvents(cookieSlugs);
   const expiredSlugs = collectExpiredEventKeys(fetched.events, (e) => e.slug);
   const slugsToRemove = Array.from(
