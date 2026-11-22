@@ -110,6 +110,12 @@ export function usePosterAutofill({
   const [priceReviewWarning, setPriceReviewWarning] = useState(false);
   const [multiEventWarning, setMultiEventWarning] = useState(false);
   const lastScannedFileRef = useRef<File | null>(null);
+  const lastModelRef = useRef<string | null>(null);
+  const phaseRef = useRef(phase);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   const isBusy =
     phase === "preparing" || phase === "checking" || phase === "analyzing";
@@ -178,12 +184,17 @@ export function usePosterAutofill({
   }, [clearFeedback, currentImageFile]);
 
   const cancelActiveScan = useCallback(() => {
+    const cancelledPhase = phaseRef.current;
     sequenceRef.current += 1;
     activeScanFileRef.current = null;
     abortRef.current?.abort();
     abortRef.current = null;
     setPhase("idle");
     clearFeedback();
+    sendGoogleEvent("publish_poster_autofill_cancel", {
+      source: "publica",
+      reason: cancelledPhase,
+    });
   }, [clearFeedback]);
 
   const dispatchExtraction = useCallback(
@@ -191,11 +202,13 @@ export function usePosterAutofill({
       file: File,
       seq: number,
       allowOverwriteOwned = false,
+      triggerState: "initial" | "rescan" | "auto_return" = "initial",
     ): Promise<void> => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       activeScanFileRef.current = file;
+      const startedAt = performance.now();
       const timeoutId = window.setTimeout(
         () => controller.abort("timeout"),
         CLIENT_SCAN_TIMEOUT_MS,
@@ -204,7 +217,10 @@ export function usePosterAutofill({
       setPhase("analyzing");
       setErrorCode(null);
       setImagePrepFailure(null);
-      sendGoogleEvent("publish_poster_autofill_start", { source: "publica" });
+      sendGoogleEvent("publish_poster_autofill_start", {
+        source: "publica",
+        state: triggerState,
+      });
 
       try {
         const body = new FormData();
@@ -254,7 +270,8 @@ export function usePosterAutofill({
           setPhase("error");
           sendGoogleEvent("publish_poster_autofill_error", {
             source: "publica",
-            code,
+            reason: code,
+            state: "extract",
           });
           return;
         }
@@ -263,18 +280,22 @@ export function usePosterAutofill({
         if (seq !== sequenceRef.current) return;
 
         lastScannedFileRef.current = file;
+        const servingModel = data.model ?? "unknown";
+        lastModelRef.current = servingModel;
 
         if (!data.hasData) {
           clearFeedback();
           setPhase("empty");
           sendGoogleEvent("publish_poster_autofill_empty", {
             source: "publica",
+            mode: servingModel,
           });
           return;
         }
 
         const applied = await onExtractionAppliedRef.current(data.extracted, {
           allowOverwriteOwned,
+          model: data.model,
           isStale: () => seq !== sequenceRef.current,
         });
         if (seq !== sequenceRef.current) return;
@@ -284,19 +305,34 @@ export function usePosterAutofill({
         setDateInferredWarning(applied.dateInferred);
         setPriceReviewWarning(applied.priceNeedsReview);
         setMultiEventWarning(applied.isMultiEvent);
-        const hasAnyGuidance =
-          applied.filledFields.length > 0 ||
+        const hasAnyWarning =
           Boolean(applied.unmatchedTown) ||
           applied.pastDate ||
           applied.dateInferred ||
           applied.priceNeedsReview ||
           applied.isMultiEvent;
+        const hasAnyGuidance = applied.filledFields.length > 0 || hasAnyWarning;
         setPhase(hasAnyGuidance ? "success" : "empty");
+
+        if (!hasAnyGuidance) {
+          sendGoogleEvent("publish_poster_autofill_empty", {
+            source: "publica",
+            mode: servingModel,
+          });
+          return;
+        }
 
         sendGoogleEvent("publish_poster_autofill_success", {
           source: "publica",
+          mode: servingModel,
+          outcome: hasAnyWarning ? "warnings" : "clean",
           filled_count: applied.filledFields.length,
+          duration_ms: Math.round(performance.now() - startedAt),
           has_unmatched_town: Boolean(applied.unmatchedTown),
+          has_date_inferred: applied.dateInferred,
+          has_past_date: applied.pastDate,
+          has_price_review: applied.priceNeedsReview,
+          is_multi_event: applied.isMultiEvent,
         });
       } catch (err) {
         if (seq !== sequenceRef.current) return;
@@ -312,7 +348,8 @@ export function usePosterAutofill({
         setPhase("error");
         sendGoogleEvent("publish_poster_autofill_error", {
           source: "publica",
-          code,
+          reason: code,
+          state: "extract",
           message: err instanceof Error ? err.name : "unknown",
         });
       } finally {
@@ -352,17 +389,30 @@ export function usePosterAutofill({
             activeScanFileRef.current = null;
             setErrorCode("not_configured");
             setPhase("error");
+            sendGoogleEvent("publish_poster_autofill_error", {
+              source: "publica",
+              reason: "not_configured",
+              state: "check",
+            });
             return;
           }
           if (status.state === "app_limit" || status.state === "account_limit") {
             activeScanFileRef.current = null;
             setErrorCode("rate_limited");
             setPhase("error");
+            sendGoogleEvent("publish_poster_autofill_error", {
+              source: "publica",
+              reason: status.state,
+              state: "check",
+            });
             return;
           }
           if (!status.signedIn) {
             activeScanFileRef.current = null;
             setPhase("idle");
+            sendGoogleEvent("publish_poster_autofill_auth_handoff", {
+              source: "publica",
+            });
             await onRequestAuthForScanRef.current(file);
             return;
           }
@@ -373,12 +423,22 @@ export function usePosterAutofill({
           activeScanFileRef.current = null;
           setErrorCode("network_error");
           setPhase("error");
+          sendGoogleEvent("publish_poster_autofill_error", {
+            source: "publica",
+            reason: "network_error",
+            state: "check",
+          });
           return;
         }
       }
 
       if (seq !== sequenceRef.current) return;
-      await dispatchExtraction(file, seq, allowOverwriteOwned);
+      await dispatchExtraction(
+        file,
+        seq,
+        allowOverwriteOwned,
+        allowOverwriteOwned ? "rescan" : "initial",
+      );
     },
     [dispatchExtraction, isAuthenticated],
   );
@@ -407,6 +467,11 @@ export function usePosterAutofill({
         if (!prepared.ok) {
           setImagePrepFailure(prepared.reason);
           setPhase("error");
+          sendGoogleEvent("publish_poster_autofill_error", {
+            source: "publica",
+            reason: `prep_${prepared.reason}`,
+            state: "prep",
+          });
           return;
         }
 
@@ -420,12 +485,18 @@ export function usePosterAutofill({
         await checkAvailabilityAndScan(prepared.file, seq, isRescanOrReplace);
       } catch (prepError) {
         if (seq !== sequenceRef.current) return;
-        if (isChunkOrNetworkLoadError(prepError)) {
+        const isChunkErr = isChunkOrNetworkLoadError(prepError);
+        if (isChunkErr) {
           setErrorCode("network_error");
         } else {
           setImagePrepFailure("encode_failed");
         }
         setPhase("error");
+        sendGoogleEvent("publish_poster_autofill_error", {
+          source: "publica",
+          reason: isChunkErr ? "network_error" : "prep_encode_failed",
+          state: "prep",
+        });
       }
     },
     [
@@ -452,7 +523,7 @@ export function usePosterAutofill({
     autoScanConsumedRef.current = autoScanIntentId;
     onAutoScanHandled?.();
     const seq = ++sequenceRef.current;
-    void dispatchExtraction(currentImageFile, seq, false);
+    void dispatchExtraction(currentImageFile, seq, false, "auto_return");
   }, [
     autoScanIntentId,
     currentImageFile,
@@ -499,7 +570,10 @@ export function usePosterAutofill({
     onUndo();
     setPhase("idle");
     clearFeedback();
-    sendGoogleEvent("publish_poster_autofill_undo", { source: "publica" });
+    sendGoogleEvent("publish_poster_autofill_undo", {
+      source: "publica",
+      mode: lastModelRef.current ?? "unknown",
+    });
   };
 
   return {

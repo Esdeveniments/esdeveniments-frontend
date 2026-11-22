@@ -342,6 +342,8 @@ def collect_data(days, sections, country=None):
                         "stringFilter": {"value": "publish_error"}}},
             {"filter": {"fieldName": "eventName",
                         "stringFilter": {"value": "publish_submit_blocked"}}},
+            {"filter": {"fieldName": "eventName",
+                        "stringFilter": {"value": "publish_poster_autofill_error"}}},
         ]}}
         # Paid flows (event promotion + place sponsorship). purchase is sent
         # only once the payment is confirmed (see utils/checkout-analytics.ts).
@@ -355,6 +357,34 @@ def collect_data(days, sections, country=None):
             "dimensions": [{"name": "eventName"}, {"name": "customEvent:reason"}],
             "metrics": [{"name": "eventCount"}],
             "dimensionFilter": with_country_filter(errors_filter, country),
+            "limit": 20,
+        }))
+        autofill_field_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "publish_poster_autofill_field"},
+        }}
+        d["poster_autofill_fields"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [
+                {"name": "customEvent:element"},
+                {"name": "customEvent:outcome"},
+            ],
+            "metrics": [{"name": "eventCount"}],
+            "dimensionFilter": with_country_filter(autofill_field_filter, country),
+            "limit": 30,
+        }))
+        autofill_model_filter = {"filter": {
+            "fieldName": "eventName",
+            "stringFilter": {"value": "publish_poster_autofill_success"},
+        }}
+        d["poster_autofill_models"] = extract_rows(api_call("runReport", {
+            "dateRanges": rng,
+            "dimensions": [
+                {"name": "customEvent:mode"},
+                {"name": "customEvent:outcome"},
+            ],
+            "metrics": [{"name": "eventCount"}],
+            "dimensionFilter": with_country_filter(autofill_model_filter, country),
             "limit": 20,
         }))
 
@@ -587,6 +617,73 @@ def collect_data(days, sections, country=None):
     return d
 
 
+def compute_poster_autofill_summary(d):
+    """Derive poster-autofill counts, per-field accuracy, and model mix from raw publish rows."""
+    publish_rows = {dims[0]: (safe_int(mets[0]), safe_int(mets[1]))
+                    for dims, mets in d.get("publish", [])}
+    events_map = {dims[0]: {"count": safe_int(mets[0]), "users": safe_int(mets[1])}
+                  for dims, mets in d.get("events", [])}
+
+    def count_of(event_name):
+        if event_name in publish_rows:
+            return publish_rows[event_name][0]
+        return events_map.get(event_name, {}).get("count", 0)
+
+    field_stats = {}
+    for dims, mets in d.get("poster_autofill_fields", []):
+        field_name = dims[0]
+        outcome = dims[1] if len(dims) > 1 else ""
+        if field_name == "(not set)" or outcome not in ("kept", "edited"):
+            continue
+        bucket = field_stats.setdefault(field_name, {"kept": 0, "edited": 0})
+        bucket[outcome] += safe_int(mets[0])
+    fields_summary = [
+        {
+            "field": field,
+            "kept": counts["kept"],
+            "edited": counts["edited"],
+            "accuracy": counts["kept"] / (counts["kept"] + counts["edited"]),
+        }
+        for field, counts in sorted(
+            field_stats.items(),
+            key=lambda kv: (kv[1]["kept"] + kv[1]["edited"]),
+            reverse=True,
+        )
+        if counts["kept"] + counts["edited"] > 0
+    ]
+
+    model_stats = {}
+    for dims, mets in d.get("poster_autofill_models", []):
+        model_name = dims[0] if dims[0] != "(not set)" else "unknown"
+        outcome = dims[1] if len(dims) > 1 else ""
+        bucket = model_stats.setdefault(
+            model_name, {"total": 0, "clean": 0, "warnings": 0}
+        )
+        cnt = safe_int(mets[0])
+        bucket["total"] += cnt
+        if outcome in ("clean", "warnings"):
+            bucket[outcome] += cnt
+    models_summary = [
+        {"model": model, **counts}
+        for model, counts in sorted(
+            model_stats.items(),
+            key=lambda kv: kv[1]["total"],
+            reverse=True,
+        )
+    ]
+
+    return {
+        "starts": count_of("publish_poster_autofill_start"),
+        "successes": count_of("publish_poster_autofill_success"),
+        "empty": count_of("publish_poster_autofill_empty"),
+        "errors": count_of("publish_poster_autofill_error"),
+        "cancels": count_of("publish_poster_autofill_cancel"),
+        "undos": count_of("publish_poster_autofill_undo"),
+        "fields": fields_summary,
+        "models": models_summary,
+    }
+
+
 def compute_behavior(d, days):
     """Derive behavior metrics from raw event data.
 
@@ -688,6 +785,7 @@ def compute_behavior(d, days):
             "successes": pub_success,
             "errors": pub_errors,
             "conversion": (pub_success / pub_starts) if pub_starts else 0,
+            "poster_autofill": compute_poster_autofill_summary(d),
         },
         "monetization": {
             ev: (events_map.get(ev, {}).get("count", 0),
@@ -1058,6 +1156,24 @@ def render_text(d, days, sections):
                 print(f"    {mets[0]:>4}x  {dims[0]:35s}  reason={reason}")
         else:
             print("    (no error data)")
+        pa = (
+            d.get("behavior", {}).get("publish", {}).get("poster_autofill")
+            or compute_poster_autofill_summary(d)
+        )
+        if pa.get("starts", 0) > 0 or pa.get("errors", 0) > 0:
+            print(f"\n  Poster autofill: starts={pa['starts']}  ok={pa['successes']}  "
+                  f"empty={pa['empty']}  err={pa['errors']}  cancel={pa['cancels']}  undo={pa['undos']}")
+            if pa.get("fields"):
+                print(f"  Field accuracy at publish (kept / total):")
+                for row in pa["fields"]:
+                    tot = row["kept"] + row["edited"]
+                    print(f"    {row['field']:14s}  {row['accuracy']:5.0%}  "
+                          f"({row['kept']} kept, {row['edited']} edited / {tot})")
+            if pa.get("models"):
+                print(f"  Serving models:")
+                for row in pa["models"]:
+                    print(f"    {row['model']:36s}  {row['total']:>4}x  "
+                          f"(clean={row['clean']}, warnings={row['warnings']})")
 
     if "search" in sections and "search_terms" in d:
         section(f"SEARCH & FILTERS (last {days} days)")
@@ -1563,6 +1679,30 @@ def render_markdown(d, days):
                 reason = dims[1] if dims[1] != "(not set)" else "unknown"
                 L.append(f"| {mets[0]} | {dims[0]} | {reason} |")
             L.append("")
+        pa = pub.get("poster_autofill") or compute_poster_autofill_summary(d)
+        if pa.get("starts", 0) > 0 or pa.get("errors", 0) > 0:
+            L.append(
+                f"**Poster autofill:** starts **{pa['starts']}** · ok **{pa['successes']}** · "
+                f"empty **{pa['empty']}** · errors **{pa['errors']}** · "
+                f"cancels **{pa['cancels']}** · undos **{pa['undos']}**"
+            )
+            L.append("")
+            if pa.get("fields"):
+                L.append("| Field | Kept | Edited | Accuracy |")
+                L.append("|-------|-----:|-------:|---------:|")
+                for row in pa["fields"]:
+                    L.append(
+                        f"| {row['field']} | {row['kept']} | {row['edited']} | {row['accuracy']:.0%} |"
+                    )
+                L.append("")
+            if pa.get("models"):
+                L.append("| Serving model | Scans | Clean | With warnings |")
+                L.append("|---------------|------:|------:|--------------:|")
+                for row in pa["models"]:
+                    L.append(
+                        f"| {row['model']} | {row['total']} | {row['clean']} | {row['warnings']} |"
+                    )
+                L.append("")
 
     # ── Search & Filters ──
     if "search_terms" in d:

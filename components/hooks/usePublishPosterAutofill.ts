@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { captureException } from "@sentry/nextjs";
 import { getPathname } from "@i18n/routing";
+import { sendGoogleEvent } from "@utils/analytics";
 import { hasPublishFormEnded } from "@utils/publish-draft-warnings";
 import {
   POSTER_SCAN_INTENT_STORAGE_KEY,
@@ -13,6 +14,8 @@ import type { FormData } from "types/event";
 import type {
   PendingPosterExtraction,
   PosterAutofillFieldKey,
+  PosterAutofillPublishAnalytics,
+  PosterAutofillTelemetrySnapshot,
   PosterAutofillUndoRecord,
   PosterExtractedEvent,
   PosterExtractionAppliedSummary,
@@ -125,6 +128,7 @@ export function usePublishPosterAutofill({
     PosterAutofillFieldKey[]
   >([]);
   const userOwnedFieldsRef = useRef<Set<PosterAutofillFieldKey>>(new Set());
+  const telemetryRef = useRef<PosterAutofillTelemetrySnapshot | null>(null);
   const autofillRunIdRef = useRef(0);
   const formRef = useRef(form);
 
@@ -177,6 +181,7 @@ export function usePublishPosterAutofill({
       setDeferredFilledFields([]);
       setPosterAutofillBusy(false);
       userOwnedFieldsRef.current.clear();
+      telemetryRef.current = null;
     },
     [],
   );
@@ -201,8 +206,12 @@ export function usePublishPosterAutofill({
       const autofillField = formKeyToAutofillField(name);
       if (!autofillField) return;
       // Every user edit (including clearing a field) takes ownership away from
-      // Undo so Undo never restores an old value over an explicit clear.
+      // Undo so Undo never restores an old value over an explicit clear, and
+      // records a per-field correction for publish-time accuracy telemetry.
       releaseUndoOwnership(autofillField);
+      if (telemetryRef.current?.filledFields.has(autofillField)) {
+        telemetryRef.current.editedFields.add(autofillField);
+      }
       if (isCleared) {
         userOwnedFieldsRef.current.delete(autofillField);
       } else {
@@ -304,6 +313,7 @@ export function usePublishPosterAutofill({
       previousAutoDates: boolean,
       options: {
         runId: number;
+        model: string | null;
         preserveUserValues: boolean;
         appliedDates?: boolean;
         mergeUndo?: boolean;
@@ -320,6 +330,23 @@ export function usePublishPosterAutofill({
       }
       formRef.current = nextForm;
       setForm(nextForm);
+
+      const servingModel = options.model ?? "unknown";
+      const currentTelemetry = telemetryRef.current;
+      if (options.mergeUndo && currentTelemetry && currentTelemetry.runId === options.runId) {
+        for (const field of filledFields) {
+          currentTelemetry.filledFields.add(field);
+          currentTelemetry.editedFields.delete(field);
+        }
+      } else {
+        telemetryRef.current = {
+          runId: options.runId,
+          model: servingModel,
+          filledFields: new Set(filledFields),
+          editedFields: new Set(),
+        };
+      }
+
       if (options.mergeUndo) {
         setUndoRecord((prev) => {
           // Only merge into the Undo record created by this exact extraction run;
@@ -351,7 +378,11 @@ export function usePublishPosterAutofill({
   const handlePosterExtractionApplied = useCallback(
     async (
       extracted: PosterExtractedEvent,
-      options?: { allowOverwriteOwned?: boolean; isStale?: () => boolean },
+      options?: {
+        allowOverwriteOwned?: boolean;
+        model?: string | null;
+        isStale?: () => boolean;
+      },
     ): Promise<PosterExtractionAppliedSummary> => {
       const { applyPosterExtractionToForm } = await loadPosterAutofillUtils();
       if (options?.isStale?.()) return EMPTY_APPLIED_SUMMARY;
@@ -360,6 +391,7 @@ export function usePublishPosterAutofill({
       const previousAutoDates = autoDatesRef.current;
       const preserveUserValues = !options?.allowOverwriteOwned;
       const runId = ++autofillRunIdRef.current;
+      const model = options?.model ?? null;
 
       const result = applyPosterExtractionToForm({
         currentForm: current,
@@ -378,7 +410,7 @@ export function usePublishPosterAutofill({
           result.filledFields,
           current,
           previousAutoDates,
-          { runId, preserveUserValues, appliedDates: result.appliedDates },
+          { runId, model, preserveUserValues, appliedDates: result.appliedDates },
         );
       }
 
@@ -389,7 +421,7 @@ export function usePublishPosterAutofill({
       setPendingExtraction(
         (isLoadingCities && Boolean(extracted.town)) ||
           (isLoadingCategories && extracted.categories.length > 0)
-          ? { runId, extracted, preserveUserValues }
+          ? { runId, model, extracted, preserveUserValues }
           : null,
       );
 
@@ -455,6 +487,7 @@ export function usePublishPosterAutofill({
         autoDatesRef.current,
         {
           runId: pending.runId,
+          model: pending.model,
           preserveUserValues: pending.preserveUserValues,
           mergeUndo: true,
         },
@@ -484,8 +517,33 @@ export function usePublishPosterAutofill({
     setPendingExtraction(null);
     setDeferredUnmatchedTown(null);
     setDeferredFilledFields([]);
+    telemetryRef.current = null;
     markEdited();
   }, [autoDatesRef, markEdited, setForm, undoRecord]);
+
+  const reportPosterAutofillPublishOutcome =
+    useCallback((): PosterAutofillPublishAnalytics => {
+      const snapshot = telemetryRef.current;
+      if (!snapshot || snapshot.filledFields.size === 0) {
+        return { poster_autofill_used: false };
+      }
+
+      for (const field of snapshot.filledFields) {
+        sendGoogleEvent("publish_poster_autofill_field", {
+          source: "publica",
+          element: field,
+          outcome: snapshot.editedFields.has(field) ? "edited" : "kept",
+          mode: snapshot.model,
+        });
+      }
+
+      return {
+        poster_autofill_used: true,
+        poster_autofill_filled_count: snapshot.filledFields.size,
+        poster_autofill_edited_count: snapshot.editedFields.size,
+        mode: snapshot.model,
+      };
+    }, []);
 
   return {
     posterAutofillBusy,
@@ -501,5 +559,6 @@ export function usePublishPosterAutofill({
     handleRequestAuthForScan,
     handlePosterExtractionApplied,
     handlePosterUndo,
+    reportPosterAutofillPublishOutcome,
   };
 }

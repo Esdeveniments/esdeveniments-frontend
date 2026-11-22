@@ -43,7 +43,11 @@ export interface PosterAutofillCardProps {
   /** Called when AI extraction returns usable event fields; returns summary for the banner. */
   onExtractionApplied: (
     extracted: import("./api/poster").PosterExtractedEvent,
-    options?: { allowOverwriteOwned?: boolean; isStale?: () => boolean }
+    options?: {
+      allowOverwriteOwned?: boolean;
+      model?: string | null;
+      isStale?: () => boolean;
+    }
   ) =>
     | import("./api/poster").PosterExtractionAppliedSummary
     | Promise<import("./api/poster").PosterExtractionAppliedSummary>;

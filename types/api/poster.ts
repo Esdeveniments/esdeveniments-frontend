@@ -141,8 +141,23 @@ export interface PosterExtractionAppliedSummary {
 
 export interface PendingPosterExtraction {
   runId: number;
+  model: string | null;
   extracted: PosterExtractedEvent;
   preserveUserValues: boolean;
+}
+
+export interface PosterAutofillTelemetrySnapshot {
+  runId: number;
+  model: string;
+  filledFields: Set<PosterAutofillFieldKey>;
+  editedFields: Set<PosterAutofillFieldKey>;
+}
+
+export interface PosterAutofillPublishAnalytics {
+  poster_autofill_used: boolean;
+  poster_autofill_filled_count?: number;
+  poster_autofill_edited_count?: number;
+  mode?: string;
 }
 
 /**
