@@ -779,14 +779,19 @@
       "followUs": "Segueix-nos"
     },
     "CommunityStrip": {
-      "followTitle": "Cada dilluns i divendres, els millors plans",
+      "cadenceLabel": "Dilluns i divendres",
+      "followTitle": "Els millors plans, sense buscar-los",
       "followDescription": "Reculls de la setmana i del cap de setmana arreu de Catalunya.",
-      "whatsappCta": "Canal de WhatsApp",
+      "whatsappCta": "WhatsApp",
+      "whatsappMeta": "Canal directe",
       "instagramCta": "Instagram",
+      "instagramMeta": "@esdeveniments.cat",
       "moreNetworks": "Altres xarxes",
+      "thinTownEyebrow": "Agenda oberta",
       "thinTownTitle": "Organitzes alguna activitat {placeIn}?",
       "thinTownDescription": "Publica-la gratis en 1 minut i apareixerà a l'agenda del municipi.",
-      "publishCta": "Publica gratis"
+      "publishCta": "Publica el teu esdeveniment",
+      "publishMeta": "Gratis · 1 minut"
     },
     "RestaurantPromotionForm": {
       "heading": "Promociona el teu restaurant",

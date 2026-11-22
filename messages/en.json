@@ -764,14 +764,19 @@
       "followUs": "Follow us"
     },
     "CommunityStrip": {
-      "followTitle": "The best plans, every Monday and Friday",
+      "cadenceLabel": "Mondays and Fridays",
+      "followTitle": "The best plans, without searching",
       "followDescription": "Weekly and weekend roundups across Catalonia.",
-      "whatsappCta": "WhatsApp Channel",
+      "whatsappCta": "WhatsApp",
+      "whatsappMeta": "Direct channel",
       "instagramCta": "Instagram",
+      "instagramMeta": "@esdeveniments.cat",
       "moreNetworks": "More networks",
+      "thinTownEyebrow": "Open agenda",
       "thinTownTitle": "Organising an event {placeIn}?",
       "thinTownDescription": "Publish it for free in 1 minute and reach locals in the town's agenda.",
-      "publishCta": "Publish for free"
+      "publishCta": "Publish your event",
+      "publishMeta": "Free · 1 minute"
     },
     "RestaurantPromotionForm": {
       "heading": "Promote your restaurant",
