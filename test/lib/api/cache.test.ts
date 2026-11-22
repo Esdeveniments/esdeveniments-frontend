@@ -200,6 +200,21 @@ describe("maxEntries option", () => {
     await keyed.cache("a", fetcher);
     expect(fetcher.mock.calls.map(([k]) => k)).toEqual(["a", "b", "c", "a"]);
   });
+
+  it("shares the same handle across calls with the same globalKey", async () => {
+    const first = createKeyedCache<string>(5000, { globalKey: "test:shared" });
+    const second = createKeyedCache<string>(5000, { globalKey: "test:shared" });
+    expect(second).toBe(first);
+
+    const fetcher = vi.fn(async (key: string | number) => `v${key}`);
+    await first.cache("k", fetcher);
+    expect(await second.cache("k", fetcher)).toBe("vk");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    second.delete("k");
+    await first.cache("k", fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
 });
 
 // Requests on a cold process used to each call the backend for the same data.

@@ -11,7 +11,7 @@ import { captureException } from "@sentry/nextjs";
 import NewsArticleDetail from "@components/noticies/NewsArticleDetail";
 import NewsArticleSkeleton from "@components/noticies/NewsArticleSkeleton";
 import { withLocalePath } from "@utils/i18n-seo";
-import { permanentRedirect } from "next/navigation";
+import { permanentRedirect, unstable_rethrow } from "next/navigation";
 import { locale as rootLocale } from "next/root-params";
 import type { AppLocale } from "types/i18n";
 
@@ -58,6 +58,7 @@ export async function generateMetadata({
   try {
     detail = await getNewsBySlugForMetadata(article);
   } catch (error) {
+    unstable_rethrow(error);
     reportNewsDetailError("generateMetadata", error, { place, article });
     throw error;
   }
@@ -107,6 +108,7 @@ export default async function Page({
   try {
     detail = await getNewsBySlug(article);
   } catch (error) {
+    unstable_rethrow(error);
     reportNewsDetailError("Page", error, { place, article });
   }
 

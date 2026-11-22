@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { fetchWithHmac } from "./fetch-wrapper";
+import { isValidDetailSlug, transportFailureStatus } from "./detail-external";
 import {
   parseAuthenticatedUser,
   parseUserPublic,
@@ -154,22 +155,36 @@ export function decodeSafeJwtClaims(accessToken: string): string {
   }
 }
 
-export async function getUserByUsernameExternal(
-  username: string
-): Promise<UserPublicResponseDTO | null> {
-  if (!username || !username.trim()) return null;
+export async function getUserByUsernameExternalResult(
+  username: string,
+  options: { skipConnection?: boolean } = {},
+): Promise<SafeFetchResult<UserPublicResponseDTO>> {
+  if (!username || !username.trim()) {
+    return { data: null, error: null, status: 404 };
+  }
   // Return null (no fetch) when the backend URL is genuinely unconfigured.
   // getApiUrl() falls back to a hardcoded default, so guarding on its result
   // is dead code and would fire a real request against the default host.
-  if (!isApiUrlConfigured()) return null;
+  if (!isApiUrlConfigured()) {
+    return { data: null, error: null, status: 404 };
+  }
   const apiUrl = getApiUrl();
 
-  return fetchJsonWithFallback(
+  return fetchJsonResult(
     `${apiUrl}/users/${encodeURIComponent(username)}`,
     parseUserPublic,
-    null,
     "getUserByUsernameExternal",
+    {
+      ...options,
+      notFoundOnMalformed400: !isValidDetailSlug(username),
+    },
   );
+}
+
+export async function getUserByUsernameExternal(
+  username: string
+): Promise<UserPublicResponseDTO | null> {
+  return (await getUserByUsernameExternalResult(username)).data;
 }
 
 /**
@@ -212,10 +227,18 @@ async function fetchJsonResult<T>(
   url: string,
   parse: (json: unknown) => T | null,
   label: string,
+  options: { skipConnection?: boolean; notFoundOnMalformed400?: boolean } = {},
 ): Promise<SafeFetchResult<T>> {
   try {
-    const response = await fetchWithHmac(url);
-    if (response.status === 404) return { data: null, error: null, status: 404 };
+    const response = options.skipConnection
+      ? await fetchWithHmac(url, { skipConnection: true })
+      : await fetchWithHmac(url);
+    if (
+      response.status === 404 ||
+      (response.status === 400 && options.notFoundOnMalformed400)
+    ) {
+      return { data: null, error: null, status: 404 };
+    }
     if (!response.ok) {
       const body = await response.text().catch(() => "<unreadable>");
       console.error(
@@ -224,7 +247,7 @@ async function fetchJsonResult<T>(
       return {
         data: null,
         error: new Error(`${label}: HTTP ${response.status}`),
-        status: response.status,
+        status: response.status >= 400 ? response.status : 502,
       };
     }
     const data = parse(await response.json());
@@ -237,7 +260,7 @@ async function fetchJsonResult<T>(
     return {
       data: null,
       error: error instanceof Error ? error : new Error(String(error)),
-      status: 502,
+      status: transportFailureStatus(error),
     };
   }
 }

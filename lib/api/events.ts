@@ -14,7 +14,7 @@ import {
 import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
 import { eventDetailCache } from "@lib/cache/event-detail-cache";
-import type { InternalOriginOptions } from "types/api/internal";
+import type { ServerReaderOptions } from "types/api/internal";
 import { cacheLife, cacheTag } from "next/cache";
 import { getErrorStatus } from "@utils/error-status";
 import { markEventReadFailed } from "./event-outage";
@@ -154,7 +154,7 @@ export async function fetchEventsCached(
 
 export async function fetchEventBySlug(
   fullSlug: string,
-  options: InternalOriginOptions = {},
+  options: ServerReaderOptions = {},
 ): Promise<EventDetailResponseDTO | null> {
   if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
     return e2eEventsStore.get(fullSlug) ?? null;

@@ -1,4 +1,6 @@
 import { cache } from "react";
+import { connection } from "next/server";
+import { cacheLife, cacheTag } from "next/cache";
 import type {
   NewsSummaryResponseDTO,
   NewsDetailResponseDTO,
@@ -6,47 +8,62 @@ import type {
 } from "types/api/news";
 import type { CitySummaryResponseDTO } from "types/api/city";
 import type { PagedResponseDTO } from "types/api/event";
-import {
-  getInternalApiUrl,
-  buildNewsQuery,
-  getVercelProtectionBypassHeaders,
-  emptyPagedResponse,
-} from "@utils/api-helpers";
-import { newsTag, newsPlaceTag, newsSlugTag } from "../cache/tags";
-import type { CacheTag } from "types/cache";
+import type { ServerReaderOptions } from "types/api/internal";
+import { buildNewsQuery, emptyPagedResponse } from "@utils/api-helpers";
 import { addCacheKeyToNewsList } from "@utils/news-cache";
-import type { InternalOriginOptions } from "types/api/internal";
-import { cacheLife, cacheTag } from "next/cache";
+import { newsTag, newsSlugTag } from "../cache/tags";
+import { createKeyedCache } from "./cache";
+import {
+  fetchNewsBySlugExternal,
+  fetchNewsCitiesStrictExternal,
+  fetchNewsStrictExternal,
+} from "./news-external";
 
 // Re-export for backward compatibility
 export type { FetchNewsParams } from "types/api/news";
 
+const NEWS_LIST_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const NEWS_CITIES_TTL_MS = 60 * 60 * 1000; // 1 hour
+const NEWS_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const { cache: newsListCache } = createKeyedCache<
+  PagedResponseDTO<NewsSummaryResponseDTO>
+>(NEWS_LIST_TTL_MS, { maxEntries: 500, globalKey: "news:list" });
+
+const { cache: newsCitiesCache } = createKeyedCache<
+  PagedResponseDTO<CitySummaryResponseDTO>
+>(NEWS_CITIES_TTL_MS, { maxEntries: 100, globalKey: "news:cities" });
+
+// Shared across Server Components and GET /api/news/[slug] (24h TTL) to avoid
+// incrementing backend article visits on refresh. `storeEmpty: false` ensures a
+// genuine 404 is not pinned for 24h if an article is published shortly after.
+export const { cache: newsDetailCache } =
+  createKeyedCache<NewsDetailResponseDTO | null>(NEWS_DETAIL_TTL_MS, {
+    storeEmpty: false,
+    maxEntries: 5000,
+    globalKey: "news:detail",
+  });
+
 export async function fetchNews(
-  params: FetchNewsParams
+  params: FetchNewsParams,
 ): Promise<PagedResponseDTO<NewsSummaryResponseDTO>> {
-  // Use internal API route for stable caching
-
+  // Keep the request-time signal fetchWithHmac gives on a cache miss so a warm
+  // in-memory cache cannot change what Next.js prerenders.
+  await connection();
+  const normalized: FetchNewsParams = {
+    page: params.page ?? 0,
+    size: params.size ?? 100,
+    ...(params.place ? { place: params.place } : {}),
+  };
+  const cacheKey = buildNewsQuery(normalized).toString();
   try {
-    const queryString = buildNewsQuery(params);
-    const finalUrl = await getInternalApiUrl(`/api/news?${queryString}`);
-
-    const tags: CacheTag[] = [newsTag];
-    if (params.place) {
-      tags.push(newsPlaceTag(params.place));
-    }
-    const response = await fetch(finalUrl, {
-      headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 3600, tags },
+    return await newsListCache(cacheKey, async () => {
+      const data = await fetchNewsStrictExternal(normalized);
+      return {
+        ...data,
+        content: addCacheKeyToNewsList(data.content),
+      };
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data: PagedResponseDTO<NewsSummaryResponseDTO> =
-      await response.json();
-    return {
-      ...data,
-      content: addCacheKeyToNewsList(data.content),
-    };
   } catch (e) {
     console.error("Error fetching news:", e);
     return emptyPagedResponse();
@@ -55,21 +72,16 @@ export async function fetchNews(
 
 export async function fetchNewsBySlug(
   slug: string,
-  options: InternalOriginOptions = {}
+  options: ServerReaderOptions = {},
 ): Promise<NewsDetailResponseDTO | null> {
-  // Internal route
+  // Keep the request-time signal fetchWithHmac gives on a cache miss so a warm
+  // in-memory cache cannot change what Next.js prerenders. Outside try/catch so
+  // prerender rejections propagate instead of being swallowed as null.
+  if (!options.skipConnection) await connection();
   try {
-    const url = await getInternalApiUrl(`/api/news/${encodeURIComponent(slug)}`, {
-      preferConfiguredOrigin: options.preferConfiguredOrigin,
-    });
-    const response = await fetch(url, {
-      headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 3600, tags: [newsTag, newsSlugTag(slug)] },
-    });
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data: NewsDetailResponseDTO = await response.json();
-    return data;
+    return await newsDetailCache(slug, () =>
+      fetchNewsBySlugExternal(slug, { skipConnection: true }),
+    );
   } catch (e) {
     console.error("Error fetching news by slug:", e);
     // Transient failure: re-throw for cached metadata readers so the error is
@@ -85,26 +97,13 @@ export async function fetchNewsCities(params?: {
   page?: number;
   size?: number;
 }): Promise<PagedResponseDTO<CitySummaryResponseDTO>> {
+  await connection();
+  const normalized = params ?? {};
+  const cacheKey = `${normalized.page ?? ""}:${normalized.size ?? ""}`;
   try {
-    const query = new URLSearchParams();
-    if (typeof params?.page === "number") query.set("page", String(params.page));
-    if (typeof params?.size === "number") query.set("size", String(params.size));
-
-    const qs = query.toString();
-    const finalUrl = await getInternalApiUrl(
-      qs ? `/api/news/cities?${qs}` : `/api/news/cities`
+    return await newsCitiesCache(cacheKey, () =>
+      fetchNewsCitiesStrictExternal(normalized),
     );
-
-    const response = await fetch(finalUrl, {
-      headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 3600, tags: [newsTag] },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return (await response.json()) as PagedResponseDTO<CitySummaryResponseDTO>;
   } catch (e) {
     console.error("Error fetching news cities:", e);
     return emptyPagedResponse();
@@ -115,19 +114,16 @@ export async function fetchNewsCities(params?: {
 // Used by the page component (explicitly dynamic).
 export const getNewsBySlug = cache(fetchNewsBySlug);
 
-// Metadata-only reader: resolves the API origin from configuration instead of
-// request headers(), so generateMetadata stays prerenderable under
-// cacheComponents (reading headers() would make the metadata boundary dynamic
-// and mismatch the static shell). Mirrors getCachedEventBySlug.
+// Metadata-only reader: calls the backend wrapper directly with
+// skipConnection: true so generateMetadata stays prerenderable under
+// cacheComponents without looping back through /api/news/[slug].
 export async function getNewsBySlugForMetadata(
   slug: string,
 ): Promise<NewsDetailResponseDTO | null> {
   "use cache";
-  // See getCachedEventBySlug: "use cache" (not React cache) is what makes
-  // metadata prerenderable under cacheComponents.
   cacheTag(newsTag, newsSlugTag(slug));
   const detail = await fetchNewsBySlug(slug, {
-    preferConfiguredOrigin: true,
+    skipConnection: true,
     throwOnError: true,
   });
   if (!detail) {
