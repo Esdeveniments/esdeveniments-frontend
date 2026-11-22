@@ -597,11 +597,9 @@ not on its parents. `router.push` doesn't trigger vignettes. Vignettes on Back,
 on inactivity and on tab revisit can't be turned off per link: use AdSense ›
 Auto ads › "Allow additional triggers for vignette ads".
 
-## React hoists a preload `<link>` into `<head>` only when it has `href`
+## Image preloads: use `ReactDOM.preload()`, not JSX `<link rel="preload">`
 
-`<link rel="preload" as="image" imageSrcSet={…} media={…}>` without `href`
-renders in `<body>`, where the browser finds it late. Pass `href` (a fallback
-URL) as well as `imageSrcSet`, as the home hero preload does (#508).
+In React 19, a Server Component rendering JSX `<link rel="preload" as="image" imageSrcSet={…}>` without `href` stays in `<body>` (#508), while passing `href` makes RSC emit both a Flight `:HL` hint (without `href`) and the JSX `<link>` (with `href`), producing duplicate `<link rel="preload">` tags on cached and initial shells (`facebook/react#35889`). Use `preload()` from `react-dom` instead: it emits a single deduplicated `<link>` and omits `href` when `imageSrcSet` is set (per WHATWG spec). Call `preload()` directly in the initial shell for static sets (the home hero in `app/[locale]/page.tsx`), and render the `"use client"` leaf `<ImagePreload>` (`components/ui/common/image/ImagePreload.tsx`) inside streamed `<Suspense>` or `"use cache"` boundaries — calling `preload()` from a Server Component inside a streamed boundary only emits Flight `:HL` after Fizz's request context closes, so Fizz drops the HTML `<link>`.
 
 ## Next keeps visited pages mounted: never find page content by global id or edit React's DOM
 
