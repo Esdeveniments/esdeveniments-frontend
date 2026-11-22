@@ -418,9 +418,11 @@ export function usePublishPosterAutofill({
       // town/category catalogs were still loading when the AI response arrived.
       setDeferredUnmatchedTown(null);
       setDeferredFilledFields([]);
-      setPendingExtraction(
+      const hasPendingCatalogs =
         (isLoadingCities && Boolean(extracted.town)) ||
-          (isLoadingCategories && extracted.categories.length > 0)
+        (isLoadingCategories && extracted.categories.length > 0);
+      setPendingExtraction(
+        hasPendingCatalogs
           ? { runId, model, extracted, preserveUserValues }
           : null,
       );
@@ -434,6 +436,7 @@ export function usePublishPosterAutofill({
         dateInferred: Boolean(result.appliedDates && extracted.dateInferred),
         priceNeedsReview: Boolean(extracted.priceResolution?.needsReview),
         isMultiEvent: extracted.isMultiEvent,
+        hasPendingCatalogs,
       };
     },
     [

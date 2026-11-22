@@ -137,6 +137,7 @@ export interface PosterExtractionAppliedSummary {
   dateInferred: boolean;
   priceNeedsReview: boolean;
   isMultiEvent: boolean;
+  hasPendingCatalogs?: boolean;
 }
 
 export interface PendingPosterExtraction {

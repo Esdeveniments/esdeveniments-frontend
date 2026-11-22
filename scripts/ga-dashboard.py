@@ -684,6 +684,17 @@ def compute_poster_autofill_summary(d):
     }
 
 
+def has_poster_autofill_activity(pa):
+    """True when any poster-autofill counter, field accuracy row, or model row is present."""
+    if not pa:
+        return False
+    return (
+        any(pa.get(k, 0) > 0 for k in ("starts", "successes", "empty", "errors", "cancels", "undos"))
+        or bool(pa.get("fields"))
+        or bool(pa.get("models"))
+    )
+
+
 def compute_behavior(d, days):
     """Derive behavior metrics from raw event data.
 
@@ -1160,7 +1171,7 @@ def render_text(d, days, sections):
             d.get("behavior", {}).get("publish", {}).get("poster_autofill")
             or compute_poster_autofill_summary(d)
         )
-        if pa.get("starts", 0) > 0 or pa.get("errors", 0) > 0:
+        if has_poster_autofill_activity(pa):
             print(f"\n  Poster autofill: starts={pa['starts']}  ok={pa['successes']}  "
                   f"empty={pa['empty']}  err={pa['errors']}  cancel={pa['cancels']}  undo={pa['undos']}")
             if pa.get("fields"):
@@ -1680,7 +1691,7 @@ def render_markdown(d, days):
                 L.append(f"| {mets[0]} | {dims[0]} | {reason} |")
             L.append("")
         pa = pub.get("poster_autofill") or compute_poster_autofill_summary(d)
-        if pa.get("starts", 0) > 0 or pa.get("errors", 0) > 0:
+        if has_poster_autofill_activity(pa):
             L.append(
                 f"**Poster autofill:** starts **{pa['starts']}** · ok **{pa['successes']}** · "
                 f"empty **{pa['empty']}** · errors **{pa['errors']}** · "

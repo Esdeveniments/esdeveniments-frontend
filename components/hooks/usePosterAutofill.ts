@@ -197,6 +197,13 @@ export function usePosterAutofill({
     });
   }, [clearFeedback]);
 
+  const requestAuthForScan = useCallback(async (file: File): Promise<void> => {
+    sendGoogleEvent("publish_poster_autofill_auth_handoff", {
+      source: "publica",
+    });
+    await onRequestAuthForScanRef.current(file);
+  }, []);
+
   const dispatchExtraction = useCallback(
     async (
       file: File,
@@ -248,7 +255,7 @@ export function usePosterAutofill({
 
           if (response.status === 401 || payload?.code === "unauthorized") {
             setPhase("idle");
-            await onRequestAuthForScanRef.current(file);
+            await requestAuthForScan(file);
             return;
           }
 
@@ -311,7 +318,10 @@ export function usePosterAutofill({
           applied.dateInferred ||
           applied.priceNeedsReview ||
           applied.isMultiEvent;
-        const hasAnyGuidance = applied.filledFields.length > 0 || hasAnyWarning;
+        const hasAnyGuidance =
+          applied.filledFields.length > 0 ||
+          hasAnyWarning ||
+          Boolean(applied.hasPendingCatalogs);
         setPhase(hasAnyGuidance ? "success" : "empty");
 
         if (!hasAnyGuidance) {
@@ -360,7 +370,7 @@ export function usePosterAutofill({
         }
       }
     },
-    [clearFeedback, locale],
+    [clearFeedback, locale, requestAuthForScan],
   );
 
   const checkAvailabilityAndScan = useCallback(
@@ -410,10 +420,7 @@ export function usePosterAutofill({
           if (!status.signedIn) {
             activeScanFileRef.current = null;
             setPhase("idle");
-            sendGoogleEvent("publish_poster_autofill_auth_handoff", {
-              source: "publica",
-            });
-            await onRequestAuthForScanRef.current(file);
+            await requestAuthForScan(file);
             return;
           }
         }
@@ -440,7 +447,7 @@ export function usePosterAutofill({
         allowOverwriteOwned ? "rescan" : "initial",
       );
     },
-    [dispatchExtraction, isAuthenticated],
+    [dispatchExtraction, isAuthenticated, requestAuthForScan],
   );
 
   const handleSelectedFile = useCallback(
