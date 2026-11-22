@@ -43,12 +43,35 @@ describe("SENTRY_IGNORE_ERRORS", () => {
 });
 
 describe("beforeSendClient", () => {
-  it("drops extension-wrapped errors even when the innermost frame is first-party", () => {
-    const event = makeClientEvent("TypeError", "Failed to fetch (www.esdeveniments.cat)", [
+  it("drops extension-wrapped fetch failures even when the innermost frame is first-party", () => {
+    const chromeFetch = makeClientEvent("TypeError", "Failed to fetch (www.esdeveniments.cat)", [
       { filename: "chrome-extension://hoklmmgfnpapgjgcpechhaamimifchmp/frame_ant/frame_ant.js" },
       { filename: "app:///_next/static/chunks/3xeo6htzcdcyx.js" },
     ]);
-    expect(beforeSendClient(event, {})).toBeNull();
+    const safariLoad = makeClientEvent("TypeError", "Load failed", [
+      { filename: "safari-extension://com.example/injected.js" },
+      { filename: "app:///_next/static/chunks/3xeo6htzcdcyx.js" },
+    ]);
+    const firefoxNetwork = makeClientEvent(
+      "TypeError",
+      "NetworkError when attempting to fetch resource.",
+      [
+        { filename: "moz-extension://1234/content.js" },
+        { filename: "app:///_next/static/chunks/3xeo6htzcdcyx.js" },
+      ],
+    );
+
+    expect(beforeSendClient(chromeFetch, {})).toBeNull();
+    expect(beforeSendClient(safariLoad, {})).toBeNull();
+    expect(beforeSendClient(firefoxNetwork, {})).toBeNull();
+  });
+
+  it("keeps first-party bugs whose stack passes through an extension wrapper", () => {
+    const event = makeClientEvent("TypeError", "Cannot read properties of undefined", [
+      { filename: "chrome-extension://hoklmmgfnpapgjgcpechhaamimifchmp/frame_ant/frame_ant.js" },
+      { filename: "app:///_next/static/chunks/3xeo6htzcdcyx.js" },
+    ]);
+    expect(beforeSendClient(event, {})).not.toBeNull();
   });
 
   it("drops Google Funding Choices focus-loop RangeErrors", () => {
