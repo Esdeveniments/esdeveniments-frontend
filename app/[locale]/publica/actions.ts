@@ -14,6 +14,7 @@ import { hubPathsFor } from "@utils/festivity";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
 import { env } from "@utils/misc-helpers";
 import { getValidatedImageFile } from "@utils/image-validation";
+import { matchCreateEventFailureReason } from "@utils/publica-analytics";
 
 /**
  * Sends email notification via Pipedream when a new event is published.
@@ -56,43 +57,33 @@ export async function createEventAction(
   }
   // The backend validates the fields; this only rejects a malformed payload.
   const data = JSON.parse(rawEvent) as EventCreateRequestDTO;
-  const imageFile = await getValidatedImageFile(formData.get("imageFile"));
+  let imageFile: File | null;
+  try {
+    imageFile = await getValidatedImageFile(formData.get("imageFile"));
+  } catch {
+    return { success: false, reason: "invalid-image" };
+  }
 
-  // 2026-07-26 round-5: catch the mutation error path so we can distinguish
-  // 401 (likely stale Bearer — user should log out and back in) from 403
-  // (profileCompleted: false per backend spec — user should complete
-  // onboarding). Anything else is a real 5xx and rethrows. We log + tag
-  // Sentry with the next action so the form can render the right message.
-  //
-  // 401/403 are *returned* as a CreateEventActionResult, not re-thrown:
-  // Next.js redacts thrown Server Action error messages/properties in
-  // production (only a generic message + digest reach the client), so
-  // PublishForm would have no reliable way to tell these apart from a
-  // plain 5xx if we threw here. editEvent
-  // (app/[locale]/e/[eventId]/edita/actions.ts) already returns rather
-  // than throws for its own actionable failures — same convention.
-  // Anything else stays a throw: there's no more specific client action
-  // to take for a real 5xx anyway.
+  // Actionable client errors are *returned* as a CreateEventActionResult, not
+  // re-thrown: Next.js redacts thrown Server Action error messages/properties
+  // in production (only a generic message + digest reach the client), so
+  // PublishForm could never tell duplicates, size limits, or validation errors
+  // apart from a 5xx if we threw here. Anything unexpected (5xx / network)
+  // still throws.
   let created;
   try {
     // 1. Create the event in your backend
     created = await createEvent(data, imageFile, e2eExtras);
   } catch (err) {
     const status = getErrorStatus(err);
+    const message = err instanceof Error ? err.message : String(err);
+
     if (status === 401 || status === 403) {
       const nextAction =
         status === 401 ? "logout-and-relogin" : "complete-profile";
       console.error(
         `createEventAction: backend rejected with ${status} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
       );
-      // Don't forward the caught `err` as-is: createEvent() embeds the raw
-      // backend response body in its .message, which would otherwise reach
-      // Sentry unredacted despite the extra.* fields below being carefully
-      // scrubbed. A short, fixed-shape message keeps the actual diagnosis
-      // (status/nextAction/field names) without the body's content. titleHint
-      // is dropped too \u2014 an event title has no diagnostic value for an
-      // auth/profile-completion failure, so there's no reason to send
-      // user-controlled content to a third-party service for it.
       captureException(new Error(`createEvent rejected: ${status}`), {
         tags: {
           section: "publica-create",
@@ -108,6 +99,12 @@ export async function createEventAction(
         reason: status === 401 ? "stale-session" : "profile-incomplete",
       };
     }
+
+    const failureReason = matchCreateEventFailureReason(message, status);
+    if (failureReason) {
+      return { success: false, reason: failureReason };
+    }
+
     throw err;
   }
 

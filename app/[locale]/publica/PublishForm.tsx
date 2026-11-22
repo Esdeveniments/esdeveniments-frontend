@@ -28,7 +28,6 @@ import type { CitySummaryResponseDTO } from "types/api/city";
 import type { RegionSummaryResponseDTO } from "types/api/event";
 import type { CategorySummaryResponseDTO } from "types/api/category";
 import {
-  EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
   MAX_UPLOAD_LIMIT_LABEL,
   PUBLISH_RESUME_PATH,
@@ -38,8 +37,10 @@ import { sendGoogleEvent } from "@utils/analytics";
 import { savePendingPostPublishUpsell } from "@utils/post-publish-upsell";
 import { isE2ETestBuild } from "@utils/env";
 import {
+  ACTION_FAILURE_ANALYTICS_REASON,
   buildPublishContext,
   classifyPublishError,
+  matchCreateEventFailureReason,
 } from "@utils/publica-analytics";
 
 import Modal from "@components/ui/common/modal";
@@ -623,15 +624,34 @@ const PublishForm = () => {
           sendGoogleEvent("publish_error", {
             ...buildPublishContext({ form, imageFile }),
             source: "publica",
-            reason:
-              result.reason === "profile-incomplete"
-                ? "profile-incomplete"
-                : "stale-session",
+            reason: ACTION_FAILURE_ANALYTICS_REASON[result.reason],
           });
-          setShowPreview(false);
-          setAuthStage(result.reason === "profile-incomplete" ? "profile" : "login");
-          setError(t(result.reason === "profile-incomplete"
-            ? "completeProfileGate.description" : "errorStaleSession"));
+          if (
+            result.reason === "profile-incomplete" ||
+            result.reason === "stale-session"
+          ) {
+            setShowPreview(false);
+            setAuthStage(
+              result.reason === "profile-incomplete" ? "profile" : "login",
+            );
+            setError(
+              t(
+                result.reason === "profile-incomplete"
+                  ? "completeProfileGate.description"
+                  : "errorStaleSession",
+              ),
+            );
+          } else if (result.reason === "duplicate") {
+            setError(t("errorDuplicate"));
+          } else if (result.reason === "image-too-large") {
+            setError(t("imageTooLarge", { limit: MAX_UPLOAD_LIMIT_LABEL }));
+          } else if (result.reason === "invalid-image") {
+            setError(t("posterAutofill.errorInvalidImage"));
+          } else if (result.reason === "body-limit") {
+            setError(t("errorBodyLimit"));
+          } else {
+            setError(t("errorValidation"));
+          }
           return;
         }
 
@@ -662,24 +682,18 @@ const PublishForm = () => {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         const normalizedMessage = errorMessage.toLowerCase();
-        const isImageUploadLimit = normalizedMessage.includes(
-          EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR
-        );
+        const matchedReason = matchCreateEventFailureReason(errorMessage);
+        const isImageUploadLimit = matchedReason === "image-too-large";
         const isBodyLimit =
           normalizedMessage.includes("body size limit") ||
           normalizedMessage.includes("body exceeded") ||
           normalizedMessage.includes("10 mb limit") ||
           normalizedMessage.includes("10mb");
-        const isRequestTooLarge =
-          normalizedMessage.includes("status: 413") ||
-          normalizedMessage.includes("request entity too large");
+        const isRequestTooLarge = matchedReason === "body-limit";
         const isFormParsingError =
           normalizedMessage.includes("unexpected end of form") ||
           normalizedMessage.includes("failed to parse body as formdata");
-
-        const isDuplicate =
-          normalizedMessage.includes("duplicate") ||
-          normalizedMessage.includes("integrity violation");
+        const isDuplicate = matchedReason === "duplicate";
 
         sendGoogleEvent("publish_error", {
           ...buildPublishContext({ form, imageFile }),

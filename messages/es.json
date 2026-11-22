@@ -358,6 +358,7 @@
       "sponsorTitle": "¿Tienes un negocio local?",
       "sponsorLink": "Ver opciones de patrocinio",
       "errorCreate": "No hemos podido crear el evento. Inténtalo de nuevo.",
+      "errorValidation": "Revisa los datos del formulario antes de volver a intentarlo.",
       "errorBodyLimit": "La imagen y los datos superan el límite de 10 MB. Elige una imagen más pequeña.",
       "errorGeneric": "No hemos podido publicar el evento. Inténtalo de nuevo.",
       "errorFormParsing": "Se cortó la conexión mientras se enviaba el formulario. Recarga la página e inténtalo de nuevo.",

@@ -358,6 +358,7 @@
       "sponsorTitle": "Have a local business?",
       "sponsorLink": "See sponsorship options",
       "errorCreate": "We couldn't create the event. Please try again.",
+      "errorValidation": "Please review the form fields before trying again.",
       "errorBodyLimit": "The image and details exceed the 10 MB limit. Choose a smaller image.",
       "errorGeneric": "We couldn't publish the event. Please try again.",
       "errorFormParsing": "The connection was interrupted while sending the form. Reload the page and try again.",

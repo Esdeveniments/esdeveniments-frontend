@@ -29,6 +29,12 @@ describe("festivity matching (real titles)", () => {
     "Fira de pessebres i ornaments",
     "FIRA DE SANTA LLUCIA",
     "Mercat nadalenc",
+    "Fira de l’Avet d’Espinelves",
+    "Fira de l'Avet",
+    "Fira d'Avets",
+    "Fira d’Avets",
+    "Fira Tió",
+    "Fira del Tió",
   ])("%s is a fira de Nadal", (title) => {
     expect(slugsFor(title)).toEqual(["fires-de-nadal"]);
   });
@@ -72,6 +78,8 @@ describe("festivity matching (real titles)", () => {
     "Arribada del Patge Reial",
     "Concurs de pessebres",
     "Fira de Sant Ponç",
+    "Hora del conte: 'No riguis del meu avet'",
+    "Anem a buscar el Tió",
     "Taller de Carnaval",
     "Inscripcions a la rua de Carnaval",
     '"El Carnaval dels animals", contacontes',

@@ -799,6 +799,13 @@ p {
   opacity: 1;
 }
 
+/* Hide Auto Ads containers if adsbygoogle.js was already loaded before a
+   client-side navigation onto a commercial checkout page (/patrocina, /promote). */
+html[data-ad-free="true"] .google-auto-placed,
+html[data-ad-free="true"] ins.adsbygoogle {
+  display: none !important;
+}
+
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
