@@ -38,10 +38,14 @@ if (typeof Blob !== "undefined" && !Blob.prototype.arrayBuffer) {
   };
 }
 
-// createCache({ globalKey }) keeps entries on globalThis, so they survive
-// vi.resetModules(). Start every test with an empty store, like a new process.
+// createCache({ globalKey }) and eventDetailCache keep entries on globalThis,
+// so they survive vi.resetModules(). Start every test with empty stores, like
+// a new process.
 beforeEach(() => {
   delete (globalThis as Record<symbol, unknown>)[
     Symbol.for("esdeveniments.cache.slots")
   ];
+  (
+    globalThis as { __appEventDetailCache?: { clear: () => void } }
+  ).__appEventDetailCache?.clear();
 });

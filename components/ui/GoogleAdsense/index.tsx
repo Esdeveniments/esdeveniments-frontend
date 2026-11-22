@@ -82,36 +82,31 @@ const GoogleAdsenseContainer = ({
     return () => clearTimeout(timer);
   }, [adsAllowed, shouldRenderSlot]);
 
-  // Push Ad
+  // Push Ad once adsbygoogle.js has settled AND the <ins> slot has positive
+  // width. Pushing before adsbygoogle.js loads queues {} into a raw array that
+  // drains later — even after a route change hides the slot (availableWidth=0).
   useEffect(() => {
     if (!shouldRenderSlot || !adsAllowed) return;
+    const adEl = adRef.current;
+    if (!adEl) return;
+
     if (fallbackTimer.current) {
       clearTimeout(fallbackTimer.current);
       fallbackTimer.current = null;
     }
 
-    if (
-      adRef.current &&
-      adRef.current.children &&
-      adRef.current.children.length > 0
-    ) {
+    if (adEl.children && adEl.children.length > 0) {
       return; // Ad already loaded
     }
 
-    try {
-      if (slotPushed.current) return;
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-      slotPushed.current = true;
-    } catch (err) {
-      console.error("adsense error", getSanitizedErrorMessage(err));
-      onDisplayAdChange(false);
-    }
+    let resizeObserver: ResizeObserver | null = null;
+    let watchdog: ReturnType<typeof setTimeout> | null = null;
 
     // Fallback: if no status arrives within a few seconds, show fallback content.
-    // The clock starts once adsbygoogle.js has loaded (or failed): it now waits
-    // for the first user interaction, and a slot pushed before that must not
-    // collapse while the script is still on its way. The watchdog covers pages
-    // where no loader runs (non-prod hosts, a failed GoogleScriptsHeavy chunk).
+    // The clock starts once adsbygoogle.js has loaded (or failed): it waits for
+    // the first user interaction, and a slot waiting for it must not collapse
+    // while the script is still on its way. The watchdog covers pages where no
+    // loader runs (non-prod hosts, a failed GoogleScriptsHeavy chunk).
     const collapseIfUnfilled = () => {
       const status = adRef.current?.getAttribute("data-ad-status");
       const hasChildren =
@@ -119,23 +114,95 @@ const GoogleAdsenseContainer = ({
       if (status === "filled" || hasChildren) return;
       onDisplayAdChange(false);
     };
+
     const startFallbackTimer = () => {
+      if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
       fallbackTimer.current = setTimeout(collapseIfUnfilled, AD_FILL_TIMEOUT_MS);
     };
+
+    const hasPositiveWidth = (el: HTMLElement) =>
+      el.isConnected && el.offsetWidth > 0;
+
+    const pushSlot = (el: HTMLElement) => {
+      if (slotPushed.current) {
+        startFallbackTimer();
+        return;
+      }
+      // Attach the `adsbygoogle` class synchronously right before push({}) so
+      // no unready/0px/hidden <ins> (e.g. in <Activity mode="hidden"> or
+      // hidden SsrListWrapper) can ever be claimed by another slot's global
+      // `adsbygoogle.push({})` scan.
+      el.classList.add("adsbygoogle");
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        slotPushed.current = true;
+      } catch (err) {
+        if (el.getAttribute("data-adsbygoogle-status") !== "done") {
+          el.classList.remove("adsbygoogle");
+        }
+        console.error("adsense error", getSanitizedErrorMessage(err));
+        onDisplayAdChange(false);
+        return;
+      }
+      startFallbackTimer();
+    };
+
+    const pushWhenSized = () => {
+      const el = adRef.current;
+      if (!el) return;
+      if (slotPushed.current) {
+        startFallbackTimer();
+        return;
+      }
+      if (hasPositiveWidth(el)) {
+        pushSlot(el);
+        return;
+      }
+      // Wait for layout width instead of pushing into a 0px slot
+      // (which throws TagError: No slot size for availableWidth=0).
+      startFallbackTimer();
+      if (typeof ResizeObserver === "undefined") return;
+      resizeObserver = new ResizeObserver(() => {
+        const current = adRef.current;
+        if (!current || !hasPositiveWidth(current)) return;
+        resizeObserver?.disconnect();
+        resizeObserver = null;
+        pushSlot(current);
+      });
+      resizeObserver.observe(el);
+    };
+
+    const cleanup = () => {
+      if (watchdog) {
+        clearTimeout(watchdog);
+        watchdog = null;
+      }
+      if (fallbackTimer.current) {
+        clearTimeout(fallbackTimer.current);
+        fallbackTimer.current = null;
+      }
+      resizeObserver?.disconnect();
+      resizeObserver = null;
+    };
+
     if (window.__adsScriptSettled) {
-      startFallbackTimer();
-      return;
+      pushWhenSized();
+      return cleanup;
     }
-    const watchdog = setTimeout(collapseIfUnfilled, AD_SCRIPT_WATCHDOG_MS);
+
+    watchdog = setTimeout(collapseIfUnfilled, AD_SCRIPT_WATCHDOG_MS);
     const onScriptSettled = () => {
-      clearTimeout(watchdog);
-      startFallbackTimer();
+      if (watchdog) {
+        clearTimeout(watchdog);
+        watchdog = null;
+      }
+      pushWhenSized();
     };
     window.addEventListener(ADS_SCRIPT_SETTLED_EVENT, onScriptSettled, {
       once: true,
     });
     return () => {
-      clearTimeout(watchdog);
+      cleanup();
       window.removeEventListener(ADS_SCRIPT_SETTLED_EVENT, onScriptSettled);
     };
   }, [adsAllowed, shouldRenderSlot]);
@@ -183,7 +250,7 @@ const GoogleAdsenseContainer = ({
         <ins
           id={id}
           ref={adRef}
-          className="adsbygoogle w-full"
+          className="w-full"
           style={
             {
               display: "block",

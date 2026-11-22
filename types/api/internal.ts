@@ -15,4 +15,9 @@ export interface InternalOriginOptions {
    * (a genuine 404 still returns `null`, which is safe to cache).
    */
   throwOnError?: boolean;
+  /**
+   * Skip calling Next's `connection()` (required inside `"use cache"` and
+   * startup warm-up, where `connection()` throws).
+   */
+  skipConnection?: boolean;
 }

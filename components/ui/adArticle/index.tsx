@@ -14,7 +14,7 @@ const AdArticle: FC<AdArticleProps> = memo(({ isDisplay = true, slot }) => {
   if (!displayAd) return null;
 
   return (
-    <div className="flex">
+    <div className="flex w-full">
       <GoogleAdsenseContainer
         id={slot}
         slot={slot}

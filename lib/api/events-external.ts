@@ -33,13 +33,24 @@ function transportFailureStatus(error: unknown): number {
   return name === "AbortError" || name === "TimeoutError" ? 504 : 502;
 }
 
-// Null only on a backend 404. Anything else (timeout, 5xx, invalid payload)
-// throws an error carrying its HTTP status (`getErrorStatus`): callers cache
-// a null as "not found" and the event page turns it into notFound() +
-// noindex, so an outage must not look like one.
+// A valid event slug only uses URL-safe slug characters (letters, digits,
+// hyphens, underscores, dots). Restricting 400 -> null to malformed slugs
+// guarantees a gateway/backend 400 on a real slug is never cached as notFound()
+// or used to prune a user's favorite.
+const VALID_EVENT_SLUG_PATTERN = /^[a-zA-Z0-9._-]+$/;
+
+// Null only on a backend 404 or a 400 for a syntactically malformed slug (e.g.
+// bot garbage like `<a href=`). Anything else (timeout, 400 on a valid slug,
+// 401/403/429, 5xx, invalid payload) throws an error carrying its HTTP status
+// (`getErrorStatus`): callers cache a null as "not found" and the event page
+// turns it into notFound() + noindex, so an outage or gateway error must not
+// look like one.
 export async function fetchEventBySlug(
   slug: string,
-  { signal }: Pick<RequestInit, "signal"> = {},
+  {
+    signal,
+    skipConnection,
+  }: Pick<RequestInit, "signal"> & { skipConnection?: boolean } = {},
 ): Promise<EventDetailResponseDTO | null> {
   const apiUrl = getApiUrl();
   let response: Response;
@@ -47,7 +58,7 @@ export async function fetchEventBySlug(
     // No `next: { revalidate }` - uses no-store to avoid cache explosion
     response = await fetchWithHmac(
       `${apiUrl}/events/${encodeURIComponent(slug)}`,
-      { signal },
+      { signal, skipConnection },
     );
   } catch (error) {
     console.error("fetchEventBySlug (external): request failed", slug, error);
@@ -58,7 +69,12 @@ export async function fetchEventBySlug(
       { status: transportFailureStatus(error) },
     );
   }
-  if (response.status === 404) return null;
+  if (
+    response.status === 404 ||
+    (response.status === 400 && !VALID_EVENT_SLUG_PATTERN.test(slug))
+  ) {
+    return null;
+  }
   if (!response.ok) {
     console.error("fetchEventBySlug (external):", slug, "HTTP", response.status);
     // A 3xx arrives here (fetchWithHmac uses redirect: "manual"); report it

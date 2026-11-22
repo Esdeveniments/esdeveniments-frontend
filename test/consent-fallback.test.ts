@@ -25,6 +25,7 @@ describe("armConsentFallback", () => {
     vi.useRealTimers();
     window.__tcfapi = undefined;
     window.googlefc = undefined;
+    document.body.innerHTML = "";
   });
 
   it("shows the box when FC reports no consent and shows nothing", () => {
@@ -95,5 +96,19 @@ describe("armConsentFallback", () => {
     armConsentFallback();
     vi.advanceTimersByTime(3000);
     expect(show).not.toHaveBeenCalled();
+  });
+
+  it("does not open a second box when another FC dialog or iframe is already mounted", () => {
+    for (const html of [
+      '<div class="fc-message-root"></div>',
+      '<div class="fc-dialog-container"></div>',
+      '<iframe src="https://fundingchoicesmessages.google.com/f/AGSKWxTest"></iframe>',
+    ]) {
+      document.body.innerHTML = html;
+      const show = installCmp([{ gdprApplies: true }]);
+      armConsentFallback();
+      vi.advanceTimersByTime(3000);
+      expect(show).not.toHaveBeenCalled();
+    }
   });
 });

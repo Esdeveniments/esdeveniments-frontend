@@ -1,30 +1,28 @@
 import { cache } from "react";
+import { connection } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { formatMegabytes } from "@utils/constants";
 import { getValidAccessToken } from "@utils/auth-cookies";
 import { fetchWithHmac } from "./fetch-wrapper";
 import { decodeSafeJwtClaims } from "./users-external";
 import {
-  getInternalApiUrl,
   buildEventsQuery,
-  getVercelProtectionBypassHeaders,
   getApiUrl,
   isApiUrlConfigured,
   emptyPagedResponse,
 } from "@utils/api-helpers";
 import { slugifySegment } from "@utils/string-helpers";
 import { eventsTag, eventTag } from "@lib/cache/tags";
+import { eventDetailCache } from "@lib/cache/event-detail-cache";
 import type { InternalOriginOptions } from "types/api/internal";
 import { cacheLife, cacheTag } from "next/cache";
 import { getErrorStatus } from "@utils/error-status";
 import { markEventReadFailed } from "./event-outage";
 import { reportCachedReadFailure } from "./report-cached-read";
-import {
-  parseEventDetail,
-  parsePagedEvents,
-} from "@lib/validation/event";
+import { parsePagedEvents } from "@lib/validation/event";
 import {
   fetchCategorizedEventsExternal,
+  fetchEventBySlug as fetchEventBySlugExternal,
   fetchEventsExternalResult,
 } from "./events-external";
 import { getSanitizedErrorMessage } from "@utils/api-error-handler";
@@ -161,45 +159,34 @@ export async function fetchEventBySlug(
   if (isE2ETestMode && e2eEventsStore?.has(fullSlug)) {
     return e2eEventsStore.get(fullSlug) ?? null;
   }
+  // Keep the request-time signal fetchWithHmac gives on a cache miss so a
+  // warm cache cannot change what Next prerenders; callers inside "use cache"
+  // pass skipConnection: true because connection() throws there. Keep this
+  // outside try/catch so Next's prerender dynamic rejection propagates cleanly
+  // and never increments the outage circuit breaker.
+  if (!options.skipConnection) await connection();
   try {
-    // Read via internal API route (stable cache, HMAC stays server-side)
-    // Use getInternalApiUrl which resolves the correct internal origin
-    const internalApiUrl = await getInternalApiUrl(`/api/events/${encodeURIComponent(fullSlug)}`, {
-      preferConfiguredOrigin: options.preferConfiguredOrigin,
-    });
-
-    const res = await fetch(internalApiUrl, {
-      headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 1800, tags: [eventsTag, eventTag(fullSlug)] },
-    });
-
-    if (res.status === 404) {
+    const event = await eventDetailCache(fullSlug, () =>
+      fetchEventBySlugExternal(fullSlug, { skipConnection: true }),
+    );
+    if (!event) {
       console.warn(
         `fetchEventBySlug: Event not found (404) for slug: ${fullSlug}`,
       );
       return null;
     }
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => "No error text");
-      console.error(
-        `fetchEventBySlug: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`,
-      );
-      throw Object.assign(new Error(`HTTP error! status: ${res.status}`), {
-        status: res.status,
-      });
-    }
-    return parseEventDetail(await res.json());
+    return event;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
-      `Error fetching event by slug (internal) for ${fullSlug}:`,
+      `Error fetching event by slug for ${fullSlug}:`,
       errorMessage,
     );
     // A 4xx is about this URL, not the backend: it never counts as an outage.
     const status = getErrorStatus(error);
     if (status === undefined || status >= 500) markEventReadFailed(fullSlug);
     // Transient failure: re-throw for cached metadata readers so the error is
-    // not cached as a null (a real 404 returned above, which is fine to cache).
+    // not cached as a null (a real 404/400 returned above, which is fine to cache).
     if (options.throwOnError) {
       throw error instanceof Error ? error : new Error(errorMessage);
     }
@@ -215,45 +202,32 @@ export async function fetchEventBySlugWithStatus(fullSlug: string): Promise<{
     return { event: e2eEventsStore.get(fullSlug) ?? null, notFound: false };
   }
 
+  await connection();
   try {
-    const internalApiUrl = await getInternalApiUrl(`/api/events/${encodeURIComponent(fullSlug)}`);
-
-    const res = await fetch(internalApiUrl, {
-      headers: getVercelProtectionBypassHeaders(),
-      next: { revalidate: 1800, tags: [eventsTag, eventTag(fullSlug)] },
-    });
-
-    if (res.status === 404) {
+    const event = await eventDetailCache(fullSlug, () =>
+      fetchEventBySlugExternal(fullSlug, { skipConnection: true }),
+    );
+    if (!event) {
       console.warn(
         `fetchEventBySlugWithStatus: Event not found (404) for slug: ${fullSlug}`,
       );
       return { event: null, notFound: true };
     }
-
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => "No error text");
-      console.error(
-        `fetchEventBySlugWithStatus: HTTP error! status: ${res.status}, url: ${internalApiUrl}, body: ${errorText}`,
-      );
-      return { event: null, notFound: false };
-    }
-
-    return { event: parseEventDetail(await res.json()), notFound: false };
+    return { event, notFound: false };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
-      `Error fetching event by slug (internal) for ${fullSlug}:`,
+      `Error fetching event by slug for ${fullSlug}:`,
       errorMessage,
     );
     return { event: null, notFound: false };
   }
 }
 
-// Cached reader for the event page and its metadata: resolves the API origin
-// from configuration instead of request headers(), so both stay prerenderable
-// under cacheComponents. Reading headers() in metadata would make its boundary
-// dynamic and mismatch the static shell ("Expected the resume to render <div>
-// ... but instead it rendered <__next_metadata_boundary__>").
+// Cached reader for the event page and its metadata: calls the external
+// backend wrapper directly (through the shared in-process eventDetailCache)
+// with skipConnection: true so both stay prerenderable under cacheComponents
+// without looping back through our own Cloudflare/origin /api/events/[slug].
 export async function getCachedEventBySlug(
   slug: string,
 ): Promise<EventDetailResponseDTO | null> {
@@ -261,16 +235,17 @@ export async function getCachedEventBySlug(
   // cacheComponents: metadata must read CACHED data to be prerenderable. React
   // cache() is only request memoization, so a revalidated fetch under it still
   // counts as runtime I/O → no static shell → PPR resume mismatch. "use cache"
-  // marks it cached; preferConfiguredOrigin keeps headers() out (forbidden here).
+  // marks it cached; skipConnection keeps connection() out (forbidden here).
   cacheTag(eventsTag, eventTag(slug));
   const event = await fetchEventBySlug(slug, {
-    preferConfiguredOrigin: true,
+    skipConnection: true,
     throwOnError: true,
   });
   if (!event) {
-    // Genuine 404: cache briefly so a newly-created event isn't stuck on
-    // "not found" metadata for hours. "minutes" not "seconds" — seconds is a
-    // PPR dynamic hole and would re-break the static shell.
+    // Genuine 404 (or malformed 400 slug): cache briefly so a newly-created
+    // event isn't stuck on "not found" metadata for hours. "minutes" not
+    // "seconds" — seconds is a PPR dynamic hole and would re-break the static
+    // shell.
     cacheLife("minutes");
     return null;
   }

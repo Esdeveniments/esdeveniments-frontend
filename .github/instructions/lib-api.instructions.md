@@ -10,7 +10,8 @@ applyTo: "lib/api/**/*.ts"
   - reference data (places, categories, regions, cities): in-memory cache after `await connection()`; the list readers use `storeEmpty: false` so a failed (empty) list is not cached; `fetchPlaceBySlug` keeps the default, because its `null` is a real 404;
   - `fetchEvents`, `fetchCategorizedEvents`: `no-store`, no cache;
   - `fetchEventsCached`: its inner `"use cache"` read uses `fetchWithHmac(..., { skipConnection: true })` and throws on failure so nothing bad is cached; `fetchEventsCached` itself never throws (it falls back to `fetchEvents` or an empty page).
-- Exceptions that still read through internal routes: event and news detail (`getInternalApiUrl` with `preferConfiguredOrigin`), profiles.
+  - event detail (`fetchEventBySlug`, `fetchEventBySlugWithStatus`, `getCachedEventBySlug`): calls `events-external.ts` directly through the shared `globalThis` `eventDetailCache` (30 min TTL, invalidated via `deleteEventDetailCache`); `getCachedEventBySlug` passes `skipConnection: true` inside `"use cache"`.
+- Exceptions that still read through internal routes: news detail (`getInternalApiUrl` with `preferConfiguredOrigin`), profiles.
 - Use query builders (`buildEventsQuery`, `buildNewsQuery`) from `utils/api-helpers.ts` — never construct URLSearchParams manually.
 
 ## External wrappers (`lib/api/*-external.ts`)

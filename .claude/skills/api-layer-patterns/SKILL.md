@@ -9,7 +9,7 @@ license: MIT
 The rules live in AGENTS.md › API layer and › Hard rules. In one line each:
 
 - Pages and components never call the backend. Server code calls a `lib/api/*.ts` reader, which calls `lib/api/*-external.ts`. Browser code calls `app/api/*`, which calls the same wrapper.
-- Our `/api/*` routes don't exist during `next build`, so server readers don't call them (see [Server readers](#layer-1-server-reader-libapiresourcets)). `news.ts`, `profiles.ts` and event/news detail still do, through `getInternalApiUrl({ preferConfiguredOrigin })`.
+- Our `/api/*` routes don't exist during `next build`, so server readers don't call them (see [Server readers](#layer-1-server-reader-libapiresourcets)). `news.ts`, `profiles.ts` and news detail still do, through `getInternalApiUrl({ preferConfiguredOrigin })`.
 - Never add `next: { revalidate, tags }` to `fetchWithHmac` in `lib/api/*-external.ts` (fetch-cache explosion, Jan 2026).
 - Never use raw `fetch()` to reach the backend; use `fetchWithHmac`.
 

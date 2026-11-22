@@ -1,10 +1,15 @@
+import { Activity } from "react";
 import { act, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UseEventsMapLibreInput } from "types/event-map";
 
 const { sendGoogleEvent, maps } = vi.hoisted(() => ({
   sendGoogleEvent: vi.fn(),
-  maps: [] as Array<{ fire: (type: string, event?: unknown) => Promise<void>; feature: unknown }>,
+  maps: [] as Array<{
+    fire: (type: string, event?: unknown) => Promise<void>;
+    feature: unknown;
+    setFeatureState: ReturnType<typeof vi.fn>;
+  }>,
 }));
 
 vi.mock("@utils/analytics", () => ({ sendGoogleEvent }));
@@ -13,7 +18,11 @@ vi.mock("maplibre-gl", () => {
   class FakeMap {
     handlers = new Map<string, Array<(event?: unknown) => unknown>>();
     feature: unknown = undefined;
+    loaded = false;
     touchZoomRotate = { disableRotation: () => {} };
+    setFeatureState = vi.fn(() => {
+      if (!this.loaded) throw new Error("Style is not done loading.");
+    });
     constructor() {
       maps.push(this);
     }
@@ -21,12 +30,14 @@ vi.mock("maplibre-gl", () => {
       this.handlers.set(type, [...(this.handlers.get(type) ?? []), handler]);
     }
     async fire(type: string, event?: unknown) {
+      if (type === "load") this.loaded = true;
       for (const handler of this.handlers.get(type) ?? []) await handler(event);
     }
     addControl() {}
     addSource() {}
     addLayer() {}
     remove() {}
+    removeFeatureState() {}
     getCanvas() {
       return { style: {} };
     }
@@ -71,8 +82,8 @@ const input: UseEventsMapLibreInput = {
   uiStrings: {},
 };
 
-function Harness() {
-  const { containerRef } = useEventsMapLibre(input);
+function Harness({ selectedId = null }: { selectedId?: string | null }) {
+  const { containerRef } = useEventsMapLibre({ ...input, selectedId });
   return <div ref={containerRef} />;
 }
 
@@ -122,5 +133,34 @@ describe("events map analytics", () => {
       ["map_pin_click", { source: "town" }],
       ["map_pin_click", { source: "cluster" }],
     ]);
+  });
+
+  it("waits for the restored map to load after Activity hide/show before setting feature state", async () => {
+    const { rerender } = render(
+      <Activity mode="visible">
+        <Harness selectedId="town:cardedeu" />
+      </Activity>,
+    );
+    await act(() => maps[0].fire("load"));
+    expect(maps[0].setFeatureState).toHaveBeenCalledTimes(1);
+
+    // Hide (router cache): effect cleanup destroys maps[0] while state survives.
+    rerender(
+      <Activity mode="hidden">
+        <Harness selectedId="town:cardedeu" />
+      </Activity>,
+    );
+
+    // Restore: creates maps[1] (unloaded). Must not call setFeatureState until load.
+    rerender(
+      <Activity mode="visible">
+        <Harness selectedId="town:cardedeu" />
+      </Activity>,
+    );
+    expect(maps).toHaveLength(2);
+    expect(maps[1].setFeatureState).not.toHaveBeenCalled();
+
+    await act(() => maps[1].fire("load"));
+    expect(maps[1].setFeatureState).toHaveBeenCalledTimes(1);
   });
 });

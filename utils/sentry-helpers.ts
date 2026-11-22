@@ -332,6 +332,47 @@ export function sentryTunnelFor(
   return `${tunnelPath}?o=${orgId}&p=${projectId}${region ? `&r=${region}` : ""}`;
 }
 
+const FUNDING_CHOICES_SCRIPT_URL =
+  /^https?:\/\/fundingchoicesmessages\.google\.com\//i;
+
+function matchesUrlPatterns(
+  url: string | undefined,
+  patterns: Array<string | RegExp>,
+): boolean {
+  if (!url) return false;
+  return patterns.some((pattern) =>
+    typeof pattern === "string" ? url.includes(pattern) : pattern.test(url),
+  );
+}
+
+function hasStackFrameMatching(
+  event: Event | ErrorEvent,
+  patterns: Array<string | RegExp>,
+): boolean {
+  return (
+    event.exception?.values?.some((ex) =>
+      ex.stacktrace?.frames?.some(
+        (frame) =>
+          matchesUrlPatterns(frame.abs_path, patterns) ||
+          matchesUrlPatterns(frame.filename, patterns),
+      ),
+    ) ?? false
+  );
+}
+
+function isFundingChoicesFocusLoop(event: ErrorEvent): boolean {
+  const isStackOverflow =
+    event.exception?.values?.some(
+      (ex) =>
+        ex.type === "RangeError" &&
+        /maximum call stack size exceeded/i.test(ex.value ?? ""),
+    ) ?? false;
+  return (
+    isStackOverflow &&
+    hasStackFrameMatching(event, [FUNDING_CHOICES_SCRIPT_URL])
+  );
+}
+
 /**
  * Client-specific beforeSend handler.
  * Browser runtime expects ErrorEvent type.
@@ -340,6 +381,16 @@ export function beforeSendClient(
   event: ErrorEvent,
   hint: EventHint,
 ): ErrorEvent | null {
+  // Sentry's eventFiltersIntegration(denyUrls) only checks the last (innermost)
+  // non-native frame, so extension-wrapped fetch calls whose innermost frame is
+  // our own bundle slip through. Check every stack frame instead.
+  if (hasStackFrameMatching(event, SENTRY_DENY_URLS)) {
+    return null;
+  }
+  // Third-party focus-trap recursion inside Google Funding Choices scripts on iOS.
+  if (isFundingChoicesFocusLoop(event)) {
+    return null;
+  }
   return beforeSend(event, hint) as ErrorEvent | null;
 }
 
