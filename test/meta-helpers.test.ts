@@ -381,6 +381,82 @@ describe("meta helpers (black-box)", () => {
         ).toBe(`6a Castaween - ${range} - La Llagosta`);
       },
     );
+
+    it("picks the longest fitting suffix tier for short, medium, and near-threshold leads without leaking Catalan prose on es/en", () => {
+      const tiers = [
+        "See times, venue details, directions and discover more local cultural events nearby.",
+        "See times, directions and more things to do nearby.",
+        "See times and how to get there.",
+      ];
+      const catalanBody = "Una jornada plena d'activitats culturals en català per a tothom.";
+
+      const shortLead = generateEventMetadata(
+        { ...event, title: "Jazz Night", location: "Vic", description: catalanBody },
+        undefined,
+        undefined,
+        "en",
+        tiers,
+      ).description as string;
+      expect(shortLead.length).toBeGreaterThanOrEqual(120);
+      expect(shortLead.length).toBeLessThanOrEqual(156);
+      expect(shortLead).toContain(tiers[0]);
+      expect(shortLead).not.toContain("jornada");
+
+      const mediumLead = generateEventMetadata(
+        {
+          ...event,
+          title: "Festival Internacional de Música Clàssica",
+          location: "Auditori Municipal",
+          description: catalanBody,
+        },
+        undefined,
+        undefined,
+        "en",
+        tiers,
+      ).description as string;
+      expect(mediumLead.length).toBeGreaterThanOrEqual(120);
+      expect(mediumLead.length).toBeLessThanOrEqual(156);
+      expect(mediumLead).toContain(tiers[1]);
+      expect(mediumLead).not.toContain("jornada");
+
+      // Lead ~110 chars: standard suffix would overflow 156, so compact suffix fits
+      // and Catalan teaser is never leaked onto English/Spanish pages.
+      const nearThresholdLead = generateEventMetadata(
+        {
+          ...event,
+          title: "Concert simfònic extraordinari de tardor amb orquestra convidada",
+          location: "Palau de la Música Catalana",
+          description: catalanBody,
+        },
+        undefined,
+        undefined,
+        "en",
+        tiers,
+      ).description as string;
+      expect(nearThresholdLead.length).toBeGreaterThanOrEqual(120);
+      expect(nearThresholdLead.length).toBeLessThanOrEqual(156);
+      expect(nearThresholdLead).toContain(tiers[2]);
+      expect(nearThresholdLead).not.toContain("jornada");
+
+      // Lead >= 120 chars on es/en: keeps factual lead without Catalan fallback.
+      const alreadyLongLead = generateEventMetadata(
+        {
+          ...event,
+          title:
+            "Concert simfònic extraordinari de tardor amb orquestra convidada i cor juvenil",
+          location: "Palau de la Música Catalana",
+          description: catalanBody,
+        },
+        undefined,
+        undefined,
+        "en",
+        tiers,
+      ).description as string;
+      expect(alreadyLongLead.length).toBeGreaterThanOrEqual(120);
+      expect(alreadyLongLead.length).toBeLessThanOrEqual(156);
+      expect(alreadyLongLead).not.toContain("jornada");
+      expect(alreadyLongLead).not.toContain("See times");
+    });
   });
 });
 

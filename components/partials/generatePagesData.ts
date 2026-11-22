@@ -14,6 +14,7 @@ import { applyLocaleToCanonical } from "@utils/i18n-seo";
 import { DEFAULT_FILTER_VALUE, getMonthNames } from "@utils/constants";
 import { DEFAULT_LOCALE, type AppLocale } from "types/i18n";
 import { getDateRangeFromByDate } from "@lib/dates";
+import { fitMetaDescription } from "@lib/meta";
 import { formatShortDateRange } from "@utils/date-helpers";
 import type { CategorySeoSlug } from "types/common";
 
@@ -194,6 +195,11 @@ export async function generatePagesData({
 
   // Get category-specific SEO data
   const categorySEO = getCategorySEO(category);
+  const metaDescriptionSuffixes = [
+    t("metaDescriptionSuffix.extended"),
+    t("metaDescriptionSuffix.standard"),
+    t("metaDescriptionSuffix.compact"),
+  ];
   const createPageData = (
     title: string,
     subTitle: string,
@@ -206,7 +212,7 @@ export async function generatePagesData({
       title,
       subTitle,
       metaTitle,
-      metaDescription,
+      fitMetaDescription(metaDescription, metaDescriptionSuffixes),
       applyLocaleToCanonical(canonical, resolvedLocale),
       notFoundText,
       search,

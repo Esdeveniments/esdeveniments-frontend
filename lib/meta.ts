@@ -90,13 +90,42 @@ export function generateMetaTitle(
   return metaTitle;
 }
 
-// Pads a short description with a generic sentence, only when it fits whole.
-function appendSentenceIfShort(base: string, sentence?: string): string {
-  const addition = sentence?.trim();
-  if (!addition || base.length >= META_DESCRIPTION_SHORT) return base;
+function normalizeSentences(
+  sentences?: string | readonly string[],
+): string[] {
+  if (!sentences) return [];
+  const list = typeof sentences === "string" ? [sentences] : sentences;
+  return list.map((raw) => raw?.trim() ?? "").filter(Boolean);
+}
+
+// Pads a short description with the first candidate sentence that fits whole
+// within META_DESCRIPTION_MAX. Pass candidates longest-first to avoid dead zones
+// between short and near-threshold bases.
+export function appendSentenceIfShort(
+  base: string,
+  sentences?: string | readonly string[],
+): string {
+  if (base.length >= META_DESCRIPTION_SHORT) return base;
+  const candidates = normalizeSentences(sentences);
+  if (candidates.length === 0) return base;
   const separator = /[.!?…]$/.test(base) ? " " : ". ";
-  const candidate = `${base}${separator}${addition}`;
-  return candidate.length <= META_DESCRIPTION_MAX ? candidate : base;
+  for (const addition of candidates) {
+    const candidate = `${base}${separator}${addition}`;
+    if (candidate.length <= META_DESCRIPTION_MAX) return candidate;
+  }
+  return base;
+}
+
+export function fitMetaDescription(
+  base: string,
+  sentences?: string | readonly string[],
+): string {
+  const cleaned = sanitizeAndTrim(base);
+  if (!cleaned) return "";
+  if (cleaned.length > META_DESCRIPTION_MAX) {
+    return truncateAtWord(cleaned, META_DESCRIPTION_MAX);
+  }
+  return appendSentenceIfShort(cleaned, sentences);
 }
 
 // --- Open Graph/SEO Metadata Generator ---
@@ -105,7 +134,7 @@ export function generateEventMetadata(
   url?: string,
   prefixTitle?: string,
   locale: AppLocale = DEFAULT_LOCALE,
-  descriptionSuffix?: string,
+  descriptionSuffix?: string | readonly string[],
 ): Metadata {
   if (!event) return { title: "No event found" };
 
@@ -168,13 +197,15 @@ export function generateEventMetadata(
       lead.length < META_DESCRIPTION_SHORT && teaser
         ? truncateAtWord(`${lead} - ${teaser}`, META_DESCRIPTION_MAX)
         : lead;
+    const suffixCandidates = normalizeSentences(descriptionSuffix);
     if (isDefaultLocale) {
-      finalDescription = appendSentenceIfShort(withTeaser, descriptionSuffix);
+      finalDescription = appendSentenceIfShort(withTeaser, suffixCandidates);
+    } else if (suffixCandidates.length > 0) {
+      // Event descriptions are Catalan: when localized suffixes are available,
+      // never fall back to Catalan prose on es/en pages.
+      finalDescription = appendSentenceIfShort(lead, suffixCandidates);
     } else {
-      // The description is Catalan: on non-default locales prefer the
-      // localized suffix sentence and use the teaser only when no suffix fits.
-      const withSuffix = appendSentenceIfShort(lead, descriptionSuffix);
-      finalDescription = withSuffix !== lead ? withSuffix : withTeaser;
+      finalDescription = withTeaser;
     }
   }
 
