@@ -1,84 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
-  getInternalApiUrl,
-  getVercelProtectionBypassHeaders,
   buildEventsQuery,
   buildNewsQuery,
   applyDistanceToParams,
 } from "../utils/api-helpers";
 import type { FetchEventsParams } from "types/event";
-import type { FetchNewsParams } from "@lib/api/news";
-
-const originalEnv = { ...process.env };
-
-describe("utils/api-helpers:getInternalApiUrl", () => {
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-    // non-production -> siteUrl = http://localhost:3000
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
-  it("builds absolute URLs from app-relative API paths", async () => {
-    expect(await getInternalApiUrl("/api/foo?x=1")).toBe(
-      "http://localhost:3000/api/foo?x=1"
-    );
-    expect(await getInternalApiUrl("api/bar")).toBe(
-      "http://localhost:3000/api/bar"
-    );
-  });
-
-  it("prefers INTERNAL_SITE_URL when available", async () => {
-    process.env.INTERNAL_SITE_URL = "https://internal.esdeveniments.cat";
-    expect(await getInternalApiUrl("/api/test")).toBe(
-      "https://internal.esdeveniments.cat/api/test"
-    );
-  });
-
-  it("falls back to NEXT_PUBLIC_SITE_URL when internal is not set", async () => {
-    delete process.env.INTERNAL_SITE_URL;
-    process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-    expect(await getInternalApiUrl("/api/test")).toBe(
-      "https://www.esdeveniments.cat/api/test"
-    );
-  });
-
-  it("prefers VERCEL_URL origin when available", async () => {
-    process.env.VERCEL_URL = "preview-abc.vercel.app";
-    expect(await getInternalApiUrl("/api/test")).toBe(
-      "https://preview-abc.vercel.app/api/test"
-    );
-    // Accept already-prefixed protocol
-    process.env.VERCEL_URL = "https://another.vercel.app";
-    expect(await getInternalApiUrl("/api/test")).toBe(
-      "https://another.vercel.app/api/test"
-    );
-  });
-});
-
-describe("utils/api-helpers:getVercelProtectionBypassHeaders", () => {
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-  });
-
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
-  it("returns empty headers when secret is not set", () => {
-    delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-    expect(getVercelProtectionBypassHeaders()).toEqual({});
-  });
-
-  it("returns x-vercel-protection-bypass header when secret is set", () => {
-    process.env.VERCEL_AUTOMATION_BYPASS_SECRET = "test-bypass-secret";
-    expect(getVercelProtectionBypassHeaders()).toEqual({
-      "x-vercel-protection-bypass": "test-bypass-secret",
-    });
-  });
-});
+import type { FetchNewsParams } from "types/api/news";
 
 describe("utils/api-helpers:buildEventsQuery", () => {
   it("sends the backend free param, including false, and omits it when unset", () => {

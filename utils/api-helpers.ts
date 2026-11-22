@@ -1,17 +1,12 @@
 /**
- * Shared API utilities for consistent origin resolution across middleware and layout
- * Follows the same fallback strategy as middleware.ts for edge runtime compatibility
+ * Shared API utilities for backend URL resolution and query building.
  */
 
-import { getSiteUrl } from "@config/index";
 import apiDefaults from "@config/api-defaults.json";
-import { isDevelopmentHost } from "@utils/host-validation";
 import type { FetchEventsParams } from "types/event";
 import { distanceToRadius } from "types/event";
 import { DEFAULT_FILTER_VALUE } from "@utils/constants";
-import type { FetchNewsParams } from "@lib/api/news";
-import type { HeadersFn } from "types/utils";
-import type { InternalOriginOptions } from "types/api/internal";
+import type { FetchNewsParams } from "types/api/news";
 import type { PagedResponseDTO } from "types/api/event";
 
 /** Default API URL used as fallback when neither API_URL nor NEXT_PUBLIC_API_URL is set. */
@@ -86,19 +81,6 @@ export function isApiUrlConfigured(): boolean {
   return apiUrlCandidates().some(([, value]) => !!value && isHttpUrl(value));
 }
 
-// Conditionally import headers - only available in server components/route handlers
-// Using dynamic require to avoid build-time errors when headers() is not available
-
-let headersFn: HeadersFn | null = null;
-try {
-  // Dynamic require is safe here - we catch errors if headers() is unavailable
-  const headersModule = require("next/headers") as { headers: HeadersFn };
-  headersFn = headersModule.headers;
-} catch {
-  // headers() not available (e.g., during build or in client context)
-  headersFn = null;
-}
-
 /**
  * API origin (scheme + host) — used for the CSP connect-src allowlist in
  * middleware. Resolves the same way as getApiUrl (API_URL → NEXT_PUBLIC_API_URL →
@@ -106,113 +88,6 @@ try {
  */
 export function getApiOrigin(): string {
   return new URL(resolveApiUrl()).origin;
-}
-
-/**
- * Optional Vercel Deployment Protection bypass header.
- *
- * When Deployment Protection is enabled, server-side fetches to the same deployment
- * (e.g. calling internal API routes via an absolute URL) will not automatically
- * include the browser's Vercel auth cookies.
- *
- * If a Protection Bypass secret is configured in Vercel, attaching this header
- * allows SSR/ISR requests to reach internal routes.
- */
-export function getVercelProtectionBypassHeaders(): Record<string, string> {
-  const secret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
-  if (!secret) return {};
-  return { "x-vercel-protection-bypass": secret };
-}
-
-/**
- * Build an absolute URL to the app's own API routes (App Router `/api/*`).
- * This is necessary when running without a request context (e.g., during build
- * or static generation), where relative URLs are invalid in Node's fetch.
- *
- * Preview/staging deployments should provide INTERNAL_SITE_URL or VERCEL_URL.
- * Request Host is only trusted for exact localhost development hosts.
- */
-export async function getInternalApiUrl(
-  path: string,
-  options: InternalOriginOptions = {},
-): Promise<string> {
-  const normalized = path.startsWith("/") ? path : `/${path}`;
-
-  // Priority 1: Try to get host from request headers (works in server components)
-  // This ensures Vercel preview URLs are correctly resolved.
-  // Skipped when preferConfiguredOrigin is set: reading headers() makes the
-  // caller dynamic, which under cacheComponents must be avoided in
-  // generateMetadata (otherwise the metadata boundary lands in the resume tree
-  // and mismatches the static shell). Metadata uses the configured origin below.
-  if (headersFn && !options.preferConfiguredOrigin) {
-    try {
-      const headersList = await headersFn();
-      const host = headersList.get("host");
-
-      if (host) {
-        if (isDevelopmentHost(host)) {
-          const origin = `http://${host}`;
-          try {
-            return new URL(normalized, origin).toString();
-          } catch {
-            // Fall through to next priority
-          }
-        }
-      }
-    } catch {
-      // headers() may throw in some contexts (e.g., during build)
-      // Fall through to next priority
-    }
-  }
-
-  // Priority 2: Explicit internal hostname (bypasses public CDN/Cloudflare)
-  const internalSiteUrl = process.env.INTERNAL_SITE_URL;
-  if (internalSiteUrl) {
-    try {
-      return new URL(normalized, internalSiteUrl).toString();
-    } catch (error) {
-      console.warn(
-        `[getInternalApiUrl] Invalid INTERNAL_SITE_URL "${internalSiteUrl}":`,
-        error,
-      );
-    }
-  }
-
-  // Priority 3: Vercel deployments (check before NEXT_PUBLIC_SITE_URL to ensure preview URLs work)
-  // VERCEL_URL is provided at runtime and points to the exact deployment host.
-  // It does not include the protocol.
-  const vercelUrl =
-    process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL || "";
-  if (vercelUrl) {
-    const origin = vercelUrl.startsWith("http")
-      ? vercelUrl
-      : `https://${vercelUrl}`;
-    try {
-      return new URL(normalized, origin).toString();
-    } catch (error) {
-      console.warn(
-        `[getInternalApiUrl] Invalid VERCEL_URL "${vercelUrl}":`,
-        error,
-      );
-    }
-  }
-
-  // Priority 4: Explicit canonical hostname (used when internal/Vercel URLs aren't available)
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    try {
-      return new URL(normalized, process.env.NEXT_PUBLIC_SITE_URL).toString();
-    } catch (error) {
-      console.warn(
-        `[getInternalApiUrl] Invalid NEXT_PUBLIC_SITE_URL "${process.env.NEXT_PUBLIC_SITE_URL}":`,
-        error,
-      );
-    }
-  }
-
-  // Priority 5: Fallback to runtime-computed siteUrl (ensures correct env vars are used)
-  // Call getSiteUrl() at runtime instead of using module-level constant
-  const siteUrl = getSiteUrl();
-  return new URL(normalized, siteUrl).toString();
 }
 
 /**

@@ -57,14 +57,11 @@ export function isLoginCompleteUrl(
 }
 
 /**
- * The app shows engagement dialogs ("Follow us", "Install the app") over the
- * page at unpredictable moments; they block clicks until dismissed. Playwright
- * runs this handler whenever one appears and an action is waiting.
+ * Dismiss legacy engagement dialogs ("Follow us", "Install the app") when
+ * running against older deployments that still render them.
  */
 export async function dismissEngagementPopups(page: Page) {
-  // Mark the popup (STORAGE_KEY / MAX_DISMISSALS in SocialFollowPopup.tsx) as
-  // dismissed the maximum number of times before every page load, so it never
-  // opens over a step. The handler below stays as a fallback.
+  // Keep localStorage suppression for remote runs against older deployments.
   await page.addInitScript(() => {
     try {
       localStorage.setItem(

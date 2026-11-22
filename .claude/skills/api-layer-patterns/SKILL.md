@@ -9,9 +9,9 @@ license: MIT
 The rules live in AGENTS.md › API layer and › Hard rules. In one line each:
 
 - Pages and components never call the backend. Server code calls a `lib/api/*.ts` reader, which calls `lib/api/*-external.ts`. Browser code calls `app/api/*`, which calls the same wrapper.
-- Our `/api/*` routes don't exist during `next build`, so server readers don't call them (see [Server readers](#layer-1-server-reader-libapiresourcets)). `news.ts`, `profiles.ts` and event/news detail still do, through `getInternalApiUrl({ preferConfiguredOrigin })`.
+- Server readers **never** call our own `/api/*` routes (they don't exist during `next build`, and at runtime a self-fetch loops through Cloudflare where Hetzner IPs can get 403/WAF challenges). Inside `"use cache"`, call the external wrapper directly with `{ skipConnection: true }`.
 - Never add `next: { revalidate, tags }` to `fetchWithHmac` in `lib/api/*-external.ts` (fetch-cache explosion, Jan 2026).
-- Never use raw `fetch()` to reach the backend; use `fetchWithHmac`.
+- Never use raw `fetch()` in server code; use `fetchWithHmac` (backend) or `safeFetch` (other services). ESLint warns on raw `fetch()` in `lib/api/*.ts`.
 
 This skill is the how-to. Copy a real file before you copy a template.
 
@@ -212,8 +212,9 @@ Templates with placeholders: `templates/external-wrapper-template.ts`, `template
 ## Reference files
 
 - `lib/api/fetch-wrapper.ts`: `fetchWithHmac`
-- `utils/api-helpers.ts`: `getApiUrl`, `isApiUrlConfigured`, `getInternalApiUrl`, query builders
+- `lib/api/detail-external.ts`: `fetchBackendDetailBySlug` (strict detail-by-slug fetch shared by `events-external.ts` and `news-external.ts`)
+- `utils/api-helpers.ts`: `getApiUrl`, `isApiUrlConfigured`, query builders
 - `utils/api-gate.ts`: public route lists
 - `utils/api-error-handler.ts`: `handleApiError`, `getSanitizedErrorMessage`
-- `lib/api/cache.ts`: `createCache`, `createKeyedCache`
+- `lib/api/cache.ts`: `createCache`, `createKeyedCache` (both support `globalKey`)
 - `utils/safe-fetch.ts`: `safeFetch`/`fireAndForgetFetch` for non-backend services

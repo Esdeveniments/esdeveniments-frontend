@@ -3,6 +3,7 @@ import * as fetchWrapper from "../lib/api/fetch-wrapper";
 import {
   getAuthenticatedUserExternal,
   getUserByUsernameExternal,
+  getUserByUsernameExternalResult,
   getUserEventsExternal,
 } from "../lib/api/users-external";
 
@@ -221,6 +222,26 @@ describe("getUserByUsernameExternal", () => {
       expect.stringContaining("getUserByUsernameExternal: failed"),
       expect.any(Error)
     );
+    errorSpy.mockRestore();
+  });
+
+  it("treats HTTP 400 on a malformed username as 404 not-found, not an error", async () => {
+    mockFetchWithHmac.mockResolvedValue(pagedResponse({ error: "bad" }, 400));
+
+    const result = await getUserByUsernameExternalResult("<script>");
+
+    expect(result).toEqual({ data: null, error: null, status: 404 });
+  });
+
+  it("keeps HTTP 400 on a valid username as an error (not cached as 404)", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockFetchWithHmac.mockResolvedValue(pagedResponse({ error: "bad" }, 400));
+
+    const result = await getUserByUsernameExternalResult("sala-apolo");
+
+    expect(result.data).toBeNull();
+    expect(result.status).toBe(400);
+    expect(result.error).toBeInstanceOf(Error);
     errorSpy.mockRestore();
   });
 });

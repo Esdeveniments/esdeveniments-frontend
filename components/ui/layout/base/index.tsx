@@ -3,7 +3,6 @@ import type { BaseLayoutProps } from "types/common";
 import Footer from "@components/ui/common/footer";
 import Navbar from "@components/ui/common/navbar";
 import NavigationProgress from "./NavigationProgress";
-import LazySocialFollowPopup from "@components/ui/common/social/LazySocialFollowPopup";
 import LazyFavoriteLoginNudge from "@components/ui/common/favoriteButton/LazyFavoriteLoginNudge";
 
 export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
@@ -31,10 +30,9 @@ export default function BaseLayout({ children }: BaseLayoutProps): JSX.Element {
       <Suspense fallback={null}>
         <Footer />
       </Suspense>
-      {/* Both read usePathname() but render nothing on the server; the
-          boundary stops them suspending the layout in generic shells. */}
+      {/* Reads usePathname() and renders nothing on the server; the boundary
+          stops it suspending the layout in generic shells. */}
       <Suspense fallback={null}>
-        <LazySocialFollowPopup />
         <LazyFavoriteLoginNudge />
       </Suspense>
     </>

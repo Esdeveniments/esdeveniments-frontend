@@ -1317,3 +1317,21 @@ rules, run Purge Everything once so old forced-TTL entries do not linger.
 `deploy-coolify.yml` checks `/edita` (must not `HIT`) and `/sitemap.xml` as
 `bingbot` (`HIT`) on every production deploy.
 
+## Server readers must never self-fetch `/api/*` through the public hostname
+
+When `fetchEventBySlug` (`lib/api/events.ts`), `lib/api/news.ts`, and
+`lib/api/profiles.ts` read through `getInternalApiUrl('/api/...')`, every
+request inside `"use cache"` (which skips `headers()` and fell back to
+`NEXT_PUBLIC_SITE_URL`) left the Hetzner container, went out through
+Cloudflare, and came back to itself. Cloudflare Bot Fight / WAF periodically
+answered those datacenter-IP self-fetches with HTTP 403 (`JAVASCRIPT-NEXTJS-63`
+on `getCachedEventBySlug`, Nov 2026), and during `deploy-coolify.yml` E2E runs
+without `INTERNAL_SITE_URL` they hit the old production container instead of
+the build under test (#630).
+
+All server readers in `lib/api/*.ts` now call their `lib/api/*-external.ts`
+wrapper directly (passing `skipConnection: true` inside `"use cache"` and
+sharing bounded `globalKey` caches via `createKeyedCache` where needed).
+`getInternalApiUrl` and `getVercelProtectionBypassHeaders` were deleted, and
+ESLint flags raw `fetch()` in `lib/api/*.ts` so this loopback pattern cannot
+return. `app/api/*` routes are strictly for browser code (SWR hooks).

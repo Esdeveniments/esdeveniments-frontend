@@ -2,6 +2,7 @@ import type {
   CacheFn,
   CacheSlot,
   KeyedCacheFn,
+  KeyedCacheHandle,
   KeyedCacheOptions,
   SingleCacheOptions,
 } from "types/cache";
@@ -12,6 +13,7 @@ const isEmpty = (data: unknown) =>
 // Next bundles pages, API routes and instrumentation.ts separately, so each
 // gets its own copy of a module-level variable. globalThis is per process.
 const SHARED_SLOTS = Symbol.for("esdeveniments.cache.slots");
+const SHARED_KEYED_SLOTS = Symbol.for("esdeveniments.cache.keyedSlots");
 
 const newSlot = <T>(): CacheSlot<T> => ({
   entry: null,
@@ -84,15 +86,34 @@ export function createCache<T>(
  * Keyed cache for values by key (e.g. by ID).
  * Returns an object with both the cache function and a clear function.
  * Concurrent misses for the same key share one fetch.
+ * When `globalKey` is set, the handle is shared on `globalThis` across Next.js
+ * server bundles (pages, API routes, server actions).
  */
 export function createKeyedCache<T>(
   ttlMs: number,
-  { storeEmpty = true, maxEntries }: KeyedCacheOptions = {},
-): {
-  cache: KeyedCacheFn<T>;
-  clear: () => void;
-  delete: (key: string | number) => void;
-} {
+  { storeEmpty = true, maxEntries, globalKey }: KeyedCacheOptions = {},
+): KeyedCacheHandle<T> {
+  if (globalKey) {
+    const store = globalThis as typeof globalThis & {
+      [SHARED_KEYED_SLOTS]?: Map<string, KeyedCacheHandle<unknown>>;
+    };
+    const slots = (store[SHARED_KEYED_SLOTS] ??= new Map());
+    const existing = slots.get(globalKey);
+    if (existing) return existing as KeyedCacheHandle<T>;
+
+    const created = buildKeyedCache<T>(ttlMs, storeEmpty, maxEntries);
+    slots.set(globalKey, created as KeyedCacheHandle<unknown>);
+    return created;
+  }
+
+  return buildKeyedCache<T>(ttlMs, storeEmpty, maxEntries);
+}
+
+function buildKeyedCache<T>(
+  ttlMs: number,
+  storeEmpty: boolean,
+  maxEntries: number | undefined,
+): KeyedCacheHandle<T> {
   const cacheMap = new Map<string | number, { data: T; timestamp: number }>();
   const pendingMap = new Map<string | number, Promise<T>>();
   // Bumped by clear() (all keys) and delete() (one key): a fetch started

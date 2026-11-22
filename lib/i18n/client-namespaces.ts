@@ -33,7 +33,6 @@ export const CLIENT_COMPONENT_KEYS = [
   "SearchBar",
   "Select",
   "ShareKit",
-  "SocialFollowPopup",
 ] as const;
 
 export const CLIENT_UTILS_KEYS = [

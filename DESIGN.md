@@ -931,6 +931,20 @@ and copy that, adapted to these tokens.
 - **No layout shift by design.** Decide on the server what renders. Anything
   that appears after load either sits in a fixed overlay or replaces a
   reserved box of the same size. Heights may change only after a tap.
+- **Inline community and growth strips (no modals, no pastel gradients, no dark slabs).**
+  Never interrupt first-time visitors (92% search/AI traffic) with timed or
+  scroll popups; GA4 showed `SocialFollowPopup` converted at 0.23% (2 PWA
+  installs / 852 offers, 0 push sign-ups). Place growth prompts inline where
+  intent already exists (`CommunityStrip` in-feed inside `EventCardList` after
+  index 6, and below `EventCategories` on event detail). Use a calm `bg-muted`
+  bento with hairline borders, zero shadow, equal-weight white `rounded-card`
+  destination tiles (`title` + 2-word meta + `↗`), a plain `label` eyebrow (no
+  "live" pulse dot for scheduled cadence), and any secondary disclosure
+  (`<details className="details-animated">`) full-width below the tiles with
+  white pills on the `bg-muted` floor. Avoid faint `from-primary/5` gradients,
+  dark cards (reserved for hero photography — dark strips trigger banner
+  blindness), semantic feedback greens on non-status buttons, and filled red
+  buttons in follow mode (keeps `/e/[eventId]` at one `btn-primary`).
 
 ## Do's and Don'ts
 

@@ -27,16 +27,6 @@ test.describe("Scroll position on navigation", () => {
   // the 90 s goto timeout on a cold preview deploy.
   test.describe.configure({ timeout: 90_000 });
 
-  test.beforeEach(async ({ page }) => {
-    // Keep the follow-us popup from covering the page.
-    await page.addInitScript(() =>
-      localStorage.setItem(
-        "social-follow-popup",
-        JSON.stringify({ dismissCount: 99, lastDismissedAt: Date.now() })
-      )
-    );
-  });
-
   test("opens the next page at the top after scrolling to the bottom", async ({
     page,
   }) => {

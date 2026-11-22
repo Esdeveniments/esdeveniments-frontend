@@ -23,8 +23,8 @@ test.describe("Home flow", () => {
     const eventLinks = page.locator('a[href^="/e/"]');
 
     // Wait for events to be rendered (with longer timeout for CI)
-    // If getInternalApiUrl() returns wrong URL, server-side fetch fails,
-    // categorizedEvents would be empty {}, and we'd see no-events-found instead
+    // If server-side backend fetch fails, categorizedEvents would be empty {},
+    // and we'd see no-events-found instead
     await expect(eventLinks.first()).toBeVisible({
       timeout: process.env.CI ? 60000 : 30000,
     });

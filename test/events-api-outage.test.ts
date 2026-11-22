@@ -103,13 +103,19 @@ describe("events API outage distinction", () => {
 });
 
 describe("event detail outage distinction", () => {
-  it("returns null only for a backend 404", async () => {
-    vi.mocked(fetchWithHmac).mockResolvedValue(new Response(null, { status: 404 }));
+  it.each([
+    ["404", 404, "gone"],
+    ["400 malformed slug", 400, "<a href="],
+  ])("returns null for a backend %s", async (_label, status, slug) => {
+    vi.mocked(fetchWithHmac).mockResolvedValue(new Response(null, { status }));
 
-    expect(await fetchEventBySlug("gone")).toBeNull();
+    expect(await fetchEventBySlug(slug)).toBeNull();
   });
 
   it.each([
+    ["HTTP 400 on a valid slug", () => new Response(null, { status: 400 }), 400],
+    ["HTTP 401", () => new Response(null, { status: 401 }), 401],
+    ["HTTP 429", () => new Response(null, { status: 429 }), 429],
     ["HTTP 503", () => new Response(null, { status: 503 }), 503],
     ["a backend redirect", () => new Response(null, { status: 302, headers: { Location: "/x" } }), 502],
     ["an HTML 200", () => new Response("<html>unavailable</html>"), 502],

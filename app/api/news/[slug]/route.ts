@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 import { fetchNewsBySlugExternal } from "@lib/api/news-external";
+import { newsDetailCache } from "@lib/api/news";
 import { handleApiError } from "@utils/api-error-handler";
-import { createKeyedCache } from "@lib/api/cache";
-import type { NewsDetailResponseDTO } from "types/api/news";
-
-// Cache for news detail by slug (24h TTL) to prevent backend visit increments on refresh
-const { cache: newsDetailCache } =
-  createKeyedCache<NewsDetailResponseDTO | null>(
-    86400000, // 24 hours
-  );
+import { getErrorStatus } from "@utils/error-status";
 
 export async function GET(
   _req: Request,
@@ -16,11 +10,17 @@ export async function GET(
 ) {
   try {
     const { slug } = await ctx.params;
-    // Use cache to prevent hitting backend on every request (which increments visits)
+    // Share the bounded 24h detail cache with Server Components so refreshes
+    // do not increment backend article visits.
     const data = await newsDetailCache(slug, async (key) => {
       return await fetchNewsBySlugExternal(key as string);
     });
-    if (!data) return NextResponse.json(null, { status: 404 });
+    if (!data) {
+      return NextResponse.json(null, {
+        status: 404,
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
     return NextResponse.json(data, {
       status: 200,
       headers: {
@@ -29,8 +29,20 @@ export async function GET(
       },
     });
   } catch (e) {
-    return handleApiError(e, "/api/news/[slug]", {
-      fallbackData: null,
+    // fetchNewsBySlugExternal already logged the upstream failure and attached
+    // its status. Return it with no-store (never 404, never cached) and skip
+    // handleApiError so an upstream outage doesn't flood Sentry per request.
+    const status = getErrorStatus(e);
+    if (status !== undefined) {
+      return NextResponse.json(
+        { error: "News service unavailable" },
+        { status, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    const response = handleApiError(e, "/api/news/[slug]", {
+      errorMessage: "News service unavailable",
     });
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   }
 }

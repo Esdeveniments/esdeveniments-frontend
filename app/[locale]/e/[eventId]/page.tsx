@@ -72,6 +72,7 @@ import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } fro
 import EventSidebar from "./components/EventSidebar";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
+import CommunityStrip from "@components/ui/common/social/CommunityStrip";
 import DetailSectionTracker from "./components/DetailSectionTracker";
 import EventMoreEvents from "./components/EventMoreEvents";
 import EventRelatedEvents from "./components/EventRelatedEvents";
@@ -674,6 +675,13 @@ async function EventPageBody({
                 <DetailSectionTracker section="categories">
                   <EventCategories categories={event.categories} place={primaryPlaceSlug} />
                 </DetailSectionTracker>
+
+                {/* Inline community follow strip (WhatsApp Channel + Instagram + other networks) */}
+                <CommunityStrip
+                  locale={locale}
+                  context="event_inline"
+                  placeSlug={primaryPlaceSlug}
+                />
 
                 <EventReportLink
                   ownerId={event.owner?.id}

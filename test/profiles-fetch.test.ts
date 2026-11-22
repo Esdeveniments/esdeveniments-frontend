@@ -1,22 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { connection } from "next/server";
 
-// Mock getInternalApiUrl and getVercelProtectionBypassHeaders before importing
-const mockGetInternalApiUrl = vi.fn();
-const mockGetVercelProtectionBypassHeaders = vi.fn();
-
-vi.mock("@utils/api-helpers", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@utils/api-helpers")>()),
-  getInternalApiUrl: (path: string, opts?: { preferConfiguredOrigin?: boolean }) =>
-    mockGetInternalApiUrl(path, opts),
-  getVercelProtectionBypassHeaders: () => mockGetVercelProtectionBypassHeaders(),
-}));
-
-// Mock parseUserPublic
-const mockParseUserPublic = vi.fn();
-
-vi.mock("@lib/validation/user", () => ({
-  parseUserPublic: (input: unknown) => mockParseUserPublic(input),
-}));
+const mockGetUserByUsernameExternalResult = vi.fn();
 
 // Mock cache tag helpers (no-op for tests)
 vi.mock("@lib/cache/tags", () => ({
@@ -29,9 +14,11 @@ vi.mock("next/cache", () => ({
   cacheTag: vi.fn(),
 }));
 
-// Mock users-external for the fetchUserEvents re-export
+// Mock users-external directly
 vi.mock("@lib/api/users-external", () => ({
   getUserByUsernameExternal: vi.fn(),
+  getUserByUsernameExternalResult: (...args: unknown[]) =>
+    mockGetUserByUsernameExternalResult(...args),
   getUserEventsExternal: vi.fn(),
 }));
 
@@ -44,197 +31,136 @@ const mockUser = {
 describe("fetchUserBySlug", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetInternalApiUrl.mockResolvedValue(
-      "http://localhost:3000/api/users/test-user",
-    );
-    mockGetVercelProtectionBypassHeaders.mockReturnValue({});
-    mockParseUserPublic.mockReturnValue(mockUser);
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("returns parsed user on a 200 response", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => mockUser,
-      }),
-    );
+  it("returns parsed user on a 200 response and calls connection()", async () => {
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: mockUser,
+      error: null,
+      status: 200,
+    });
 
     const { fetchUserBySlug } = await import("../lib/api/profiles");
     const result = await fetchUserBySlug("test-user");
 
     expect(result).toEqual(mockUser);
-    expect(mockGetInternalApiUrl).toHaveBeenCalledWith(
-      "/api/users/test-user",
-      { preferConfiguredOrigin: undefined },
+    expect(connection).toHaveBeenCalledTimes(1);
+    expect(mockGetUserByUsernameExternalResult).toHaveBeenCalledWith(
+      "test-user",
+      { skipConnection: true },
     );
-    expect(mockParseUserPublic).toHaveBeenCalledWith(mockUser);
-
-    vi.stubGlobal("fetch", globalFetch);
   });
 
   it("returns null on 404", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 404,
-        ok: false,
-        json: async () => null,
-      }),
-    );
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: null,
+      error: null,
+      status: 404,
+    });
 
     const { fetchUserBySlug } = await import("../lib/api/profiles");
     const result = await fetchUserBySlug("nonexistent");
 
     expect(result).toBeNull();
-    expect(mockParseUserPublic).not.toHaveBeenCalled();
-
-    vi.stubGlobal("fetch", globalFetch);
   });
 
-  it("returns null on non-ok non-404 response without throwOnError", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 500,
-        ok: false,
-        json: async () => ({ error: "server error" }),
-      }),
-    );
+  it("returns null on upstream error without throwOnError", async () => {
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: null,
+      error: new Error("getUserByUsernameExternal: HTTP 500"),
+      status: 500,
+    });
 
     const { fetchUserBySlug } = await import("../lib/api/profiles");
     const result = await fetchUserBySlug("test-user");
 
     expect(result).toBeNull();
-
-    vi.stubGlobal("fetch", globalFetch);
   });
 
-  it("throws on non-ok response with throwOnError", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 500,
-        ok: false,
-        json: async () => ({ error: "server error" }),
-      }),
-    );
+  it("throws with status on upstream error with throwOnError", async () => {
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: null,
+      error: new Error("getUserByUsernameExternal: HTTP 500"),
+      status: 500,
+    });
 
     const { fetchUserBySlug } = await import("../lib/api/profiles");
 
     await expect(
       fetchUserBySlug("test-user", { throwOnError: true }),
-    ).rejects.toThrow("HTTP error! status: 500");
-
-    vi.stubGlobal("fetch", globalFetch);
+    ).rejects.toMatchObject({
+      message: "getUserByUsernameExternal: HTTP 500",
+      status: 500,
+    });
   });
 
-  it("returns null on network error without throwOnError", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
+  it("skips connection() when skipConnection is set", async () => {
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: mockUser,
+      error: null,
+      status: 200,
+    });
 
     const { fetchUserBySlug } = await import("../lib/api/profiles");
-    const result = await fetchUserBySlug("test-user");
+    await fetchUserBySlug("test-user", { skipConnection: true });
 
-    expect(result).toBeNull();
-
-    vi.stubGlobal("fetch", globalFetch);
-  });
-
-  it("passes preferConfiguredOrigin to getInternalApiUrl", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => mockUser,
-      }),
-    );
-
-    const { fetchUserBySlug } = await import("../lib/api/profiles");
-    await fetchUserBySlug("test-user", { preferConfiguredOrigin: true });
-
-    expect(mockGetInternalApiUrl).toHaveBeenCalledWith(
-      "/api/users/test-user",
-      { preferConfiguredOrigin: true },
-    );
-
-    vi.stubGlobal("fetch", globalFetch);
+    expect(connection).not.toHaveBeenCalled();
   });
 });
 
 describe("getUserByUsernameCached", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetInternalApiUrl.mockResolvedValue(
-      "http://localhost:3000/api/users/test-user",
-    );
-    mockGetVercelProtectionBypassHeaders.mockReturnValue({});
-    mockParseUserPublic.mockReturnValue(mockUser);
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("returns the user when the fetch succeeds", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 200,
-        ok: true,
-        json: async () => mockUser,
-      }),
-    );
+  it("returns the user when the fetch succeeds and skips connection()", async () => {
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: mockUser,
+      error: null,
+      status: 200,
+    });
 
     const { getUserByUsernameCached } = await import("../lib/api/profiles");
     const result = await getUserByUsernameCached("test-user");
 
     expect(result).toEqual(mockUser);
-
-    vi.stubGlobal("fetch", globalFetch);
+    expect(connection).not.toHaveBeenCalled();
   });
 
   it("returns null when the user is not found (404)", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        status: 404,
-        ok: false,
-        json: async () => null,
-      }),
-    );
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: null,
+      error: null,
+      status: 404,
+    });
 
     const { getUserByUsernameCached } = await import("../lib/api/profiles");
     const result = await getUserByUsernameCached("nonexistent");
 
     expect(result).toBeNull();
-
-    vi.stubGlobal("fetch", globalFetch);
   });
 
   it("throws on transient errors (not cached as null)", async () => {
-    const globalFetch = globalThis.fetch;
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
+    mockGetUserByUsernameExternalResult.mockResolvedValue({
+      data: null,
+      error: new Error("network"),
+      status: 502,
+    });
 
     const { getUserByUsernameCached } = await import("../lib/api/profiles");
 
     await expect(
       getUserByUsernameCached("test-user"),
     ).rejects.toThrow("network");
-
-    vi.stubGlobal("fetch", globalFetch);
   });
 });

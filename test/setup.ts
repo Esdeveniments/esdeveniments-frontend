@@ -38,10 +38,15 @@ if (typeof Blob !== "undefined" && !Blob.prototype.arrayBuffer) {
   };
 }
 
-// createCache({ globalKey }) keeps entries on globalThis, so they survive
-// vi.resetModules(). Start every test with an empty store, like a new process.
+// createCache({ globalKey }) and createKeyedCache({ globalKey }) keep entries
+// on globalThis, so they survive vi.resetModules(). Start every test with empty
+// stores, like a new process.
 beforeEach(() => {
   delete (globalThis as Record<symbol, unknown>)[
     Symbol.for("esdeveniments.cache.slots")
   ];
+  const keyedSlots = (
+    globalThis as Record<symbol, Map<string, { clear: () => void }> | undefined>
+  )[Symbol.for("esdeveniments.cache.keyedSlots")];
+  keyedSlots?.forEach((slot) => slot.clear());
 });
