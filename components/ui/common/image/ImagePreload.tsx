@@ -1,3 +1,6 @@
+"use client";
+
+import { preload } from "react-dom";
 import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
 import {
   getOptimalImageQuality,
@@ -7,27 +10,31 @@ import {
 import type { ImagePreloadProps } from "types/props";
 
 /**
- * Preloads a page's LCP image. Same helper, widths, sizes and quality as the
- * priority ImageServer that renders it, so the browser reuses the response.
+ * Preloads a page's LCP image via ReactDOM.preload (matching next/image's own
+ * ImagePreload pattern). Keeping this as a client leaf ensures ReactDOM.preload
+ * runs during Fizz SSR (inside streamed <Suspense> and "use cache" boundaries)
+ * and emits a single deduplicated <link rel="preload"> without hitting React's
+ * RSC duplicate-link bug (facebook/react#35889).
  */
-export default function ImagePreload({ image, context }: ImagePreloadProps) {
+export default function ImagePreload({
+  image,
+  context,
+  cacheKey,
+}: ImagePreloadProps) {
+  if (!image.trim()) return null;
   const sources = buildResponsivePictureSourceUrls(
     image,
-    undefined,
+    cacheKey,
     { quality: getOptimalImageQuality({ isPriority: true, isExternal: true }) },
     getResponsiveWidths(context),
   );
-  if (!sources.webpSrcSet) return null;
-  return (
-    <link
-      rel="preload"
-      as="image"
-      // href lets React hoist the preload into <head>.
-      href={sources.webp}
-      imageSrcSet={sources.webpSrcSet}
-      imageSizes={getOptimalImageSizes(context)}
-      type="image/webp"
-      fetchPriority="high"
-    />
-  );
+  if (!sources.webp || !sources.webpSrcSet) return null;
+  preload(sources.webp, {
+    as: "image",
+    imageSrcSet: sources.webpSrcSet,
+    imageSizes: getOptimalImageSizes(context),
+    type: "image/webp",
+    fetchPriority: "high",
+  });
+  return null;
 }

@@ -4,6 +4,7 @@ import type { NewsListProps } from "types/props";
 import type { PlaceRelation } from "types/common";
 import type { NewsSummaryResponseDTO } from "types/api/news";
 import JsonLdServer from "@components/partials/JsonLdServer";
+import ImagePreload from "@components/ui/common/image/ImagePreload";
 import NewsCard from "@components/ui/newsCard";
 import NewsCardGrid from "@components/noticies/NewsCardGrid";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
@@ -93,6 +94,13 @@ export default async function NewsList({
 
   return (
     <>
+      {featured.imageUrl && (
+        <ImagePreload
+          image={featured.imageUrl}
+          cacheKey={featured.updatedAt}
+          context="featured"
+        />
+      )}
       <JsonLdServer id="news-place-itemlist" data={newsItemList} />
       {chips}
       {/* gap-5 matches the List grid, so the featured card sits like a row */}

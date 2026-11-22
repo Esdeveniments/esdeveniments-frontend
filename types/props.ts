@@ -1654,6 +1654,7 @@ export interface CardImagePreloadProps {
 export interface ImagePreloadProps {
   image: string;
   context: ImageSizeContext;
+  cacheKey?: string;
 }
 
 export interface ThumbnailProps {
