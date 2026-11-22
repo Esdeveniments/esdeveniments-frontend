@@ -256,6 +256,10 @@ export interface EventCardListProps {
   priorityIndex?: number;
   headingLevel?: CardProps["headingLevel"];
   initialIsFavorite?: boolean;
+  /** Optional full-width slot inserted into the grid between rows. */
+  inlineSlot?: ReactNode;
+  /** 0-based index after which `inlineSlot` renders (clamped to the last item). */
+  inlineSlotAfterIndex?: number;
 }
 
 /** Server card options: `row` layout (news article event lists) and the home carousel. */

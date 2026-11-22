@@ -487,6 +487,10 @@ export interface ListItem {
 export interface ListProps<T extends ListItem = ListEvent> {
   events: T[];
   children: (event: T, index: number) => React.ReactElement;
+  /** Optional full-width slot inserted into the grid after `inlineSlotAfterIndex`. */
+  inlineSlot?: React.ReactNode;
+  /** 0-based index after which `inlineSlot` renders (clamped to the last item). */
+  inlineSlotAfterIndex?: number;
 }
 
 export interface ViewCounterProps {

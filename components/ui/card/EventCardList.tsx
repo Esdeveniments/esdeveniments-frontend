@@ -8,12 +8,18 @@ export default async function EventCardList({
   priorityIndex = 0,
   headingLevel,
   initialIsFavorite,
+  inlineSlot,
+  inlineSlotAfterIndex,
 }: EventCardListProps) {
   if (events.length === 0) return null;
   const labels = await getCardLabels();
 
   return (
-    <List events={events}>
+    <List
+      events={events}
+      inlineSlot={inlineSlot}
+      inlineSlotAfterIndex={inlineSlotAfterIndex}
+    >
       {(event, index) => (
         <CardServer
           event={event}

@@ -9,7 +9,9 @@ import { SocialIcon } from "./icons";
 
 const ANALYTICS_EVENT = "community_strip_click";
 const CARD_SURFACE_CLASS =
-  "w-full rounded-card border border-border/40 bg-background p-card-padding-sm";
+  "w-full rounded-card border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background p-card-padding-sm";
+const WHATSAPP_CTA_CLASS =
+  "btn-base btn-sm border-transparent bg-success-dark text-primary-foreground hover:bg-success-dark/90 focus-visible:ring-success-dark";
 
 const PRIMARY_PLATFORM_SET = new Set<string>(["whatsapp", "instagram"]);
 const SECONDARY_PROFILES = socialProfiles.filter(
@@ -99,7 +101,7 @@ export default async function CommunityStrip({
               {t("thinTownDescription")}
             </span>
           </span>
-          <span className="btn-neutral btn-sm self-start md:self-center shrink-0 group-hover:bg-muted">
+          <span className="btn-primary btn-sm self-start md:self-center shrink-0 group-hover:bg-primary-dark">
             {t("publishCta")}
             <ChevronRightIcon
               className="h-4 w-4 shrink-0 motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5"
@@ -112,8 +114,18 @@ export default async function CommunityStrip({
   }
 
   const primaryActions = [
-    { platform: "whatsapp", label: t("whatsappCta"), href: socialLinks.whatsapp },
-    { platform: "instagram", label: t("instagramCta"), href: socialLinks.instagram },
+    {
+      platform: "whatsapp",
+      label: t("whatsappCta"),
+      href: socialLinks.whatsapp,
+      buttonClass: WHATSAPP_CTA_CLASS,
+    },
+    {
+      platform: "instagram",
+      label: t("instagramCta"),
+      href: socialLinks.instagram,
+      buttonClass: "btn-outline btn-sm",
+    },
   ];
 
   return (
@@ -132,12 +144,12 @@ export default async function CommunityStrip({
         </div>
 
         <div className="flex flex-wrap items-center gap-element-gap-sm">
-          {primaryActions.map(({ platform, label, href }) =>
+          {primaryActions.map(({ platform, label, href, buttonClass }) =>
             renderNetworkLink(
               platform,
               label,
               href,
-              "btn-neutral btn-sm",
+              buttonClass,
               context,
               placeSlug,
             ),
@@ -145,7 +157,7 @@ export default async function CommunityStrip({
         </div>
       </div>
 
-      <details className="details-animated group mt-element-gap border-t border-border/30 pt-element-gap-sm">
+      <details className="details-animated group mt-element-gap border-t border-primary/15 pt-element-gap-sm">
         <summary className="flex min-h-button w-full cursor-pointer list-none items-center justify-between gap-element-gap-sm body-small font-medium text-muted-foreground hover:text-foreground transition-colors focus-ring rounded-button [&::-webkit-details-marker]:hidden">
           <span>{t("moreNetworks")}</span>
           <ChevronDownIcon

@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import CommunityStrip from "@components/ui/common/social/CommunityStrip";
 import HybridEventsList from "@components/ui/hybridEventsList";
+import List from "@components/ui/list";
 import { socialLinks } from "@config/index";
 import type { ListEvent } from "types/api/event";
 
@@ -20,9 +21,14 @@ function findComponentProps(
     }
     return undefined;
   }
-  const el = node as ReactElement<Record<string, unknown> & { children?: ReactNode }>;
+  const el = node as ReactElement<
+    Record<string, unknown> & { children?: ReactNode; inlineSlot?: ReactNode }
+  >;
   if (el.type === target) return el.props;
-  return findComponentProps(el.props?.children, target);
+  return (
+    findComponentProps(el.props?.inlineSlot, target) ??
+    findComponentProps(el.props?.children, target)
+  );
 }
 
 describe("CommunityStrip", () => {
@@ -152,5 +158,33 @@ describe("HybridEventsList CommunityStrip selection", () => {
     });
 
     expect(findComponentProps(tree, CommunityStrip)).toBeUndefined();
+  });
+
+  it("inserts List inlineSlot between cards at the target index and clamps for short lists", () => {
+    const { container } = render(
+      <List
+        events={makeEvents(10)}
+        inlineSlot={<div data-testid="slot">Strip</div>}
+        inlineSlotAfterIndex={6}
+      >
+        {(ev) => <span>{String("title" in ev ? ev.title : "ad")}</span>}
+      </List>,
+    );
+    const items = Array.from(container.querySelectorAll("ul > li"));
+    expect(items).toHaveLength(11);
+    expect(items[7].querySelector('[data-testid="slot"]')).toBeTruthy();
+
+    const { container: shortContainer } = render(
+      <List
+        events={makeEvents(3)}
+        inlineSlot={<div data-testid="short-slot">Strip</div>}
+        inlineSlotAfterIndex={6}
+      >
+        {(ev) => <span>{String("title" in ev ? ev.title : "ad")}</span>}
+      </List>,
+    );
+    const shortItems = Array.from(shortContainer.querySelectorAll("ul > li"));
+    expect(shortItems).toHaveLength(4);
+    expect(shortItems[3].querySelector('[data-testid="short-slot"]')).toBeTruthy();
   });
 });

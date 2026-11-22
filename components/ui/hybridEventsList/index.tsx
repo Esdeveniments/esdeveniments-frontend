@@ -15,6 +15,7 @@ import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
 import CommunityStrip from "@components/ui/common/social/CommunityStrip";
 import {
+  COMMUNITY_STRIP_LIST_AFTER_INDEX,
   omitDefaultFilterValue,
   THIN_TOWN_EVENT_THRESHOLD,
 } from "@utils/constants";
@@ -160,18 +161,19 @@ async function HybridEventsList({
             events={initialEvents}
             priorityIndex={priorityIndex}
             headingLevel="h2"
+            inlineSlot={
+              !profileSlug ? (
+                <CommunityStrip
+                  locale={locale}
+                  context={isThinTown ? "thin_town_inline" : "listing_inline"}
+                  placeSlug={place || undefined}
+                  placeLabel={isThinTown ? placeTypeLabel?.label : undefined}
+                  placeType={isThinTown ? placeTypeLabel?.type : undefined}
+                />
+              ) : undefined
+            }
+            inlineSlotAfterIndex={COMMUNITY_STRIP_LIST_AFTER_INDEX}
           />
-          {!profileSlug ? (
-            <div className="w-full mt-section-y-sm">
-              <CommunityStrip
-                locale={locale}
-                context={isThinTown ? "thin_town_inline" : "listing_inline"}
-                placeSlug={place || undefined}
-                placeLabel={isThinTown ? placeTypeLabel?.label : undefined}
-                placeType={isThinTown ? placeTypeLabel?.type : undefined}
-              />
-            </div>
-          ) : null}
           <AdArticle slot="9643657007" />
         </SsrListWrapper>
 

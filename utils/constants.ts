@@ -69,6 +69,8 @@ export const FESTA_MAJOR_MIN_INDEXABLE_ACTS = 5;
 export const FESTIVITY_MIN_INDEXABLE_TOWNS = 5;
 /** Unfiltered town listings with fewer upcoming events show the inline organizer publish CTA. */
 export const THIN_TOWN_EVENT_THRESHOLD = 5;
+/** 0-based index in the listing grid after which CommunityStrip renders (after row 2 on 3-col desktop, between Ad #0 at 3 and Ad #1 at 9). */
+export const COMMUNITY_STRIP_LIST_AFTER_INDEX = 6;
 /**
  * server-festa-major-sitemap.xml waits this long for its reads. A cold read
  * (after a deploy purges everything, or once a quiet festivity's cache entry
