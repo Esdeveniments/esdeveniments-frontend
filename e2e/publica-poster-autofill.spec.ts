@@ -376,4 +376,91 @@ test.describe("Publica AI poster autofill", () => {
       page.getByTestId("poster-autofill-card").locator("img"),
     ).toBeVisible();
   });
+
+  test("warnings clear live when fixed and removing poster in Step 3 resets card to idle", async ({
+    page,
+  }) => {
+    await mockAuthenticatedUser(page);
+    await mockPublishCatalogs(page);
+
+    await page.route("**/api/events/extract-poster", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          json: { state: "available", signedIn: true },
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        json: {
+          hasData: true,
+          model: "gemini/gemini-3.5-flash-lite",
+          extracted: {
+            title: "Mercat d'Hivern",
+            description: "Parades artesanes al centre.",
+            startDate: "2025-10-10T10:00",
+            endDate: "2025-10-10T20:00",
+            isAllDay: false,
+            dateInferred: false,
+            isMultiEvent: false,
+            town: "Vila Desconeguda",
+            location: "Plaça del Mercat",
+            url: null,
+            price: null,
+            priceResolution: null,
+            categories: ["concerts"],
+          },
+        },
+      });
+    });
+
+    await page.goto("/publica", { waitUntil: "domcontentloaded" });
+    await expect(page.getByTestId("event-form")).toHaveAttribute(
+      "data-hydrated",
+      "true",
+      { timeout: 30_000 },
+    );
+
+    await page.getByTestId("poster-autofill-input").setInputFiles(DEFAULT_IMAGE);
+    await expect(page.getByTestId("poster-autofill-success")).toContainText(
+      "Omplert:",
+      { timeout: 15_000 },
+    );
+    await expect(page.getByTestId("poster-autofill-warnings")).toContainText(
+      "Vila Desconeguda",
+    );
+    await expect(page.getByTestId("poster-autofill-warnings")).toContainText(
+      "aquesta data ja ha passat",
+    );
+
+    // Step 2: select a real town -> unmatched-town warning disappears immediately
+    await page.getByTestId("next-button").click();
+    await page.locator("#town-input").fill("Mataró");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("poster-autofill-warnings")).not.toContainText(
+      "Vila Desconeguda",
+    );
+    await expect(page.getByTestId("poster-autofill-warnings")).toContainText(
+      "aquesta data ja ha passat",
+    );
+
+    // Step 3: move date to the future -> past-date warning disappears completely
+    await page.getByTestId("next-button").click();
+    await page.locator("#event-date-start-date").fill("2027-10-10");
+    await expect(page.getByTestId("poster-autofill-warnings")).toHaveCount(0);
+
+    // Step 3: remove poster via ImageUpload -> PosterAutofillCard resets to idle
+    await page
+      .getByTestId("event-form")
+      .getByRole("button", { name: /Elimina|Remove/i })
+      .click();
+    await expect(page.getByTestId("poster-autofill-card")).toHaveAttribute(
+      "data-phase",
+      "idle",
+    );
+    await expect(page.getByTestId("poster-autofill-pick")).toHaveText(
+      "Tria un cartell",
+    );
+  });
 });

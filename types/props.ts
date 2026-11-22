@@ -49,8 +49,14 @@ export interface PosterAutofillCardProps {
     | Promise<import("./api/poster").PosterExtractionAppliedSummary>;
   /** Whether an Undo record with at least one still-owned field is available. */
   canUndo: boolean;
+  /** Fields filled asynchronously once town/category catalogs finish loading. */
+  deferredFilledFields?: import("./api/poster").PosterAutofillFieldKey[];
   /** Unmatched town surfaced asynchronously after deferred catalog loading finishes. */
   deferredUnmatchedTown?: string | null;
+  /** True once a town is selected in the form (clears stale unmatched-town warning). */
+  hasSelectedTown?: boolean;
+  /** True while the form's current event dates have already ended (clears stale past-date warning once fixed). */
+  isFormDateEnded?: boolean;
   /** Surgically revert only fields still owned by the last autofill. */
   onUndo: () => void;
   /** Inform the parent while image preparation or AI extraction is running. */

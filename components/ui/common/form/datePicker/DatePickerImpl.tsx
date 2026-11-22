@@ -112,6 +112,16 @@ export default function DatePickerImpl({
   const allDaySwitchId = `${idPrefix}-all-day-switch`;
   const [startDraft, setStartDraft] = useState<string | null>(null);
   const [endDraft, setEndDraft] = useState<string | null>(null);
+  const [shownStartYmd, setShownStartYmd] = useState(startYmd);
+  const [shownEndYmd, setShownEndYmd] = useState(endYmd);
+  if (shownStartYmd !== startYmd) {
+    setShownStartYmd(startYmd);
+    if (startDraft !== null) setStartDraft(null);
+  }
+  if (shownEndYmd !== endYmd) {
+    setShownEndYmd(endYmd);
+    if (endDraft !== null) setEndDraft(null);
+  }
   const [calendarFocusDate, setCalendarFocusDate] = useState<string | undefined>(
     undefined,
   );

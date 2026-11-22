@@ -128,17 +128,7 @@ export function usePosterAutofill({
     [],
   );
 
-  // Cancel any in-flight scan if an external uploader (Step 3 ImageUpload)
-  // replaces or removes the poster while scanning is in progress.
-  useEffect(() => {
-    const activeFile = activeScanFileRef.current;
-    if (!activeFile || currentImageFile === activeFile) return;
-    sequenceRef.current += 1;
-    activeScanFileRef.current = null;
-    abortRef.current?.abort();
-    abortRef.current = null;
-    queueMicrotask(() => setPhase("idle"));
-  }, [currentImageFile]);
+  const prevImageFileRef = useRef<File | null>(currentImageFile);
 
   const clearFeedback = useCallback(() => {
     setErrorCode(null);
@@ -150,6 +140,42 @@ export function usePosterAutofill({
     setPriceReviewWarning(false);
     setMultiEventWarning(false);
   }, []);
+
+  // React to external poster changes (Step 3 ImageUpload replacing or removing
+  // the poster): cancel an in-flight scan OR reset a finished success/error
+  // banner so we never show "Cartell llegit" on a removed or unscanned image.
+  useEffect(() => {
+    const prevFile = prevImageFileRef.current;
+    prevImageFileRef.current = currentImageFile;
+    if (currentImageFile === prevFile) return;
+
+    const activeFile = activeScanFileRef.current;
+    if (activeFile && currentImageFile !== activeFile) {
+      sequenceRef.current += 1;
+      activeScanFileRef.current = null;
+      abortRef.current?.abort();
+      abortRef.current = null;
+      queueMicrotask(() => {
+        setPhase("idle");
+        clearFeedback();
+      });
+      return;
+    }
+
+    if (
+      !activeFile &&
+      currentImageFile !== lastScannedFileRef.current
+    ) {
+      queueMicrotask(() => {
+        setPhase((current) =>
+          current === "success" || current === "empty" || current === "error"
+            ? "idle"
+            : current,
+        );
+        clearFeedback();
+      });
+    }
+  }, [clearFeedback, currentImageFile]);
 
   const cancelActiveScan = useCallback(() => {
     sequenceRef.current += 1;

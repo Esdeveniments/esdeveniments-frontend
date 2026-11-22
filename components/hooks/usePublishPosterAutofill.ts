@@ -121,6 +121,9 @@ export function usePublishPosterAutofill({
   const [deferredUnmatchedTown, setDeferredUnmatchedTown] = useState<
     string | null
   >(null);
+  const [deferredFilledFields, setDeferredFilledFields] = useState<
+    PosterAutofillFieldKey[]
+  >([]);
   const userOwnedFieldsRef = useRef<Set<PosterAutofillFieldKey>>(new Set());
   const autofillRunIdRef = useRef(0);
   const formRef = useRef(form);
@@ -171,6 +174,7 @@ export function usePublishPosterAutofill({
       setUndoRecord(null);
       setPendingExtraction(null);
       setDeferredUnmatchedTown(null);
+      setDeferredFilledFields([]);
       setPosterAutofillBusy(false);
       userOwnedFieldsRef.current.clear();
     },
@@ -231,13 +235,18 @@ export function usePublishPosterAutofill({
           ? crypto.randomUUID()
           : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+      const failHandoff = () => {
+        handedOffRef.current = false;
+        handoffStartedRef.current = false;
+        setHandingOff(false);
+        setError(draftHandoffFailedMessage);
+      };
+
       const result = await prepareResume("login", "restore", {
         imageFile: file,
       });
       if (!result.ok) {
-        setError(draftHandoffFailedMessage);
-        handoffStartedRef.current = false;
-        setHandingOff(false);
+        failHandoff();
         return;
       }
 
@@ -251,9 +260,7 @@ export function usePublishPosterAutofill({
           JSON.stringify(record),
         );
       } catch {
-        setError(draftHandoffFailedMessage);
-        handoffStartedRef.current = false;
-        setHandingOff(false);
+        failHandoff();
         return;
       }
 
@@ -269,10 +276,7 @@ export function usePublishPosterAutofill({
         } catch {
           // Ignore storage cleanup error.
         }
-        handedOffRef.current = false;
-        handoffStartedRef.current = false;
-        setHandingOff(false);
-        setError(draftHandoffFailedMessage);
+        failHandoff();
       }
     },
     [
@@ -287,6 +291,55 @@ export function usePublishPosterAutofill({
       setHandingOff,
       signIn,
     ],
+  );
+
+  const commitAppliedFields = useCallback(
+    (
+      nextForm: FormData,
+      filledFields: PosterAutofillFieldKey[],
+      previousForm: FormData,
+      previousAutoDates: boolean,
+      options: {
+        preserveUserValues: boolean;
+        appliedDates?: boolean;
+        mergeUndo?: boolean;
+      },
+    ) => {
+      markEdited();
+      if (!options.preserveUserValues) {
+        for (const field of filledFields) {
+          userOwnedFieldsRef.current.delete(field);
+        }
+      }
+      if (options.appliedDates) {
+        autoDatesRef.current = false;
+      }
+      formRef.current = nextForm;
+      setForm(nextForm);
+      if (options.mergeUndo) {
+        setUndoRecord((prev) => {
+          if (!prev) {
+            return {
+              runId: ++autofillRunIdRef.current,
+              ownedFields: new Set(filledFields),
+              previousForm,
+              previousAutoDates,
+            };
+          }
+          const nextOwned = new Set(prev.ownedFields);
+          for (const field of filledFields) nextOwned.add(field);
+          return { ...prev, ownedFields: nextOwned };
+        });
+      } else {
+        setUndoRecord({
+          runId: ++autofillRunIdRef.current,
+          ownedFields: new Set(filledFields),
+          previousForm,
+          previousAutoDates,
+        });
+      }
+    },
+    [autoDatesRef, markEdited, setForm],
   );
 
   const handlePosterExtractionApplied = useCallback(
@@ -313,29 +366,19 @@ export function usePublishPosterAutofill({
       });
 
       if (result.filledFields.length > 0) {
-        markEdited();
-        if (!preserveUserValues) {
-          for (const field of result.filledFields) {
-            userOwnedFieldsRef.current.delete(field);
-          }
-        }
-        if (result.appliedDates) {
-          autoDatesRef.current = false;
-        }
-        formRef.current = result.nextForm;
-        setForm(result.nextForm);
-        const runId = ++autofillRunIdRef.current;
-        setUndoRecord({
-          runId,
-          ownedFields: new Set(result.filledFields),
-          previousForm: current,
+        commitAppliedFields(
+          result.nextForm,
+          result.filledFields,
+          current,
           previousAutoDates,
-        });
+          { preserveUserValues, appliedDates: result.appliedDates },
+        );
       }
 
       // Keep extraction + overwrite policy for deferred reconciliation if
       // town/category catalogs were still loading when the AI response arrived.
       setDeferredUnmatchedTown(null);
+      setDeferredFilledFields([]);
       setPendingExtraction(
         (isLoadingCities && Boolean(extracted.town)) ||
           (isLoadingCategories && extracted.categories.length > 0)
@@ -359,10 +402,9 @@ export function usePublishPosterAutofill({
       categories,
       cityOptions,
       cityToRegionOptionMap,
+      commitAppliedFields,
       isLoadingCategories,
       isLoadingCities,
-      markEdited,
-      setForm,
     ],
   );
 
@@ -398,27 +440,14 @@ export function usePublishPosterAutofill({
         setDeferredUnmatchedTown(reconciled.unmatchedTown);
       }
       if (reconciled.filledFields.length === 0) return;
-      markEdited();
-      if (!pending.preserveUserValues) {
-        for (const field of reconciled.filledFields) {
-          userOwnedFieldsRef.current.delete(field);
-        }
-      }
-      formRef.current = reconciled.nextForm;
-      setForm(reconciled.nextForm);
-      setUndoRecord((prev) => {
-        if (!prev) {
-          return {
-            runId: ++autofillRunIdRef.current,
-            ownedFields: new Set(reconciled.filledFields),
-            previousForm: current,
-            previousAutoDates: autoDatesRef.current,
-          };
-        }
-        const nextOwned = new Set(prev.ownedFields);
-        for (const field of reconciled.filledFields) nextOwned.add(field);
-        return { ...prev, ownedFields: nextOwned };
-      });
+      setDeferredFilledFields(reconciled.filledFields);
+      commitAppliedFields(
+        reconciled.nextForm,
+        reconciled.filledFields,
+        current,
+        autoDatesRef.current,
+        { preserveUserValues: pending.preserveUserValues, mergeUndo: true },
+      );
     },
   );
 
@@ -443,6 +472,7 @@ export function usePublishPosterAutofill({
     setUndoRecord(null);
     setPendingExtraction(null);
     setDeferredUnmatchedTown(null);
+    setDeferredFilledFields([]);
     markEdited();
   }, [autoDatesRef, markEdited, setForm, undoRecord]);
 
@@ -452,6 +482,7 @@ export function usePublishPosterAutofill({
     verifiedScanIntentId,
     clearVerifiedScanIntent,
     canUndo: Boolean(undoRecord && undoRecord.ownedFields.size > 0),
+    deferredFilledFields,
     deferredUnmatchedTown,
     resetPosterAutofill,
     trackFormFieldOwnership,

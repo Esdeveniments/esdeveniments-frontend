@@ -377,4 +377,103 @@ describe("PosterAutofillCard", () => {
     );
     expect(screen.queryByTestId("poster-autofill-empty")).not.toBeInTheDocument();
   });
+
+  it("clears unmatched-town and past-date warnings reactively, merges deferred fields, and resets when poster is removed externally", async () => {
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ state: "available", signedIn: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            extracted: EXTRACTED,
+            hasData: true,
+            model: "gemini/gemini-3.5-flash-lite",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const onExtractionApplied = vi.fn().mockResolvedValue({
+      filledFields: ["title", "dates"],
+      unmatchedTown: "Vila Desconeguda",
+      pastDate: true,
+      dateInferred: false,
+      priceNeedsReview: false,
+      isMultiEvent: false,
+    });
+
+    const baseProps = {
+      currentImageFile: sampleFile,
+      currentImagePreview: "data:image/jpeg;base64,abc",
+      isAuthenticated: true,
+      isAuthLoading: false,
+      onRequestAuthForScan: vi.fn(),
+      onPosterPrepared: vi.fn(),
+      onExtractionApplied,
+      canUndo: true,
+      onUndo: vi.fn(),
+    };
+
+    const { rerender } = render(
+      <PosterAutofillCard
+        {...baseProps}
+        hasSelectedTown={false}
+        isFormDateEnded={true}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("poster-autofill-input"), {
+      target: { files: [sampleFile] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId("poster-autofill-warnings")).toHaveTextContent(
+        "Vila Desconeguda",
+      ),
+    );
+    expect(screen.getByTestId("poster-autofill-warnings")).toHaveTextContent(
+      "posterAutofill.warningPastDate",
+    );
+
+    // Deferred catalog fill adds "categories" to the summary list; resolving town & date clears both warnings
+    rerender(
+      <PosterAutofillCard
+        {...baseProps}
+        deferredFilledFields={["categories"]}
+        hasSelectedTown={true}
+        isFormDateEnded={false}
+      />,
+    );
+    expect(screen.getByTestId("poster-autofill-success")).toHaveTextContent(
+      "posterAutofill.fields.categories",
+    );
+    expect(
+      screen.queryByTestId("poster-autofill-warnings"),
+    ).not.toBeInTheDocument();
+
+    // Removing the poster externally from Step 3 resets the card back to idle
+    rerender(
+      <PosterAutofillCard
+        {...baseProps}
+        currentImageFile={null}
+        currentImagePreview={null}
+        canUndo={false}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("poster-autofill-card")).toHaveAttribute(
+        "data-phase",
+        "idle",
+      ),
+    );
+    expect(screen.getByTestId("poster-autofill-pick")).toHaveTextContent(
+      "posterAutofill.pickButton",
+    );
+  });
 });

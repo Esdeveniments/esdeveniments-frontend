@@ -42,14 +42,19 @@ const MISSING_SENTINELS = new Set([
 
 // Donation-based entry phrases: NEVER treat as "free" ("0").
 const DONATION_PRICE_RE =
-  /\b(taquilla\s+inversa|aportacio\s+voluntaria|aportacion\s+voluntaria|donatiu|donativo|la\s+voluntat|la\s+voluntad|paga\s+el\s+que\s+vulguis|pay\s+what\s+you\s+can)\b/i;
+  /\b(taquilla\s+inversa|aportacio\s+voluntaria|aportacion\s+voluntaria|donatiu|donativo|la\s+voluntat|la\s+voluntad|paga\s+el\s+que\s+vulguis|pay\s+what\s+you\s+can|prix\s+libre|participation\s+libre|offerta\s+libera|spendenbasis|donation\s+based|suggested\s+donation)\b/i;
 
 // Any euro amount appearing inside a price string ("8,50 €", "€ 10", "5 euros").
 const EURO_AMOUNT_GLOBAL_RE =
   /(?:€\s*(\d{1,4}(?:[.,]\d{1,2})?)|(\d{1,4}(?:[.,]\d{1,2})?)\s*(?:€|euros?|eur\b))/gi;
 
 const FREE_MENTION_RE =
-  /\b(gratuit\w*|gratis|entrada\s+lliure|entrada\s+libre|acces\s+lliure|acceso\s+libre|free\s+(?:entry|admission)?)\b/i;
+  /\b(gratuit\w*|gratis|entrada\s+lliure|entrada\s+libre|entrada\s+gratuita|entrada\s+livre|acces\s+lliure|acceso\s+libre|entree\s+(?:gratuite|libre)|ingresso\s+(?:gratuito|libero)|eintritt\s+frei|kostenlos|sarrera\s+doan|free\s+(?:entry|admission)?)\b/i;
+
+// Subset qualifiers where "free" applies only to a restricted group (kids,
+// members, seniors, etc.) rather than general admission.
+const RESTRICTED_FREE_RE =
+  /\b(socis|socios|members?|infants?|nens?|ninos?|menors?|menores|kids?|children|jubilats?|estudiants?|estudiantes?|students?|fins\s+a\s+\d+|hasta\s+\d+|under\s+\d+|menys\s+de\s+\d+|moins\s+de\s+\d+)\b/i;
 
 /**
  * Strict JSON Schema forwarded to ai-gateway (`response_format.json_schema`).
@@ -96,7 +101,7 @@ export const POSTER_EXTRACTION_JSON_SCHEMA: Record<string, unknown> = {
     town: {
       type: ["string", "null"],
       description:
-        "Catalan municipality name only (e.g. 'Cardedeu', 'Mataró', 'Barcelona', 'El Masnou'). Do not include comarca, province, or venue name. Null if not visible.",
+        "Municipality name explicitly printed on the poster (official Catalan spelling when in Catalonia, e.g. 'Cardedeu', 'Mataró', 'Barcelona', 'Girona'). Do not include comarca, province, or venue name. Null if no town is visibly printed — never guess from venue or logo.",
     },
     location: {
       type: ["string", "null"],
@@ -152,9 +157,9 @@ function getMadridDateAnchor(now: Date): { ymd: string; weekday: string; year: n
 }
 
 const OUTPUT_LANGUAGE_GUIDANCE: Record<AppLocale, string> = {
-  ca: "Write title and description in crisp, natural, idiomatic Catalan (translate Spanish, English, or other poster languages accurately into natural Catalan without castellanismes or anglocismes; keep proper nouns, artist names, and original work titles intact).",
-  es: "Write title and description in crisp, natural, idiomatic Spanish (translate Catalan, English, or other poster languages accurately into natural Spanish; keep proper nouns, artist names, and original work titles intact).",
-  en: "Write title and description in crisp, natural, idiomatic English (translate Catalan, Spanish, or other poster languages accurately into natural English; keep proper nouns, artist names, and original work titles intact).",
+  ca: "Write title and description in crisp, natural, idiomatic Catalan. If the poster is bilingual and already includes Catalan text, use the Catalan version; otherwise translate Spanish, English, or any other poster language accurately into natural Catalan without castellanismes or anglocismes. Keep proper nouns, artist/band names, venue names, and original work titles intact.",
+  es: "Write title and description in crisp, natural, idiomatic Spanish. If the poster is bilingual and already includes Spanish text, use the Spanish version; otherwise translate Catalan, English, or any other poster language accurately into natural Spanish. Keep proper nouns, artist/band names, venue names, and original work titles intact.",
+  en: "Write title and description in crisp, natural, idiomatic English. If the poster is bilingual and already includes English text, use the English version; otherwise translate Catalan, Spanish, or any other poster language accurately into natural English. Keep proper nouns, artist/band names, venue names, and original work titles intact.",
 };
 
 /**
@@ -178,37 +183,43 @@ export function buildPosterExtractionPrompt(options?: {
           .join("\n")}\n`
       : "\nIf no category list is provided, return an empty categories array.\n";
 
-  return `You transcribe and structure cultural-event data from a poster image for Esdeveniments.cat (Catalonia).
+  return `You transcribe and structure event data from a poster image for Esdeveniments.cat.
 Reference date: Today is ${weekday}, ${ymd} (Europe/Madrid timezone).
 
-STRICT ACCURACY RULES:
-1. Transcribe ONLY facts clearly visible on the poster. Never invent venues, schedules, performers, ticket rules, prices, URLs, or target audiences.
-2. If the image is NOT an event poster or has no readable event information, return null for every nullable field, false for booleans, and [] for categories.
-3. Return real JSON null for unknown fields — NEVER the literal text "null", "N/A", or "desconegut".
+STRICT ZERO-ASSUMPTION RULES:
+1. Extract ONLY facts explicitly printed or unmistakably visible on the poster. Never guess, infer, extrapolate, or fill gaps from outside knowledge about an artist, venue, organizer, or past editions.
+2. When ANY field is missing, cropped, blurry, or ambiguous, return null (or [] for categories, false for booleans) — NEVER guess:
+   - No price printed -> price=null (never assume free or paid).
+   - No municipality printed -> town=null (never guess a town from a venue name, street, logo, or language).
+   - No website/ticket URL printed -> url=null (never convert @social handles or organizer names into URLs).
+   - No end time or end date printed -> endDate=null (never estimate duration).
+   - No readable calendar date printed -> startDate=null (never fall back to today's date).
+   - Event type not clearly supported by visible poster content -> categories=[].
+3. If the image is NOT an event poster or has no readable event information, return null for every nullable field, false for booleans, and [] for categories.
+4. Return real JSON null for unknown fields — NEVER placeholder text like "null", "N/A", "TBD", or "desconegut".
 
 DESCRIPTION CRAFT (for Esdeveniments.cat event pages):
 - ${OUTPUT_LANGUAGE_GUIDANCE[locale]}
 - The event page ALREADY displays the title, date, time, venue, and town above the description. Do NOT open with robotic boilerplate like "Aquest esdeveniment se celebrarà el dia…" / "Este evento se celebrará…" / "This event takes place on…".
-- Open with a clear 1–2 sentence hook (under 160 characters) stating what the event actually is and who performs or leads it — this sits above the mobile fold and powers search snippets.
-- Include every concrete fact visible on the poster: artists/speakers, programme or schedule items, entry/registration notes, accessibility, age range (only if printed), and organizers/collaborators.
-- Match length to the poster's actual information: if a poster is sparse, write a brief, honest 1-paragraph summary rather than padding. Never use AI clichés ("experiència inoblidable", "no t'ho perdis", "per a tots els públics", "unforgettable experience" unless printed).
+- Open with a factual 1–2 sentence hook (under 160 characters) summarizing ONLY what the poster visibly announces.
+- Include only concrete details visibly printed on the poster (performers/speakers, schedule/programme, registration or entry notes, accessibility, age range, organizers/collaborators). Do NOT invent audience claims, artist bios, venue descriptions, or marketing clichés ("experiència inoblidable", "no t'ho perdis", "per a tots els públics", "unforgettable experience") unless explicitly printed.
+- If the poster has very little text, write a brief 1-sentence factual description — or null if only a title/date/place appear with nothing else to describe. Never pad.
 - Formatting: 1 to 3 paragraphs separated by \\n\\n. You may use **bold** sparingly for programme sections. NEVER use Markdown # headings or HTML tags.
 
 DATES & TIMES (Europe/Madrid):
-- Format YYYY-MM-DDTHH:mm when a time is shown (24h, e.g. 20:00), or YYYY-MM-DD when only a date is shown.
-- If the 4-digit year IS printed on the poster, preserve it and set hasExplicitYear=true.
-- If the year is omitted, set hasExplicitYear=false:
-  * If a weekday is printed (e.g. "dissabte 29 de maig"), pick the year within ±1 year where that month/day falls on that weekday.
-  * Otherwise, if the date falls today or within the past 45 days, keep the current year; otherwise pick the next occurrence within 1 year.
-- Set isAllDay=true ONLY when date(s) have no start time.
-- If no end time is printed on a single-day timed event, set endDate=null (do NOT invent one).
-- For multi-event festival programmes, set isMultiEvent=true and use the umbrella title and full date span.
+- Format YYYY-MM-DDTHH:mm when a start time is visibly printed (24h, e.g. 20:00), or YYYY-MM-DD when only a date is printed.
+- If a 4-digit year IS visibly printed on the poster, preserve it verbatim and set hasExplicitYear=true.
+- If day and month are visibly printed WITHOUT a 4-digit year, set hasExplicitYear=false:
+  * If a weekday is also printed (e.g. "dissabte 29 de maig"), pick the nearest year within ±1 year where that month/day falls on that weekday.
+  * Otherwise pick the next upcoming occurrence on or after ${ymd} (do not assume a past year when no year or weekday indicates it).
+- Set isAllDay=true ONLY when date(s) have no start time printed.
+- For multi-event festival programmes, set isMultiEvent=true and use the umbrella title and full printed date span.
 
 TOWN, VENUE, URL & PRICE:
-- town: ONLY the Catalan municipality name (e.g. "Cardedeu", "Mataró", "Barcelona", "El Masnou"). Never include comarca or venue.
-- location: ONLY the specific venue, square, or street address, without repeating the town name.
-- url: ONLY a website or ticket URL visibly printed on the poster.
-- price: Transcribe the exact printed price text (e.g. "Entrada lliure", "12 €", "Anticipada 8,50 € / Taquilla 10 €", "Taquilla inversa"). Do NOT call "taquilla inversa" free. Return null if no price is printed.
+- town: ONLY a municipality name visibly printed on the poster. When it is a Catalan municipality, use its official Catalan spelling (e.g. "Cardedeu", "Mataró", "Barcelona", "El Masnou", "Girona" not "Gerona", "Lleida" not "Lérida", "Sant Cugat del Vallès" not "San Cugat del Vallés"). Never include comarca or venue. Return null if no town is printed.
+- location: ONLY the specific venue, square, or street address visibly printed on the poster, without repeating the town name. Return null if none is printed.
+- url: ONLY a website or ticket URL visibly printed on the poster. Return null if none is printed.
+- price: Transcribe ONLY the exact printed price text (e.g. "Entrada lliure", "12 €", "Anticipada 8,50 € / Taquilla 10 €", "Taquilla inversa"). Do NOT call "taquilla inversa" free. Return null if no price is printed.
 ${categorySection}
 Return ONLY the JSON object matching the schema.`;
 }
@@ -380,11 +391,30 @@ function addOneHourWallClock(date: string, time: string): string {
   return `${date}T${nextH}:${nextM}`;
 }
 
+function shiftYmdByYears(ymd: string, years: number): string | null {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const candidate = `${String(y + years).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  try {
+    return splitLocalDateTime(candidate).date;
+  } catch {
+    return null;
+  }
+}
+
+function shiftLocalDateTimeByYears(value: string, years: number): string | null {
+  const tIndex = value.indexOf("T");
+  if (tIndex === -1) return shiftYmdByYears(value, years);
+  const shiftedDay = shiftYmdByYears(value.slice(0, tIndex), years);
+  return shiftedDay ? `${shiftedDay}${value.slice(tIndex)}` : null;
+}
+
 function normalizeDates(
   rawStart: string | null | undefined,
   rawEnd: string | null | undefined,
   rawIsAllDay: boolean | null | undefined,
   currentYear: number,
+  todayYmd: string,
+  hasExplicitYear: boolean,
 ): { startDate: string | null; endDate: string | null; isAllDay: boolean } {
   const start = parsePosterDateToken(rawStart, currentYear);
   if (!start) {
@@ -395,39 +425,63 @@ function normalizeDates(
   const isAllDay =
     start.time === null || (rawIsAllDay === true && start.time === "00:00");
 
+  let result: { startDate: string; endDate: string; isAllDay: boolean };
+
   if (isAllDay) {
     const endDay = end && end.date >= start.date ? end.date : start.date;
-    return {
+    result = {
       startDate: `${start.date}T00:00`,
       endDate: `${endDay}T23:59`,
       isAllDay: true,
     };
-  }
-
-  const startValue = `${start.date}T${start.time}`;
-  if (end) {
-    // Same-day overnight span (e.g. 23:30 -> 02:00): roll end to the next day.
-    if (end.date === start.date && end.time && end.time < start.time!) {
-      return {
+  } else {
+    const startValue = `${start.date}T${start.time}`;
+    if (end) {
+      // Same-day overnight span (e.g. 23:30 -> 02:00): roll end to the next day.
+      if (end.date === start.date && end.time && end.time < start.time!) {
+        result = {
+          startDate: startValue,
+          endDate: `${addDaysYmd(start.date, 1)}T${end.time}`,
+          isAllDay: false,
+        };
+      } else {
+        const endValue = `${end.date}T${end.time ?? "23:59"}`;
+        result =
+          endValue > startValue
+            ? { startDate: startValue, endDate: endValue, isAllDay: false }
+            : {
+                startDate: startValue,
+                endDate: addOneHourWallClock(start.date, start.time!),
+                isAllDay: false,
+              };
+      }
+    } else {
+      // No valid end time printed: default +1h with midnight rollover so start !== end.
+      result = {
         startDate: startValue,
-        endDate: `${addDaysYmd(start.date, 1)}T${end.time}`,
+        endDate: addOneHourWallClock(start.date, start.time!),
         isAllDay: false,
       };
     }
+  }
 
-    const endValue = `${end.date}T${end.time ?? "23:59"}`;
-    if (endValue > startValue) {
-      return { startDate: startValue, endDate: endValue, isAllDay: false };
+  // Deterministic guard: when no 4-digit year was printed on the poster and the
+  // entire extracted range already ended before today, roll forward +1 year so
+  // yearless upcoming posters never land on an unpublishable past date.
+  // Ongoing exhibitions (end >= today) and explicitly printed years stay untouched.
+  if (!hasExplicitYear && result.endDate.slice(0, 10) < todayYmd) {
+    const shiftedStart = shiftLocalDateTimeByYears(result.startDate, 1);
+    const shiftedEnd = shiftLocalDateTimeByYears(result.endDate, 1);
+    if (shiftedStart && shiftedEnd) {
+      return {
+        startDate: shiftedStart,
+        endDate: shiftedEnd,
+        isAllDay: result.isAllDay,
+      };
     }
   }
 
-  // No valid end time printed (or bogus equal start==end): default +1h with
-  // midnight rollover so we never emit equal start===end.
-  return {
-    startDate: startValue,
-    endDate: addOneHourWallClock(start.date, start.time!),
-    isAllDay: false,
-  };
+  return result;
 }
 
 /**
@@ -511,9 +565,9 @@ export function resolvePosterPrice(
     };
   }
 
-  // Free text with extra wording (e.g. "Entrada lliure fins a completar aforament")
-  // and zero paid amounts -> free.
-  if (FREE_MENTION_RE.test(normalized)) {
+  // Free text with extra wording (e.g. "Entrada lliure fins a completar aforament",
+  // "Entrée gratuite") and zero paid amounts or subset qualifiers -> free.
+  if (FREE_MENTION_RE.test(normalized) && !RESTRICTED_FREE_RE.test(normalized)) {
     return {
       priceType: "free",
       priceAmount: "",
@@ -588,7 +642,9 @@ export function parsePosterExtraction(
   }
 
   const data = parsed.data;
-  const { year: currentYear } = getMadridDateAnchor(options?.now ?? new Date());
+  const { ymd: todayYmd, year: currentYear } = getMadridDateAnchor(
+    options?.now ?? new Date(),
+  );
 
   const title = cleanSingleLine(data.title, MAX_TITLE_CHARS);
   const description = cleanDescription(data.description);
@@ -616,6 +672,8 @@ export function parsePosterExtraction(
     data.endDate,
     data.isAllDay,
     currentYear,
+    todayYmd,
+    data.hasExplicitYear !== false,
   );
 
   const dateInferred = Boolean(startDate && data.hasExplicitYear === false);

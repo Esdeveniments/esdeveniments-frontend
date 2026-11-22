@@ -177,6 +177,34 @@ describe("resolvePosterPrice", () => {
       needsReview: false,
     });
   });
+
+  it("handles multilingual free/donation prices while keeping qualified free phrases for review", () => {
+    expect(resolvePosterPrice("Entrée gratuite")).toEqual({
+      priceType: "free",
+      priceAmount: "",
+      originalPrice: null,
+      needsReview: false,
+    });
+    expect(resolvePosterPrice("Eintritt frei")).toEqual({
+      priceType: "free",
+      priceAmount: "",
+      originalPrice: null,
+      needsReview: false,
+    });
+    expect(resolvePosterPrice("Prix libre")).toEqual({
+      priceType: "unknown",
+      priceAmount: "",
+      originalPrice: "Prix libre",
+      needsReview: true,
+    });
+    // Qualified free phrases must NOT be marked unconditionally free
+    expect(resolvePosterPrice("Gratuït fins a 12 anys")).toEqual({
+      priceType: "unknown",
+      priceAmount: "",
+      originalPrice: "Gratuït fins a 12 anys",
+      needsReview: true,
+    });
+  });
 });
 
 describe("parsePosterExtraction", () => {
@@ -270,6 +298,48 @@ describe("parsePosterExtraction", () => {
       { now: anchor },
     );
     expect(leapDay?.startDate).toBe("2028-02-29T19:00");
+
+    // Yearless date that already ended rolls forward +1 year while keeping dateInferred
+    const yearlessPast = parsePosterExtraction(
+      {
+        startDate: "2026-10-18T10:00",
+        endDate: "2026-10-18T20:00",
+        isAllDay: false,
+        hasExplicitYear: false,
+      },
+      { now: anchor },
+    );
+    expect(yearlessPast?.startDate).toBe("2027-10-18T10:00");
+    expect(yearlessPast?.endDate).toBe("2027-10-18T20:00");
+    expect(yearlessPast?.dateInferred).toBe(true);
+
+    // Yearless ongoing exhibition (started before today, ends after today) stays untouched
+    const yearlessOngoing = parsePosterExtraction(
+      {
+        startDate: "2026-10-01",
+        endDate: "2026-12-20",
+        isAllDay: true,
+        hasExplicitYear: false,
+      },
+      { now: anchor },
+    );
+    expect(yearlessOngoing?.startDate).toBe("2026-10-01T00:00");
+    expect(yearlessOngoing?.endDate).toBe("2026-12-20T23:59");
+    expect(yearlessOngoing?.dateInferred).toBe(true);
+
+    // Explicitly printed past year stays verbatim so the user gets the past-date warning
+    const explicitPast = parsePosterExtraction(
+      {
+        startDate: "2025-10-18T10:00",
+        endDate: "2025-10-18T20:00",
+        isAllDay: false,
+        hasExplicitYear: true,
+      },
+      { now: anchor },
+    );
+    expect(explicitPast?.startDate).toBe("2025-10-18T10:00");
+    expect(explicitPast?.endDate).toBe("2025-10-18T20:00");
+    expect(explicitPast?.dateInferred).toBe(false);
   });
 
   it("treats literal 'null'/'N/A' sentinels and empty non-poster replies as empty", () => {
