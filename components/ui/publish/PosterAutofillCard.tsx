@@ -299,6 +299,22 @@ export default function PosterAutofillCard({
     </Button>
   );
 
+  const undoButton = canUndo && !isBusy && (
+    <Button
+      key="undo"
+      type="button"
+      variant="ghost"
+      hasIcon
+      onClick={handleUndoClick}
+      disabled={disabled}
+      data-testid="poster-autofill-undo"
+      className={`${ACTION_BTN_CLASSES} text-muted-foreground`}
+    >
+      <ArrowUturnLeftIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+      {t("posterAutofill.undoButton")}
+    </Button>
+  );
+
   const actions = isBusy ? (
     <Button
       key="cancel"
@@ -313,21 +329,7 @@ export default function PosterAutofillCard({
   ) : effectivePhase === "success" ? (
     <>
       {pickButton("neutral")}
-      {canUndo && (
-        <Button
-          key="undo"
-          type="button"
-          variant="ghost"
-          hasIcon
-          onClick={handleUndoClick}
-          disabled={disabled}
-          data-testid="poster-autofill-undo"
-          className={`${ACTION_BTN_CLASSES} text-muted-foreground`}
-        >
-          <ArrowUturnLeftIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {t("posterAutofill.undoButton")}
-        </Button>
-      )}
+      {undoButton}
     </>
   ) : phase === "error" && canRetry ? (
     <>
@@ -345,6 +347,7 @@ export default function PosterAutofillCard({
         {t("posterAutofill.retryButton")}
       </Button>
       {pickButton("ghost")}
+      {undoButton}
     </>
   ) : phase === "idle" && hasExistingPoster ? (
     <>
@@ -360,9 +363,13 @@ export default function PosterAutofillCard({
         {t("posterAutofill.analyzeExistingButton")}
       </Button>
       {pickButton("ghost")}
+      {undoButton}
     </>
   ) : (
-    pickButton("neutral")
+    <>
+      {pickButton("neutral")}
+      {undoButton}
+    </>
   );
 
   return (

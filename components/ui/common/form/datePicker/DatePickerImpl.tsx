@@ -122,9 +122,14 @@ export default function DatePickerImpl({
     setShownEndYmd(endYmd);
     if (endDraft !== null) setEndDraft(null);
   }
-  const [calendarFocusDate, setCalendarFocusDate] = useState<string | undefined>(
-    undefined,
-  );
+  const [calendarFocus, setCalendarFocus] = useState<{
+    date: string;
+    nonce: number;
+  } | null>(null);
+
+  const focusCalendarOn = (ymd: string) => {
+    setCalendarFocus((prev) => ({ date: ymd, nonce: (prev?.nonce ?? 0) + 1 }));
+  };
 
   const isPlausibleYmd = (value: string) => /^[1-9]\d{3}-\d{2}-\d{2}$/.test(value);
 
@@ -153,7 +158,7 @@ export default function DatePickerImpl({
       return;
     }
     const nextEndYmd = endYmd >= nextStartYmd ? endYmd : nextStartYmd;
-    setCalendarFocusDate(nextStartYmd);
+    focusCalendarOn(nextStartYmd);
     handleRangeChange(nextStartYmd, nextEndYmd);
   };
 
@@ -163,7 +168,7 @@ export default function DatePickerImpl({
     setStartDraft(null);
     if (isPlausibleYmd(candidate)) {
       const nextEndYmd = endYmd >= candidate ? endYmd : candidate;
-      setCalendarFocusDate(candidate);
+      focusCalendarOn(candidate);
       handleRangeChange(candidate, nextEndYmd);
     }
   };
@@ -173,7 +178,7 @@ export default function DatePickerImpl({
       setEndDraft(nextEndYmd);
       return;
     }
-    setCalendarFocusDate(nextEndYmd);
+    focusCalendarOn(nextEndYmd);
     handleRangeChange(startYmd, nextEndYmd);
   };
 
@@ -183,7 +188,7 @@ export default function DatePickerImpl({
     setEndDraft(null);
     if (isPlausibleYmd(candidate)) {
       const clampedEnd = candidate < startYmd ? startYmd : candidate;
-      setCalendarFocusDate(clampedEnd);
+      focusCalendarOn(clampedEnd);
       handleRangeChange(startYmd, clampedEnd);
     }
   };
@@ -249,7 +254,8 @@ export default function DatePickerImpl({
         fromDate={startYmd}
         toDate={endYmd}
         minDate={firstDay}
-        focusDate={calendarFocusDate}
+        focusDate={calendarFocus?.date}
+        focusNonce={calendarFocus?.nonce}
         required={required}
         onChange={handleRangeChange}
       />

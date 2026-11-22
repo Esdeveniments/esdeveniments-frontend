@@ -197,12 +197,30 @@ describe("resolvePosterPrice", () => {
       originalPrice: "Prix libre",
       needsReview: true,
     });
-    // Qualified free phrases must NOT be marked unconditionally free
+    // Qualified free phrases and non-admission "Free X" phrases must stay for review
     expect(resolvePosterPrice("Gratuït fins a 12 anys")).toEqual({
       priceType: "unknown",
       priceAmount: "",
       originalPrice: "Gratuït fins a 12 anys",
       needsReview: true,
+    });
+    expect(resolvePosterPrice("Free parking")).toEqual({
+      priceType: "unknown",
+      priceAmount: "",
+      originalPrice: "Free parking",
+      needsReview: true,
+    });
+    expect(resolvePosterPrice("Free parking · 5 €")).toEqual({
+      priceType: "paid",
+      priceAmount: "5",
+      originalPrice: "Free parking · 5 €",
+      needsReview: true,
+    });
+    expect(resolvePosterPrice("Free entry")).toEqual({
+      priceType: "free",
+      priceAmount: "",
+      originalPrice: null,
+      needsReview: false,
     });
   });
 });
@@ -326,6 +344,22 @@ describe("parsePosterExtraction", () => {
     expect(yearlessOngoing?.startDate).toBe("2026-10-01T00:00");
     expect(yearlessOngoing?.endDate).toBe("2026-12-20T23:59");
     expect(yearlessOngoing?.dateInferred).toBe(true);
+
+    // Weekday-anchored past yearless date ("divendres 13 de novembre") stays on its
+    // weekday instead of shifting +1y onto a Saturday
+    const weekdayAnchoredPast = parsePosterExtraction(
+      {
+        startDate: "2026-11-13T20:00",
+        endDate: "2026-11-13T22:00",
+        isAllDay: false,
+        hasExplicitYear: false,
+        hasPrintedWeekday: true,
+      },
+      { now: anchor },
+    );
+    expect(weekdayAnchoredPast?.startDate).toBe("2026-11-13T20:00");
+    expect(weekdayAnchoredPast?.endDate).toBe("2026-11-13T22:00");
+    expect(weekdayAnchoredPast?.dateInferred).toBe(true);
 
     // Explicitly printed past year stays verbatim so the user gets the past-date warning
     const explicitPast = parsePosterExtraction(

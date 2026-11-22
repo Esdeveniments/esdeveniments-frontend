@@ -140,6 +140,7 @@ export interface PosterExtractionAppliedSummary {
 }
 
 export interface PendingPosterExtraction {
+  runId: number;
   extracted: PosterExtractedEvent;
   preserveUserValues: boolean;
 }

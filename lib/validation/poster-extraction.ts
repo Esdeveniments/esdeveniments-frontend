@@ -51,6 +51,12 @@ const EURO_AMOUNT_GLOBAL_RE =
 const FREE_MENTION_RE =
   /\b(gratuit\w*|gratis|entrada\s+lliure|entrada\s+libre|entrada\s+gratuita|entrada\s+livre|acces\s+lliure|acceso\s+libre|entree\s+(?:gratuite|libre)|ingresso\s+(?:gratuito|libero)|eintritt\s+frei|kostenlos|sarrera\s+doan|free\s+(?:entry|admission)?)\b/i;
 
+// Fallback free check (when no exact-match helper hit and no paid amount exists):
+// requires an explicit admission noun after English "free" so "Free parking"
+// is never misclassified as free event admission.
+const FREE_ADMISSION_FALLBACK_RE =
+  /\b(gratuit\w*|gratis|entrada\s+lliure|entrada\s+libre|entrada\s+gratuita|entrada\s+livre|acces\s+lliure|acceso\s+libre|entree\s+(?:gratuite|libre)|ingresso\s+(?:gratuito|libero)|eintritt\s+frei|kostenlos|sarrera\s+doan|free\s+(?:entry|admission))\b/i;
+
 // Subset qualifiers where "free" applies only to a restricted group (kids,
 // members, seniors, etc.) rather than general admission.
 const RESTRICTED_FREE_RE =
@@ -93,6 +99,11 @@ export const POSTER_EXTRACTION_JSON_SCHEMA: Record<string, unknown> = {
       description:
         "True if a 4-digit year is visibly printed on the poster; false if the year had to be inferred or no date was found.",
     },
+    hasPrintedWeekday: {
+      type: "boolean",
+      description:
+        "True if a day of the week (e.g. 'divendres', 'Saturday', 'sábado') is visibly printed alongside the event date; false otherwise.",
+    },
     isMultiEvent: {
       type: "boolean",
       description:
@@ -132,6 +143,7 @@ export const POSTER_EXTRACTION_JSON_SCHEMA: Record<string, unknown> = {
     "endDate",
     "isAllDay",
     "hasExplicitYear",
+    "hasPrintedWeekday",
     "isMultiEvent",
     "town",
     "location",
@@ -210,8 +222,8 @@ DATES & TIMES (Europe/Madrid):
 - Format YYYY-MM-DDTHH:mm when a start time is visibly printed (24h, e.g. 20:00), or YYYY-MM-DD when only a date is printed.
 - If a 4-digit year IS visibly printed on the poster, preserve it verbatim and set hasExplicitYear=true.
 - If day and month are visibly printed WITHOUT a 4-digit year, set hasExplicitYear=false:
-  * If a weekday is also printed (e.g. "dissabte 29 de maig"), pick the nearest year within ±1 year where that month/day falls on that weekday.
-  * Otherwise pick the next upcoming occurrence on or after ${ymd} (do not assume a past year when no year or weekday indicates it).
+  * If a weekday is also printed (e.g. "dissabte 29 de maig"), set hasPrintedWeekday=true and pick the nearest year within ±1 year where that month/day falls on that weekday.
+  * Otherwise set hasPrintedWeekday=false and pick the next upcoming occurrence on or after ${ymd} (do not assume a past year when no year or weekday indicates it).
 - Set isAllDay=true ONLY when date(s) have no start time printed.
 - For multi-event festival programmes, set isMultiEvent=true and use the umbrella title and full printed date span.
 
@@ -275,6 +287,7 @@ const RawPosterExtractionSchema = z.object({
   endDate: z.string().nullish(),
   isAllDay: z.boolean().nullish(),
   hasExplicitYear: z.boolean().nullish(),
+  hasPrintedWeekday: z.boolean().nullish(),
   isMultiEvent: z.boolean().nullish(),
   town: z.string().nullish(),
   location: z.string().nullish(),
@@ -415,6 +428,7 @@ function normalizeDates(
   currentYear: number,
   todayYmd: string,
   hasExplicitYear: boolean,
+  hasPrintedWeekday: boolean,
 ): { startDate: string | null; endDate: string | null; isAllDay: boolean } {
   const start = parsePosterDateToken(rawStart, currentYear);
   if (!start) {
@@ -465,11 +479,16 @@ function normalizeDates(
     }
   }
 
-  // Deterministic guard: when no 4-digit year was printed on the poster and the
-  // entire extracted range already ended before today, roll forward +1 year so
-  // yearless upcoming posters never land on an unpublishable past date.
-  // Ongoing exhibitions (end >= today) and explicitly printed years stay untouched.
-  if (!hasExplicitYear && result.endDate.slice(0, 10) < todayYmd) {
+  // Deterministic guard: when no 4-digit year AND no weekday were printed on
+  // the poster and the entire extracted range already ended before today, roll
+  // forward +1 year so yearless upcoming posters never land on an unpublishable
+  // past date. Weekday-anchored dates (shifting +1y changes the weekday),
+  // ongoing exhibitions (end >= today), and explicitly printed years stay untouched.
+  if (
+    !hasExplicitYear &&
+    !hasPrintedWeekday &&
+    result.endDate.slice(0, 10) < todayYmd
+  ) {
     const shiftedStart = shiftLocalDateTimeByYears(result.startDate, 1);
     const shiftedEnd = shiftLocalDateTimeByYears(result.endDate, 1);
     if (shiftedStart && shiftedEnd) {
@@ -566,8 +585,12 @@ export function resolvePosterPrice(
   }
 
   // Free text with extra wording (e.g. "Entrada lliure fins a completar aforament",
-  // "Entrée gratuite") and zero paid amounts or subset qualifiers -> free.
-  if (FREE_MENTION_RE.test(normalized) && !RESTRICTED_FREE_RE.test(normalized)) {
+  // "Entrée gratuite", "Free entry") and zero paid amounts or subset qualifiers -> free.
+  // English bare "free" requires an admission term here so "Free parking" stays unknown.
+  if (
+    FREE_ADMISSION_FALLBACK_RE.test(normalized) &&
+    !RESTRICTED_FREE_RE.test(normalized)
+  ) {
     return {
       priceType: "free",
       priceAmount: "",
@@ -674,6 +697,7 @@ export function parsePosterExtraction(
     currentYear,
     todayYmd,
     data.hasExplicitYear !== false,
+    Boolean(data.hasPrintedWeekday),
   );
 
   const dateInferred = Boolean(startDate && data.hasExplicitYear === false);

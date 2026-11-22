@@ -215,6 +215,9 @@ export function usePublishPosterAutofill({
   const handlePosterPrepared = useCallback(
     (file: File) => {
       setError(null);
+      setPendingExtraction(null);
+      setDeferredUnmatchedTown(null);
+      setDeferredFilledFields([]);
       trackFieldInteraction("image");
       setImageFile(file);
       updateImagePreview(file);
@@ -300,6 +303,7 @@ export function usePublishPosterAutofill({
       previousForm: FormData,
       previousAutoDates: boolean,
       options: {
+        runId: number;
         preserveUserValues: boolean;
         appliedDates?: boolean;
         mergeUndo?: boolean;
@@ -318,9 +322,11 @@ export function usePublishPosterAutofill({
       setForm(nextForm);
       if (options.mergeUndo) {
         setUndoRecord((prev) => {
-          if (!prev) {
+          // Only merge into the Undo record created by this exact extraction run;
+          // if an earlier scan owned `prev`, replace it so Undo scope matches apply-time fills.
+          if (!prev || prev.runId !== options.runId) {
             return {
-              runId: ++autofillRunIdRef.current,
+              runId: options.runId,
               ownedFields: new Set(filledFields),
               previousForm,
               previousAutoDates,
@@ -332,7 +338,7 @@ export function usePublishPosterAutofill({
         });
       } else {
         setUndoRecord({
-          runId: ++autofillRunIdRef.current,
+          runId: options.runId,
           ownedFields: new Set(filledFields),
           previousForm,
           previousAutoDates,
@@ -353,6 +359,7 @@ export function usePublishPosterAutofill({
       const current = formRef.current;
       const previousAutoDates = autoDatesRef.current;
       const preserveUserValues = !options?.allowOverwriteOwned;
+      const runId = ++autofillRunIdRef.current;
 
       const result = applyPosterExtractionToForm({
         currentForm: current,
@@ -371,18 +378,18 @@ export function usePublishPosterAutofill({
           result.filledFields,
           current,
           previousAutoDates,
-          { preserveUserValues, appliedDates: result.appliedDates },
+          { runId, preserveUserValues, appliedDates: result.appliedDates },
         );
       }
 
-      // Keep extraction + overwrite policy for deferred reconciliation if
+      // Keep extraction + runId + overwrite policy for deferred reconciliation if
       // town/category catalogs were still loading when the AI response arrived.
       setDeferredUnmatchedTown(null);
       setDeferredFilledFields([]);
       setPendingExtraction(
         (isLoadingCities && Boolean(extracted.town)) ||
           (isLoadingCategories && extracted.categories.length > 0)
-          ? { extracted, preserveUserValues }
+          ? { runId, extracted, preserveUserValues }
           : null,
       );
 
@@ -446,7 +453,11 @@ export function usePublishPosterAutofill({
         reconciled.filledFields,
         current,
         autoDatesRef.current,
-        { preserveUserValues: pending.preserveUserValues, mergeUndo: true },
+        {
+          runId: pending.runId,
+          preserveUserValues: pending.preserveUserValues,
+          mergeUndo: true,
+        },
       );
     },
   );

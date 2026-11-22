@@ -557,6 +557,8 @@ export interface DateRangeCalendarProps {
   minDate?: string;
   /** Optional YYYY-MM-DD target whose month should be brought into view */
   focusDate?: string;
+  /** Incrementing nonce so repeated requests for the same focusDate re-focus after calendar navigation */
+  focusNonce?: number;
   /** Never let the user clear the range */
   required?: boolean;
 }

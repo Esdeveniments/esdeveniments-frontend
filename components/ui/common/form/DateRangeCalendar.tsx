@@ -45,6 +45,7 @@ export default function DateRangeCalendar({
   onChange,
   minDate,
   focusDate,
+  focusNonce = 0,
   required = false,
 }: DateRangeCalendarProps): ReactElement {
   const t = useTranslations("Components.DateRangeCalendar");
@@ -78,9 +79,10 @@ export default function DateRangeCalendar({
     setShownFrom(fromDate);
     if (from) setMonth(from);
   }
-  const [shownFocus, setShownFocus] = useState(focusDate);
-  if (shownFocus !== focusDate) {
-    setShownFocus(focusDate);
+  const focusKey = focusDate ? `${focusDate}:${focusNonce}` : undefined;
+  const [shownFocusKey, setShownFocusKey] = useState(focusKey);
+  if (shownFocusKey !== focusKey) {
+    setShownFocusKey(focusKey);
     const target = parseYMD(focusDate);
     if (target) setMonth(target);
   }
