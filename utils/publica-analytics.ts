@@ -1,4 +1,5 @@
-import type { FormData } from "types/event";
+import type { CreateEventFailureReason, FormData } from "types/event";
+import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "./constants";
 
 export function buildPublishContext(args: {
   form: FormData;
@@ -13,6 +14,55 @@ export function buildPublishContext(args: {
     has_town: Boolean(form.town),
     has_region: Boolean(form.region),
   };
+}
+
+export const ACTION_FAILURE_ANALYTICS_REASON: Record<
+  CreateEventFailureReason,
+  string
+> = {
+  "profile-incomplete": "profile-incomplete",
+  "stale-session": "stale-session",
+  duplicate: "duplicate",
+  "image-too-large": "image_too_large",
+  "invalid-image": "invalid_image",
+  "body-limit": "body_limit",
+  validation: "validation",
+};
+
+/**
+ * Classifies actionable createEvent errors shared by the server action
+ * (before Next.js redacts thrown messages in production) and the client
+ * fallback catch block.
+ */
+export function matchCreateEventFailureReason(
+  message: string,
+  status?: number,
+): Exclude<
+  CreateEventFailureReason,
+  "profile-incomplete" | "stale-session" | "invalid-image"
+> | null {
+  const normalized = message.toLowerCase();
+  if (normalized.includes(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR)) {
+    return "image-too-large";
+  }
+  if (
+    status === 413 ||
+    normalized.includes("status: 413") ||
+    normalized.includes("request entity too large")
+  ) {
+    return "body-limit";
+  }
+  if (
+    status === 409 ||
+    normalized.includes("duplicate") ||
+    normalized.includes("integrity violation")
+  ) {
+    return "duplicate";
+  }
+  if (status === 400 || status === 422) {
+    return "validation";
+  }
+  return null;
 }
 
 export function classifyPublishError(args: {

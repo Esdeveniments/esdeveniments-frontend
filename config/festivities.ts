@@ -37,9 +37,10 @@ export const FESTIVITY_TYPES: readonly FestivityType[] = [
     messageKey: "firesDeNadal",
     terms: ["fira", "mercat", "mercadet"],
     // "Fira de Nadal", "Mercat artesà de Nadal", "Fira de Santa Llúcia",
-    // "Fira de pessebres", "Mercat nadalenc". Not "Nadal al mercat setmanal".
+    // "Fira de pessebres", "Mercat nadalenc", "Fira de l'Avet", "Fira del Tió".
+    // Not "Nadal al mercat setmanal".
     include:
-      /\b(fira|fires|mercat|mercats|mercadet|mercadets)\b(?:\s+[\w'’]+){0,3}?\s+(nadal|nadalenc\w*|santa llucia|pessebres?)\b/,
+      /\b(fira|fires|mercat|mercats|mercadet|mercadets)\b(?:\s+[\w'’]+){0,3}?\s+(nadal|nadalenc\w*|santa llucia|pessebres?|(?:l['’])?avets?|tio|tions)\b/,
     exclude: NOT_THE_EVENT,
     yearOffset: 0,
     window: nadalWindow,

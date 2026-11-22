@@ -2,6 +2,7 @@ import { GoogleAnalyticsEvent, WindowWithGtag } from "../types/common";
 import type { SearchContext, SearchOutcome, SearchSuggestion } from "../types/search";
 import { omitDefaultFilterValue } from "./constants";
 import { isE2ETestMode } from "./env";
+import { stripLocalePrefix } from "./i18n-routing";
 import { isProductionHost } from "./production-host";
 
 export const sendGoogleEvent = (
@@ -224,4 +225,21 @@ export const getShareItemId = (url: string): string => {
   } catch {
     return "";
   }
+};
+
+const PROMOTE_PATH_RE = /^\/e\/[^/]+\/promote(?:\/|$)/;
+
+/**
+ * Commercial checkout and sponsorship pages never show third-party AdSense
+ * ads: running Auto Ads on /patrocina or /e/[slug]/promote clashes with our
+ * own paid offers and clutters checkout/upload flows.
+ */
+export const isAdFreePath = (pathname: string | null | undefined): boolean => {
+  if (!pathname) return false;
+  const { pathnameWithoutLocale } = stripLocalePrefix(pathname);
+  return (
+    pathnameWithoutLocale === "/patrocina" ||
+    pathnameWithoutLocale.startsWith("/patrocina/") ||
+    PROMOTE_PATH_RE.test(pathnameWithoutLocale)
+  );
 };

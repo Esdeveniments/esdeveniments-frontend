@@ -147,6 +147,25 @@ describe("Publica submit-time createEventAction result handling", () => {
     expect(storage.discard).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["duplicate", "errorDuplicate"],
+    ["image-too-large", "imageTooLarge"],
+    ["invalid-image", "posterAutofill.errorInvalidImage"],
+    ["body-limit", "errorBodyLimit"],
+    ["validation", "errorCreate"],
+  ] as const)(
+    "shows actionable error without auth gate for %s result",
+    async (reason, expectedText) => {
+      mockCreateEventAction.mockResolvedValue({ success: false, reason });
+
+      await renderAndSubmit();
+
+      await screen.findByText(expectedText);
+      expect(screen.queryByTestId("complete-profile-gate")).not.toBeInTheDocument();
+      expect(storage.discard).not.toHaveBeenCalled();
+    },
+  );
+
   it("proceeds normally on success — no gate, no stale-session error", async () => {
     mockCreateEventAction.mockResolvedValue({
       success: true,

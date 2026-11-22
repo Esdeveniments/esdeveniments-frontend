@@ -4,6 +4,7 @@ import type { Option } from "types/common";
 import {
   buildPublishContext,
   classifyPublishError,
+  matchCreateEventFailureReason,
 } from "@utils/publica-analytics";
 
 function makeForm(overrides: Partial<FormData> = {}): FormData {
@@ -101,5 +102,20 @@ describe("publica analytics helpers", () => {
         isDuplicate: false,
       })
     ).toBe("generic");
+  });
+
+  it("matchCreateEventFailureReason maps status codes and messages consistently", () => {
+    expect(
+      matchCreateEventFailureReason("event_image_upload_too_large"),
+    ).toBe("image-too-large");
+    expect(matchCreateEventFailureReason("Request Entity Too Large")).toBe(
+      "body-limit",
+    );
+    expect(matchCreateEventFailureReason("HTTP error", 413)).toBe("body-limit");
+    expect(matchCreateEventFailureReason("duplicate key")).toBe("duplicate");
+    expect(matchCreateEventFailureReason("conflict", 409)).toBe("duplicate");
+    expect(matchCreateEventFailureReason("bad request", 400)).toBe("validation");
+    expect(matchCreateEventFailureReason("unprocessable", 422)).toBe("validation");
+    expect(matchCreateEventFailureReason("internal error", 500)).toBeNull();
   });
 });

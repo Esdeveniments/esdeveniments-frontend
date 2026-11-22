@@ -4,9 +4,10 @@
    The ESLint rule can't detect this pattern with nested async callbacks. */
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 import { isE2ETestBuild } from "@utils/env";
-import { ensureGtag } from "@utils/analytics";
+import { ensureGtag, isAdFreePath } from "@utils/analytics";
 import { ADS_SCRIPT_SETTLED_EVENT } from "@lib/context/AdContext";
 import type { GoogleScriptsHeavyProps } from "types/ads";
 
@@ -76,6 +77,22 @@ export default function GoogleScriptsHeavy({
 }: GoogleScriptsHeavyProps) {
   const autoAdsInitRef = useRef(false);
   const autoAdsPendingToken = useRef<symbol | null>(null);
+  const routerPathname = usePathname();
+  const currentPathname =
+    routerPathname ??
+    (typeof window !== "undefined" ? window.location.pathname : "/");
+  const adFreeRoute = isAdFreePath(currentPathname);
+
+  useEffect(() => {
+    if (adFreeRoute) {
+      document.documentElement.dataset.adFree = "true";
+    } else {
+      delete document.documentElement.dataset.adFree;
+    }
+    return () => {
+      delete document.documentElement.dataset.adFree;
+    };
+  }, [adFreeRoute]);
 
   // Track outbound link clicks (external http/https) with optional enrichment via data attributes.
   useEffect(() => {
@@ -202,7 +219,7 @@ export default function GoogleScriptsHeavy({
   // Trigger Google Auto Ads once consented and loader is (or becomes) available.
   useEffect(() => {
     if (isE2ETestBuild) return;
-    if (!adsAllowed || !ADS_CLIENT) return;
+    if (!adsAllowed || !ADS_CLIENT || adFreeRoute) return;
 
     // Track all timeouts for cleanup
     const timeoutIds: ReturnType<typeof setTimeout>[] = [];
@@ -296,13 +313,13 @@ export default function GoogleScriptsHeavy({
         window.__autoAdsInitPending = undefined;
       }
     };
-  }, [adsAllowed]);
+  }, [adsAllowed, adFreeRoute]);
 
   // Load adsbygoogle.js after consent and the first interaction (or the load
   // fallback). The pushes above queue in window.adsbygoogle until it runs.
   useEffect(() => {
     if (isE2ETestBuild) return;
-    if (!adsAllowed || !adsScriptReady || !ADS_SRC) return;
+    if (!adsAllowed || !adsScriptReady || !ADS_SRC || adFreeRoute) return;
     if (document.querySelector(`script[src="${ADS_SRC}"]`)) return;
 
     const script = document.createElement("script");
@@ -316,7 +333,7 @@ export default function GoogleScriptsHeavy({
     script.onload = settle;
     script.onerror = settle;
     document.head.appendChild(script);
-  }, [adsAllowed, adsScriptReady]);
+  }, [adsAllowed, adsScriptReady, adFreeRoute]);
 
   useEffect(() => {
     if (isE2ETestBuild) return;

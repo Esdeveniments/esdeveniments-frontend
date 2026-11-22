@@ -89,3 +89,54 @@ describe("GoogleScriptsHeavy click analytics", () => {
     ]);
   });
 });
+
+describe("GoogleScriptsHeavy ad-free checkout routes", () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllEnvs();
+    window.history.pushState({}, "", "/");
+    delete document.documentElement.dataset.adFree;
+    document
+      .querySelectorAll('script[src*="adsbygoogle"]')
+      .forEach((el) => el.remove());
+  });
+
+  it("matches /patrocina and /e/[slug]/promote across all locales", async () => {
+    const { isAdFreePath } = await import("@utils/analytics");
+    expect(isAdFreePath("/patrocina")).toBe(true);
+    expect(isAdFreePath("/patrocina/upload")).toBe(true);
+    expect(isAdFreePath("/es/patrocina")).toBe(true);
+    expect(isAdFreePath("/en/patrocina/success")).toBe(true);
+    expect(isAdFreePath("/e/festa-major/promote")).toBe(true);
+    expect(isAdFreePath("/es/e/festa-major/promote/cancel")).toBe(true);
+    expect(isAdFreePath("/")).toBe(false);
+    expect(isAdFreePath("/barcelona")).toBe(false);
+    expect(isAdFreePath("/e/festa-major")).toBe(false);
+  });
+
+  it("suppresses adsbygoogle.js and marks html[data-ad-free] on /patrocina", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_ADS", "ca-pub-123456");
+    window.history.pushState({}, "", "/es/patrocina/upload");
+    const GoogleScriptsHeavy = (await import("../app/GoogleScriptsHeavy")).default;
+
+    render(<GoogleScriptsHeavy adsAllowed={true} adsScriptReady={true} />);
+
+    expect(document.documentElement.dataset.adFree).toBe("true");
+    expect(document.querySelector('script[src*="adsbygoogle"]')).toBeNull();
+  });
+
+  it("loads adsbygoogle.js normally on non-ad-free routes", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_ADS", "ca-pub-123456");
+    window.history.pushState({}, "", "/barcelona");
+    const GoogleScriptsHeavy = (await import("../app/GoogleScriptsHeavy")).default;
+
+    render(<GoogleScriptsHeavy adsAllowed={true} adsScriptReady={true} />);
+
+    expect(document.documentElement.dataset.adFree).toBeUndefined();
+    expect(
+      document.querySelector('script[src*="adsbygoogle"]'),
+    ).not.toBeNull();
+  });
+});
