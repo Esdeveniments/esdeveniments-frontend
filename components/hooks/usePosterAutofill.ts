@@ -318,17 +318,18 @@ export function usePosterAutofill({
           applied.dateInferred ||
           applied.priceNeedsReview ||
           applied.isMultiEvent;
-        const hasAnyGuidance =
-          applied.filledFields.length > 0 ||
-          hasAnyWarning ||
-          Boolean(applied.hasPendingCatalogs);
+        const hasAnyGuidance = applied.filledFields.length > 0 || hasAnyWarning;
         setPhase(hasAnyGuidance ? "success" : "empty");
 
         if (!hasAnyGuidance) {
-          sendGoogleEvent("publish_poster_autofill_empty", {
-            source: "publica",
-            mode: servingModel,
-          });
+          // Skip emitting empty when deferred town/category catalogs are still
+          // loading so a run that fills asynchronously is not miscounted as empty.
+          if (!applied.hasPendingCatalogs) {
+            sendGoogleEvent("publish_poster_autofill_empty", {
+              source: "publica",
+              mode: servingModel,
+            });
+          }
           return;
         }
 
