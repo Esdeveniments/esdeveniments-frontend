@@ -715,10 +715,66 @@ p {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  /* ===================================== */
+  /* POSTER AUTOFILL MICRO-INTERACTIONS    */
+  /* ===================================== */
+
+  .poster-thumb-outline {
+    outline: 1px solid oklch(0 0 0 / 0.1);
+    outline-offset: -1px;
+  }
+
+  .poster-scan-beam {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 45%;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgb(214 0 47 / 0.16) 72%,
+      rgb(214 0 47 / 0.85) 96%,
+      transparent 100%
+    );
+    animation: poster-scan-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    will-change: transform;
+  }
+
+  .poster-icon-swap {
+    animation: poster-icon-in 260ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+}
+
+@keyframes poster-scan-sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(230%);
+  }
+}
+
+@keyframes poster-icon-in {
+  from {
+    opacity: 0;
+    transform: scale(0.25);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .poster-scan-beam {
+    display: none;
+  }
   * {
+    animation-delay: 0ms !important;
     animation-duration: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0ms !important;

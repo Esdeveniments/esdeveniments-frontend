@@ -123,7 +123,10 @@ test.describe("Publish wizard should not auto publish", () => {
       "icons",
       "icon-192x192.png"
     );
-    await page.setInputFiles('input[type="file"][accept*="image"]', imagePath);
+    await page
+      .getByTestId("event-form")
+      .locator('input[type="file"]')
+      .setInputFiles(imagePath);
 
     // Go back to step 2 and forward to step 3 again
     await page.getByTestId("prev-button").click();

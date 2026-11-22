@@ -78,13 +78,67 @@ describe("DatePickerImpl", () => {
   });
 
   describe("initial rendering", () => {
-    it("renders the label, an inline calendar and both time inputs", () => {
+    it("renders the label, an inline calendar, date inputs, and both time inputs", () => {
       render(<DatePickerImpl {...baseProps} />);
 
       expect(screen.getByText("Data i hora")).toBeInTheDocument();
       expect(screen.getByRole("grid")).toBeInTheDocument();
+      expect(screen.getByLabelText("Data d'inici")).toHaveValue("2026-03-07");
+      expect(screen.getByLabelText("Data de fi")).toHaveValue("2026-03-07");
       expect(screen.getByLabelText("Hora d'inici")).toHaveValue("10:00");
       expect(screen.getByLabelText("Hora de fi")).toHaveValue("11:00");
+    });
+
+    it("updates multi-month ranges directly via the start/end date inputs", () => {
+      render(<Harness {...baseProps} />);
+
+      fireEvent.change(screen.getByLabelText("Data de fi"), {
+        target: { value: "2026-06-30" },
+      });
+
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-06-30", 11, 0),
+      );
+      // Calendar brings the edited end month into view
+      expect(dayButton("2026-06-30")).toBeInTheDocument();
+    });
+
+    it("does not clamp partial keyboard year or day values until a valid end date is typed or blurred", () => {
+      render(
+        <Harness
+          {...baseProps}
+          startDate="2026-06-15T10:00"
+          endDate="2026-06-15T11:00"
+        />,
+      );
+
+      const endInput = screen.getByLabelText("Data de fi");
+      for (const partial of ["0002-06-30", "0020-06-30", "0202-06-30"]) {
+        fireEvent.change(endInput, { target: { value: partial } });
+        expect(endInput).toHaveValue(partial);
+        expect(baseProps.onChange).not.toHaveBeenCalled();
+      }
+
+      // Intermediate day below start day (typing "3" on the way to "30") stays untouched
+      fireEvent.change(endInput, { target: { value: "2026-06-03" } });
+      expect(endInput).toHaveValue("2026-06-03");
+      expect(baseProps.onChange).not.toHaveBeenCalled();
+
+      // Completing a valid end date commits immediately
+      fireEvent.change(endInput, { target: { value: "2026-06-30" } });
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-06-30", 11, 0),
+      );
+
+      // Blurring an end date earlier than start clamps to start
+      fireEvent.change(endInput, { target: { value: "2026-06-01" } });
+      fireEvent.blur(endInput);
+      expect(baseProps.onChange).toHaveBeenLastCalledWith(
+        "endDate",
+        expectedLocalTime("2026-06-15", 11, 0),
+      );
     });
 
     it("does not render all-day toggle by default", () => {

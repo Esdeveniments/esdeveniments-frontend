@@ -14,6 +14,8 @@ import { toLocalDateTimeString } from "@utils/date-helpers";
 import EventForm from "@components/ui/EventForm";
 import { useImagePreview } from "@components/hooks/useImagePreview";
 import { usePublishDraft } from "@components/hooks/usePublishDraft";
+import { usePublishPosterAutofill } from "@components/hooks/usePublishPosterAutofill";
+import PosterAutofillCard from "@components/ui/publish/PosterAutofillCard";
 import PublishDraftPanel from "@components/ui/publish/PublishDraftPanel";
 import { getPublishDraftWarnings, hasPublishFormEnded } from "@utils/publish-draft-warnings";
 import { useGetRegionsWithCities } from "@components/hooks/useGetRegionsWithCities";
@@ -135,6 +137,9 @@ const PublishForm = () => {
   const [editorVersion, setEditorVersion] = useState(0);
   const [wizardStep, setWizardStep] = useState<EventFormStep>(0);
   const [publishAfterReturn, setPublishAfterReturn] = useState<PublishResumeIntent | null>(null);
+  const resetPosterAutofillRef = useRef<
+    (options?: { keepScanIntent?: boolean }) => void
+  >(() => {});
   const [continuingPublication, setContinuingPublication] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authStage, setAuthStage] = useState<PublishResumeStage | null>(null);
@@ -153,6 +158,7 @@ const PublishForm = () => {
   const resetEditor = useCallback(() => {
     setWizardStep(0);
     setPublishAfterReturn(null);
+    resetPosterAutofillRef.current();
     setIsRedirecting(false);
     submittedRef.current = false;
     formStartedRef.current = false;
@@ -171,6 +177,7 @@ const PublishForm = () => {
     onRestore: (saved, resumed, intent) => {
       setError(null);
       setIsRedirecting(false);
+      resetPosterAutofillRef.current({ keepScanIntent: true });
       setEditorVersion((version) => version + 1);
       autoDatesRef.current = false;
       setForm({ ...emptyForm, ...createDefaultDates(), ...saved.form });
@@ -277,18 +284,66 @@ const PublishForm = () => {
     setWizardStep(step);
   }, [markEdited]);
 
+  const {
+    posterAutofillBusy,
+    setPosterAutofillBusy,
+    verifiedScanIntentId,
+    clearVerifiedScanIntent,
+    canUndo: canUndoPosterAutofill,
+    deferredFilledFields,
+    deferredUnmatchedTown,
+    resetPosterAutofill,
+    trackFormFieldOwnership,
+    handlePosterPrepared,
+    handleRequestAuthForScan,
+    handlePosterExtractionApplied,
+    handlePosterUndo,
+  } = usePublishPosterAutofill({
+    form,
+    setForm,
+    autoDatesRef,
+    cityOptions,
+    cityToRegionOptionMap,
+    categories,
+    isLoadingCities,
+    isLoadingCategories,
+    isAuthLoading,
+    locale,
+    signIn,
+    prepareResume: draft.prepareResume,
+    draftOwnerChanged: draft.ownerChanged,
+    markEdited,
+    trackFieldInteraction,
+    setImageFile,
+    updateImagePreview,
+    setError,
+    setHandingOff,
+    handoffStartedRef,
+    handedOffRef,
+    draftHandoffFailedMessage: t("draftHandoffFailed"),
+  });
+
+  useEffect(() => {
+    resetPosterAutofillRef.current = resetPosterAutofill;
+  }, [resetPosterAutofill]);
+
   const handleFormChange = useCallback(<K extends keyof FormData>(
     name: K,
     value: FormData[K]
   ) => {
     trackFieldInteraction(String(name));
+    const isCleared =
+      value === "" ||
+      value === null ||
+      (Array.isArray(value) && value.length === 0);
+    trackFormFieldOwnership(name, isCleared);
     if (name === "startDate" || name === "endDate" || name === "isAllDay") {
       autoDatesRef.current = false;
       const ended = t("dateEnded");
       setError((current) => (current === ended ? null : current));
     }
     setForm((prev) => ({ ...prev, [name]: value }));
-  }, [trackFieldInteraction, t]);
+  }, [trackFieldInteraction, trackFormFieldOwnership, t]);
 
   const handleImageChange = (file: File | null) => {
     setError(null);
@@ -300,6 +355,7 @@ const PublishForm = () => {
 
   const handleTownChange = (town: Option | null) => {
     trackFieldInteraction("town");
+    trackFormFieldOwnership("town", !town);
 
     setForm((prev) => {
       const next = { ...prev, town };
@@ -488,7 +544,7 @@ const PublishForm = () => {
   };
 
   const onSubmit = async () => {
-    if (handingOff || isPending || creatingRef.current || submittedRef.current || isAuthLoading || draft.ownerChanged) return;
+    if (handingOff || isPending || posterAutofillBusy || creatingRef.current || submittedRef.current || isAuthLoading || draft.ownerChanged) return;
     if (draft.status === "decision" || draft.failure?.reason === "stale") {
       setError(t("draftResolveBeforePublish"));
       return;
@@ -767,7 +823,7 @@ const PublishForm = () => {
           setOpen={setShowPreview}
           title={tForm("previewModalTitle")}
           actionButton={isPending && !isRedirecting ? tForm("publishing") : submitLabel}
-          actionButtonDisabled={isDraftLocked || isFormDisabled || isPending || isSubmitDisabled || imagePreparing}
+          actionButtonDisabled={isDraftLocked || isFormDisabled || isPending || isSubmitDisabled || imagePreparing || posterAutofillBusy}
           actionButtonAnalyticsAction={submitAnalyticsAction}
           onActionButtonClick={async () => {
             await onSubmit();
@@ -847,9 +903,29 @@ const PublishForm = () => {
           {/* Until the user picks restore or discard, show only that choice instead of a locked form. */}
           <fieldset disabled={isDraftLocked || isPending} inert={isDraftLocked}
             hidden={draft.status === "decision" && !draft.dirty}>
-          <div className="w-full">
+          <div className="w-full stack gap-6">
+            <PosterAutofillCard
+              key={`autofill-${editorVersion}`}
+              currentImageFile={imageFile}
+              currentImagePreview={imagePreview}
+              isAuthenticated={isAuthenticated}
+              isAuthLoading={isAuthLoading}
+              disabled={isDraftLocked || isPending || imagePreparing}
+              autoScanIntentId={verifiedScanIntentId}
+              onAutoScanHandled={clearVerifiedScanIntent}
+              onRequestAuthForScan={handleRequestAuthForScan}
+              onPosterPrepared={handlePosterPrepared}
+              onExtractionApplied={handlePosterExtractionApplied}
+              canUndo={canUndoPosterAutofill}
+              deferredFilledFields={deferredFilledFields}
+              deferredUnmatchedTown={deferredUnmatchedTown}
+              hasSelectedTown={Boolean(form.town)}
+              isFormDateEnded={hasPublishFormEnded(form)}
+              onUndo={handlePosterUndo}
+              onBusyChange={setPosterAutofillBusy}
+            />
             <EventForm
-              key={editorVersion}
+              key={`form-${editorVersion}`}
               initialStep={wizardStep}
               onStepChange={handleStepChange}
               form={form}
@@ -858,7 +934,7 @@ const PublishForm = () => {
               loadingLabel={isRedirecting ? t("publishCta.redirecting") : undefined}
               analyticsContext="publica"
               isLoading={isPending || isRedirecting}
-              isSubmitDisabled={isSubmitDisabled}
+              isSubmitDisabled={isSubmitDisabled || posterAutofillBusy}
               submitAnalyticsAction={submitAnalyticsAction}
               cityOptions={cityOptions}
               categoryOptions={categoryOptions}

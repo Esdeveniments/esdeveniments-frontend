@@ -169,10 +169,10 @@ export function usePublishDraft({
     if (result?.ok) { clearGuestReturn(); setResumeFailed(false); onReset(); }
     return result;
   };
-  const flush = async (): Promise<PublishDraftFlushResult> => {
-    if (edited.current) {
+  const flush = async (override?: Partial<PublishDraftInput>): Promise<PublishDraftFlushResult> => {
+    if (edited.current || override) {
       edited.current = false;
-      session.current?.edit({ form, imageFile, step });
+      session.current?.edit({ form, imageFile, step, ...override });
     }
     return session.current?.flush() ?? { ok: false, reason: "unavailable" };
   };
@@ -181,9 +181,13 @@ export function usePublishDraft({
     edited.current = false;
     return session.current?.discard() ?? { ok: false, reason: "unavailable" };
   };
-  const prepareResume = async (stage: PublishResumeStage, action: PublishResumeAction = "restore"): Promise<PublishDraftFlushResult> => {
+  const prepareResume = async (
+    stage: PublishResumeStage,
+    action: PublishResumeAction = "restore",
+    override?: Partial<PublishDraftInput>,
+  ): Promise<PublishDraftFlushResult> => {
     const current = session.current;
-    const result = await flush();
+    const result = await flush(override);
     if (!current || current !== session.current) return { ok: false, reason: "stale" };
     if (!result.ok) return result;
     if (!session.current?.state.canDiscard) return { ok: true, revision: null };

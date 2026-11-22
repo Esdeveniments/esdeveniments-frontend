@@ -159,6 +159,7 @@ export async function GET(request: NextRequest) {
         revalidateSecretConfigured: Boolean(process.env.REVALIDATE_SECRET),
         healthSecretConfigured: Boolean(process.env.HEALTH_SECRET),
         cloudflarePurgeConfigured: isCloudflarePurgeConfigured(),
+        aiGatewayConfigured: Boolean(process.env.GATEWAY_TOKEN?.trim()),
         redisConfigured,
       },
       buildVersion: process.env.BUILD_VERSION || "unknown",
