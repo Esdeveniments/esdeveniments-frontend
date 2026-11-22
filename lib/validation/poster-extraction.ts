@@ -107,7 +107,7 @@ export const POSTER_EXTRACTION_JSON_SCHEMA: Record<string, unknown> = {
     isMultiEvent: {
       type: "boolean",
       description:
-        "True if the poster is a multi-event programme or festival listing several distinct acts/sessions; false for a single event.",
+        "True ONLY when the poster lists several distinct acts/sessions with their own titles or non-consecutive dates; false for a single event, fair, exhibition, or park spanning consecutive days.",
     },
     town: {
       type: ["string", "null"],
@@ -212,10 +212,10 @@ STRICT ZERO-ASSUMPTION RULES:
 
 DESCRIPTION CRAFT (for Esdeveniments.cat event pages):
 - ${OUTPUT_LANGUAGE_GUIDANCE[locale]}
-- The event page ALREADY displays the title, date, time, venue, and town above the description. Do NOT open with robotic boilerplate like "Aquest esdeveniment se celebrarà el dia…" / "Este evento se celebrará…" / "This event takes place on…".
+- The event page ALREADY displays the title, date, time, venue, and town above the description. Do NOT open with robotic boilerplate ("Aquest esdeveniment se celebrarà el dia…" / "Este evento se celebrará…" / "This event takes place on…") or promotional imperative openers ("Gaudeix de…", "Gaudiu de…", "Gaudim…", "Celebra…", "Descobreix…", "Viu…", "Vine…", "Disfruta de…", "Enjoy…", "Join us…").
 - Open with a factual 1–2 sentence hook (under 160 characters) summarizing ONLY what the poster visibly announces.
-- Include only concrete details visibly printed on the poster (performers/speakers, schedule/programme, registration or entry notes, accessibility, age range, organizers/collaborators). Do NOT invent audience claims, artist bios, venue descriptions, or marketing clichés ("experiència inoblidable", "no t'ho perdis", "per a tots els públics", "unforgettable experience") unless explicitly printed.
-- If the poster has very little text, write a brief 1-sentence factual description — or null if only a title/date/place appear with nothing else to describe. Never pad.
+- Include only concrete details visibly printed on the poster (performers/speakers, schedule/programme, registration or entry notes, accessibility, age range, organizers/collaborators). Do NOT invent edition claims ("nova edició"), audience claims ("per a tots els públics", "activitats per a tothom"), artist bios, venue descriptions, or marketing clichés ("experiència inoblidable", "no t'ho perdis", "unforgettable experience") unless explicitly printed.
+- If the poster has very little text, write a brief 1-sentence factual description — or return description=null when the text would only restate the title, date, and place. Never pad.
 - Formatting: 1 to 3 paragraphs separated by \\n\\n. You may use **bold** sparingly for programme sections. NEVER use Markdown # headings or HTML tags.
 
 DATES & TIMES (Europe/Madrid):
@@ -225,7 +225,8 @@ DATES & TIMES (Europe/Madrid):
   * If a weekday is also printed (e.g. "dissabte 29 de maig"), set hasPrintedWeekday=true and pick the nearest year within ±1 year where that month/day falls on that weekday.
   * Otherwise set hasPrintedWeekday=false and pick the next upcoming occurrence on or after ${ymd} (do not assume a past year when no year or weekday indicates it).
 - Set isAllDay=true ONLY when date(s) have no start time printed.
-- For multi-event festival programmes, set isMultiEvent=true and use the umbrella title and full printed date span.
+- Non-consecutive sessions or calendar lists (e.g. "5, 12 i 19 de març" or separate monthly dates): set startDate/endDate to the first session on or after ${ymd} using that session's own printed end time (or null if none), and list ALL printed session dates and times in description. Use a continuous multi-day span ONLY when the poster prints a continuous range or consecutive days.
+- Set isMultiEvent=true ONLY when the poster lists distinct acts or sessions with separate titles or non-consecutive dates. A single fair, market, exhibition, or park spanning consecutive days has isMultiEvent=false.
 
 TOWN, VENUE, URL & PRICE:
 - town: ONLY a municipality name visibly printed on the poster. When it is a Catalan municipality, use its official Catalan spelling (e.g. "Cardedeu", "Mataró", "Barcelona", "El Masnou", "Girona" not "Gerona", "Lleida" not "Lérida", "Sant Cugat del Vallès" not "San Cugat del Vallés"). Never include comarca or venue. Return null if no town is printed.
