@@ -34,7 +34,7 @@ Preload that same image with `<ImagePreload>` (`components/ui/common/image/Image
 ```tsx
 import ImagePreload from "@components/ui/common/image/ImagePreload";
 
-<ImagePreload image={event.imageUrl} cacheKey={event.updatedAt} context="hero" />
+<ImagePreload image={featured.imageUrl} cacheKey={featured.updatedAt} context="featured" />
 ```
 
 `ImagePreload` is a `"use client"` leaf that calls `ReactDOM.preload()` and returns `null` (the same pattern `next/image` uses). Avoid JSX `<link rel="preload" href imageSrcSet>` in Server Components: React 19 emits both a Flight hint and the JSX tag, duplicating `<link>` elements (`facebook/react#35889`). Avoid calling `ReactDOM.preload()` directly in a Server Component inside streamed `<Suspense>` or `"use cache"`: Fizz drops the HTML `<link>` when Flight `:HL` arrives after the shell flushes.
