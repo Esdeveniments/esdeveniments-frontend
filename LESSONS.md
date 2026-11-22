@@ -1286,6 +1286,37 @@ come back. `productionBrowserSourceMaps: false` stops the SDK from enabling
 them, and turning it on adds map generation to every build, so it needs its own
 measurement.
 
+## Cloudflare Cache Rule #1 must respect origin `Cache-Control`, not ignore it
+
+Until 2026-11-22, Cloudflare Rule #1 (`Cache HTML pages - regular traffic (non-bots)`)
+used `Edge TTL: Ignore cache-control header and use this TTL: 1800` and excluded
+only `preferits`, `callback`, and `publica`. Live `curl` checks proved four
+hidden bugs caused by that one setting:
+
+1. `/e/.../edita` and `/e/.../promote` returned `Cache-Control: private, no-store`,
+   yet Cloudflare cached them (`cf-cache-status: HIT`, 30 min).
+2. `/sw.js` returned `no-cache, max-age=0, must-revalidate`, yet Cloudflare
+   served it as `HIT` for 30 min after deploys.
+3. `/_next/static/*` immutable chunks (`max-age=31536000`) were cut down to
+   30 min at the edge.
+4. Sitemaps were forced-cached 30 min for normal UAs (ignoring `s-maxage=300`
+   and `private, no-store`), while `Googlebot` and `bingbot` got `DYNAMIC`
+   (zero edge cache) because Rule #1 excluded them and Cloudflare does not
+   cache `.xml` by default.
+
+Fix (2026-11-22, Free plan 8/10 rules): Rule #1 now uses `Edge TTL: Use
+cache-control header if present, bypass cache if not`, `Browser TTL: Respect
+origin TTL`, and case-insensitive (`lower(...)`) exclusions for `preferits`,
+`callback`, `publica`, `edita`, `promote`, and `/sw.js`. Rule #2 (`Cache XML
+sitemaps (respect origin)`) sits at position #2 — right below Rule #1 and
+strictly above all Bypass rules (`RSC`, `AI bots`, `/_next/image`, `Markdown`)
+— allowlisting only the 10 real sitemap paths (never broad `ends_with(".xml")`,
+which would also match `/api/*.xml`, `/rss.xml`, and fake `.xml` routes), with
+`Do not serve stale content while updating` enabled. After changing cache TTL
+rules, run Purge Everything once so old forced-TTL entries do not linger.
+`deploy-coolify.yml` checks `/edita` (must not `HIT`) and `/sitemap.xml` as
+`bingbot` (`HIT`) on every production deploy.
+
 ## Server readers must never self-fetch `/api/*` through the public hostname
 
 When `fetchEventBySlug` (`lib/api/events.ts`), `lib/api/news.ts`, and

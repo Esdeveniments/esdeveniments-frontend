@@ -577,7 +577,10 @@
       }
     },
     "EventMeta": {
-      "descriptionSuffix": "Consulta l'horari, com arribar-hi i més plans a prop."
+      "descriptionSuffixFull": "Consulta l'horari, la ubicació, el preu i com arribar-hi, i descobreix més plans i activitats culturals a prop.",
+      "descriptionSuffixExtended": "Consulta l'horari, la ubicació, com arribar-hi i descobreix més plans culturals a prop.",
+      "descriptionSuffix": "Consulta l'horari, com arribar-hi i més plans a prop.",
+      "descriptionSuffixCompact": "Consulta l'horari i la ubicació."
     }
   },
   "Components": {
@@ -1326,13 +1329,13 @@
         "fires-i-mercats": {
           "titleSuffix": "Fires i mercats",
           "description": "mercats, fires, mercats artesanals, productes locals, artesania",
-          "context": "Mercats avui? Descobreix fires i mercats artesanals amb productes locals",
+          "context": "Descobreix fires i mercats artesanals amb productes locals",
           "noEvents": "fires ni mercats a la zona"
         },
         "festes-populars": {
           "titleSuffix": "Festes majors i populars",
           "description": "festes majors, festes populars, correfocs, castells, celebracions tradicionals",
-          "context": "Festes majors avui? Descobreix correfocs, castellers i les millors festes populars catalanes",
+          "context": "Descobreix correfocs, castellers i les millors festes populars catalanes",
           "noEvents": "festes populars o celebracions tradicionals"
         },
         "tallers-i-formacio": {
@@ -1391,20 +1394,20 @@
         },
         "cinema": {
           "titleSuffix": "Cinema i pel·lícules",
-          "description": "cinema, cartelera, pel·lícules, projeccions, festivals de cinema",
-          "context": "Cartelera avui? Descobreix pel·lícules, projeccions i festivals de cinema",
+          "description": "cinema, cartellera, pel·lícules, projeccions, festivals de cinema",
+          "context": "Descobreix la cartellera de cinema, projeccions i festivals audiovisuals",
           "noEvents": "projeccions de cinema o activitats audiovisuals"
         },
         "musica": {
           "titleSuffix": "Concerts i música en directe",
           "description": "concerts, música en directe, festivals, espectacles musicals, actuacions",
-          "context": "Concerts avui? Descobreix música en directe, festivals i actuacions a prop teu",
+          "context": "Descobreix concerts, música en directe, festivals i actuacions a prop teu",
           "noEvents": "concerts, festivals o espectacles musicals"
         },
         "teatre": {
           "titleSuffix": "Obres de teatre",
           "description": "teatre, obres de teatre, monòlegs, òpera, arts escèniques",
-          "context": "Teatre avui? Descobreix obres, monòlegs i els millors espectacles d'arts escèniques",
+          "context": "Descobreix obres de teatre, monòlegs i els millors espectacles d’arts escèniques",
           "noEvents": "obres de teatre o espectacles d'arts escèniques"
         },
         "altres": {
@@ -1451,11 +1454,16 @@
           "notFound": "Ho sentim, però no hi ha {noEventsText} aquest cap de setmana {label}. Consulta altres dates, explora activitats a la resta de Catalunya o ajusta els filtres de la cerca per descobrir més opcions."
         }
       },
+      "metaDescriptionSuffix": {
+        "extended": "Consulta l’agenda actualitzada amb horaris, ubicacions i propostes culturals.",
+        "standard": "Consulta l’agenda actualitzada amb horaris i ubicacions.",
+        "compact": "Consulta l’agenda i els horaris."
+      },
       "categoryNoDate": {
         "title": "{titleSuffix} {label} {year}",
         "subTitle": "Descobreix {titleSuffix} {label} amb una selecció d’esdeveniments i activitats culturals. Concerts, tallers, exposicions, plans familiars i propostes gratuïtes.",
         "metaTitle": "{categoryTitle} {label} {year} | Què fer - Agenda i plans",
-        "metaDescription": "{context} {label}. Consulta l’agenda.",
+        "metaDescription": "{context} {label}.",
         "notFound": "Ho sentim, però no hi ha {noEventsText} {label} en aquest moment. Prova amb altres dates, categories o localitats properes per descobrir noves propostes culturals."
       },
       "regionNoDate": {

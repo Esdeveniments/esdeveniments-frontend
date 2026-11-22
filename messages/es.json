@@ -577,7 +577,10 @@
       }
     },
     "EventMeta": {
-      "descriptionSuffix": "Consulta el horario, cómo llegar y más planes cerca."
+      "descriptionSuffixFull": "Consulta el horario, la ubicación, el precio y cómo llegar, y descubre más planes y actividades culturales cerca.",
+      "descriptionSuffixExtended": "Consulta el horario, la ubicación, cómo llegar y descubre más planes culturales cerca.",
+      "descriptionSuffix": "Consulta el horario, cómo llegar y más planes cerca.",
+      "descriptionSuffixCompact": "Consulta horarios y cómo llegar."
     }
   },
   "Components": {
@@ -1326,13 +1329,13 @@
         "fires-i-mercats": {
           "titleSuffix": "Ferias y mercados",
           "description": "mercados, ferias, mercados artesanales, productos locales, artesanía",
-          "context": "¿Mercados hoy? Descubre ferias y mercados artesanales con productos locales",
+          "context": "Descubre ferias y mercados artesanales con productos locales",
           "noEvents": "ferias ni mercados en la zona"
         },
         "festes-populars": {
           "titleSuffix": "Fiestas mayores y populares",
           "description": "fiestas mayores, fiestas populares, correfocs, castells, celebraciones tradicionales",
-          "context": "¿Fiestas mayores hoy? Descubre correfocs, castellers y las mejores fiestas populares catalanas",
+          "context": "Descubre correfocs, castellers y las mejores fiestas populares catalanas",
           "noEvents": "fiestas populares o celebraciones tradicionales"
         },
         "tallers-i-formacio": {
@@ -1386,25 +1389,25 @@
         "exposicions": {
           "titleSuffix": "Exposiciones y museos",
           "description": "exposiciones, museos, galerías de arte, arte visual, rutas culturales",
-          "context": "¿Exposiciones hoy? Descubre museos, galerías de arte y la mejor cultura visual",
+          "context": "Descubre exposiciones, museos, galerías de arte y la mejor cultura visual",
           "noEvents": "exposiciones o actividades de arte"
         },
         "cinema": {
           "titleSuffix": "Cartelera de cine",
           "description": "cartelera, cine, películas, proyecciones, festivales de cine",
-          "context": "¿Cartelera hoy? Descubre películas, proyecciones y festivales de cine",
+          "context": "Descubre la cartelera de cine, películas, proyecciones y festivales",
           "noEvents": "proyecciones de cine o actividades audiovisuales"
         },
         "musica": {
           "titleSuffix": "Conciertos y música en directo",
           "description": "conciertos, música en directo, festivales, espectáculos musicales, actuaciones",
-          "context": "¿Conciertos hoy? Descubre música en directo, festivales y actuaciones cerca de ti",
+          "context": "Descubre conciertos, música en directo, festivales y actuaciones cerca de ti",
           "noEvents": "conciertos, festivales o espectáculos musicales"
         },
         "teatre": {
           "titleSuffix": "Obras de teatro",
           "description": "teatro, obras de teatro, monólogos, ópera, artes escénicas",
-          "context": "¿Teatro hoy? Descubre obras, monólogos y los mejores espectáculos de artes escénicas",
+          "context": "Descubre obras de teatro, monólogos y los mejores espectáculos de artes escénicas",
           "noEvents": "obras de teatro o espectáculos de artes escénicas"
         },
         "altres": {
@@ -1451,11 +1454,16 @@
           "notFound": "Lo sentimos, pero no hay {noEventsText} este fin de semana {label}. Consulta otras fechas, explora actividades en el resto de Cataluña o ajusta los filtros de la búsqueda para descubrir más opciones."
         }
       },
+      "metaDescriptionSuffix": {
+        "extended": "Consulta la agenda actualizada con horarios, ubicaciones y planes culturales.",
+        "standard": "Consulta la agenda actualizada con horarios y ubicaciones.",
+        "compact": "Consulta la agenda y horarios."
+      },
       "categoryNoDate": {
         "title": "{titleSuffix} {label} {year}",
         "subTitle": "Descubre {titleSuffix} {label} con una selección de eventos y actividades culturales. Conciertos, talleres, exposiciones, planes familiares y propuestas gratuitas.",
         "metaTitle": "{categoryTitle} {label} {year} | Qué hacer - Agenda y planes",
-        "metaDescription": "{context} {label}. Consulta la agenda.",
+        "metaDescription": "{context} {label}.",
         "notFound": "Lo sentimos, pero no hay {noEventsText} {label} en este momento. Prueba con otras fechas, categorías o localidades cercanas para descubrir nuevas propuestas culturales."
       },
       "regionNoDate": {
@@ -1475,7 +1483,7 @@
         "default": {
           "title": "Qué hacer {label}. Agenda {year}",
           "metaTitle": "Qué hacer {label} - Agenda y planes {year}",
-          "metaDescription": "Descubre la agenda hoy {label} este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes."
+          "metaDescription": "Descubre qué hacer {label} este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes."
         },
         "titleTest": {
           "metaTitle": "Agenda {placeOf}: conciertos, ferias y fiestas"
