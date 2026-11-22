@@ -116,6 +116,12 @@ describe("publica analytics helpers", () => {
     expect(matchCreateEventFailureReason("conflict", 409)).toBe("duplicate");
     expect(matchCreateEventFailureReason("bad request", 400)).toBe("validation");
     expect(matchCreateEventFailureReason("unprocessable", 422)).toBe("validation");
+    expect(
+      matchCreateEventFailureReason('title "Duplicate Festival" too short', 400),
+    ).toBe("validation");
+    expect(
+      matchCreateEventFailureReason('title "Duplicate Festival" crashed', 500),
+    ).toBeNull();
     expect(matchCreateEventFailureReason("internal error", 500)).toBeNull();
   });
 });

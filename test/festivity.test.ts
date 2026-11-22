@@ -31,6 +31,8 @@ describe("festivity matching (real titles)", () => {
     "Mercat nadalenc",
     "Fira de l’Avet d’Espinelves",
     "Fira de l'Avet",
+    "Fira d'Avets",
+    "Fira d’Avets",
     "Fira Tió",
     "Fira del Tió",
   ])("%s is a fira de Nadal", (title) => {

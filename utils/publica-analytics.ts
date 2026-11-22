@@ -45,22 +45,28 @@ export function matchCreateEventFailureReason(
   if (normalized.includes(EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR)) {
     return "image-too-large";
   }
+
+  // When an HTTP status is known (server action), classify from status alone
+  // so echoed user fields (e.g. a title containing "duplicate") in 400 or 500
+  // bodies never get misreported as duplicate errors.
+  if (typeof status === "number") {
+    if (status === 413) return "body-limit";
+    if (status === 409) return "duplicate";
+    if (status === 400 || status === 422) return "validation";
+    return null;
+  }
+
   if (
-    status === 413 ||
     normalized.includes("status: 413") ||
     normalized.includes("request entity too large")
   ) {
     return "body-limit";
   }
   if (
-    status === 409 ||
     normalized.includes("duplicate") ||
     normalized.includes("integrity violation")
   ) {
     return "duplicate";
-  }
-  if (status === 400 || status === 422) {
-    return "validation";
   }
   return null;
 }

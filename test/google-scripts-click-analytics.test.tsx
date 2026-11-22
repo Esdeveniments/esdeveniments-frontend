@@ -139,4 +139,51 @@ describe("GoogleScriptsHeavy ad-free checkout routes", () => {
       document.querySelector('script[src*="adsbygoogle"]'),
     ).not.toBeNull();
   });
+
+  it("cancels a queued idle callback if unmounted before Auto Ads initializes", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.resetModules();
+      vi.stubEnv("NEXT_PUBLIC_GOOGLE_ADS", "ca-pub-123456");
+      window.history.pushState({}, "", "/barcelona");
+      delete window.__autoAdsInitialized;
+      delete window.__autoAdsInitPending;
+      const pushSpy = vi.fn();
+      (window as unknown as { adsbygoogle: { push: typeof pushSpy } }).adsbygoogle = {
+        push: pushSpy,
+      };
+      let queuedIdle: (() => void) | null = null;
+      const cancelIdleSpy = vi.fn(() => {
+        queuedIdle = null;
+      });
+      const origRic = window.requestIdleCallback;
+      const origCic = window.cancelIdleCallback;
+      window.requestIdleCallback = vi.fn((cb: IdleRequestCallback) => {
+        queuedIdle = () => cb({ didTimeout: false, timeRemaining: () => 50 });
+        return 42;
+      });
+      window.cancelIdleCallback = cancelIdleSpy;
+
+      try {
+        const GoogleScriptsHeavy = (await import("../app/GoogleScriptsHeavy")).default;
+        const { unmount } = render(
+          <GoogleScriptsHeavy adsAllowed={true} adsScriptReady={false} />,
+        );
+        // Fire the 1s timer so pushAutoAds queues the idle callback.
+        vi.advanceTimersByTime(1000);
+        expect(queuedIdle).not.toBeNull();
+
+        // Simulate navigating away before the idle callback fires.
+        unmount();
+        expect(cancelIdleSpy).toHaveBeenCalledWith(42);
+        expect(pushSpy).not.toHaveBeenCalled();
+      } finally {
+        window.requestIdleCallback = origRic;
+        window.cancelIdleCallback = origCic;
+        delete (window as unknown as { adsbygoogle?: unknown }).adsbygoogle;
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 
 import { isE2ETestBuild } from "@utils/env";
 import { ensureGtag, isAdFreePath } from "@utils/analytics";
+import { scheduleIdleCallback } from "@utils/browser";
 import { ADS_SCRIPT_SETTLED_EVENT } from "@lib/context/AdContext";
 import type { GoogleScriptsHeavyProps } from "types/ads";
 
@@ -221,8 +222,10 @@ export default function GoogleScriptsHeavy({
     if (isE2ETestBuild) return;
     if (!adsAllowed || !ADS_CLIENT || adFreeRoute) return;
 
-    // Track all timeouts for cleanup
+    // Track all timers and idle callbacks for cleanup
     const timeoutIds: ReturnType<typeof setTimeout>[] = [];
+    let cancelIdle: (() => void) | undefined;
+    let active = true;
 
     const setPendingToken = () => {
       const token = Symbol("auto-ads-init");
@@ -252,13 +255,13 @@ export default function GoogleScriptsHeavy({
     const pendingToken = setPendingToken();
 
     const pushAutoAds = () => {
-      if (autoAdsInitRef.current || window.__autoAdsInitialized) {
+      if (!active || autoAdsInitRef.current || window.__autoAdsInitialized) {
         clearPendingToken(pendingToken);
         return;
       }
 
       const initAds = () => {
-        if (autoAdsInitRef.current || window.__autoAdsInitialized) {
+        if (!active || autoAdsInitRef.current || window.__autoAdsInitialized) {
           clearPendingToken(pendingToken);
           return;
         }
@@ -273,7 +276,7 @@ export default function GoogleScriptsHeavy({
           clearPendingToken(pendingToken);
         } catch {
           const retryId = setTimeout(() => {
-            if (autoAdsInitRef.current || window.__autoAdsInitialized) {
+            if (!active || autoAdsInitRef.current || window.__autoAdsInitialized) {
               clearPendingToken(pendingToken);
               return;
             }
@@ -294,17 +297,14 @@ export default function GoogleScriptsHeavy({
         }
       };
 
-      if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(() => initAds(), { timeout: 2000 });
-      } else {
-        const fallbackId = setTimeout(initAds, 500);
-        timeoutIds.push(fallbackId);
-      }
+      cancelIdle = scheduleIdleCallback(initAds, { timeout: 2000 });
     };
 
     const timer = setTimeout(pushAutoAds, 1000);
     timeoutIds.push(timer);
     return () => {
+      active = false;
+      cancelIdle?.();
       timeoutIds.forEach((id) => clearTimeout(id));
       if (autoAdsPendingToken.current === pendingToken) {
         autoAdsPendingToken.current = null;

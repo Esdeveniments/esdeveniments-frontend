@@ -152,7 +152,7 @@ describe("Publica submit-time createEventAction result handling", () => {
     ["image-too-large", "imageTooLarge"],
     ["invalid-image", "posterAutofill.errorInvalidImage"],
     ["body-limit", "errorBodyLimit"],
-    ["validation", "errorCreate"],
+    ["validation", "errorValidation"],
   ] as const)(
     "shows actionable error without auth gate for %s result",
     async (reason, expectedText) => {

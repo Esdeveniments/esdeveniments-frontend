@@ -358,6 +358,7 @@
       "sponsorTitle": "Tens un negoci local?",
       "sponsorLink": "Mira les opcions de patrocini",
       "errorCreate": "No hem pogut crear l'esdeveniment. Torna-ho a provar.",
+      "errorValidation": "Revisa les dades del formulari abans de tornar-ho a provar.",
       "errorBodyLimit": "La imatge i les dades superen el límit de 10 MB. Tria una imatge més petita.",
       "errorGeneric": "No hem pogut publicar l'esdeveniment. Torna-ho a provar.",
       "errorFormParsing": "S'ha tallat la connexió mentre s'enviava el formulari. Recarrega la pàgina i torna-ho a provar.",

@@ -650,7 +650,7 @@ const PublishForm = () => {
           } else if (result.reason === "body-limit") {
             setError(t("errorBodyLimit"));
           } else {
-            setError(t("errorCreate"));
+            setError(t("errorValidation"));
           }
           return;
         }
