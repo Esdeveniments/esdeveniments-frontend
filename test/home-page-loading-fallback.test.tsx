@@ -36,8 +36,9 @@ describe("home page loading fallback", () => {
     expect(html).toContain('data-testid="home-page-skeleton"');
     expect(html).toContain('data-testid="home-events-skeleton"');
     expect(html).toContain('href="/openapi.json"');
-    // Crawlers that don't run JS read headings in source order.
-    expect(html.match(/<h[1-6][\s>]/)?.[0]).toBe("<h1 ");
+    // Fallback omits headings so the streamed HeroSection remains the sole <h1>
+    // in raw HTML without duplicate <h1> tags or an <h2> before <h1>.
+    expect(html).not.toMatch(/<h[1-6][\s>]/);
     // The hero skeleton carries the real hero text, so it has the same height.
     expect(html).toContain('data-testid="hero-section-skeleton"');
   });

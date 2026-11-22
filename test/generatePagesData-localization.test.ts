@@ -63,4 +63,92 @@ describe("generatePagesData localization", () => {
       expect(result.metaTitle).toContain("(1 de novembre)");
     });
   });
+
+  describe("listing meta descriptions stay within 120-156 chars and date-consistent", () => {
+    const categories = [
+      "literatura",
+      "fires-i-mercats",
+      "festes-populars",
+      "tallers-i-formacio",
+      "dansa",
+      "salut-i-benestar",
+      "esport",
+      "patrimoni-cultural",
+      "serveis-municipals",
+      "gent-gran",
+      "familia-i-infants",
+      "exposicions",
+      "cinema",
+      "musica",
+      "teatre",
+      "altres",
+    ] as const;
+
+    const places = [
+      { place: "bot", placeTypeLabel: { type: "town", label: "Bot" } },
+      { place: "barcelona", placeTypeLabel: { type: "town", label: "Barcelona" } },
+      {
+        place: "el-pont-de-vilomara-i-rocafort",
+        placeTypeLabel: { type: "town", label: "El Pont de Vilomara i Rocafort" },
+      },
+    ] as const;
+
+    const dates = ["", "avui", "dema", "setmana", "cap-de-setmana"] as const;
+    const locales = ["ca", "es", "en"] as const;
+
+    it("keeps all category, date, and place combinations between 120 and 156 chars without today-leakage", async () => {
+      for (const locale of locales) {
+        for (const { place, placeTypeLabel } of places) {
+          for (const byDate of dates) {
+            const plain = await generatePagesData({
+              currentYear: 2026,
+              place,
+              byDate,
+              placeTypeLabel,
+              locale,
+            });
+            expect(
+              plain.metaDescription.length,
+              `${locale}/${place}/${byDate}: "${plain.metaDescription}"`,
+            ).toBeGreaterThanOrEqual(120);
+            expect(
+              plain.metaDescription.length,
+              `${locale}/${place}/${byDate}: "${plain.metaDescription}"`,
+            ).toBeLessThanOrEqual(156);
+            if (byDate !== "avui") {
+              expect(
+                plain.metaDescription.toLowerCase(),
+                `${locale}/${place}/${byDate}`,
+              ).not.toMatch(/\b(avui|hoy|today)\b/);
+            }
+
+            for (const category of categories) {
+              const res = await generatePagesData({
+                currentYear: 2026,
+                place,
+                byDate,
+                placeTypeLabel,
+                category,
+                locale,
+              });
+              expect(
+                res.metaDescription.length,
+                `${locale}/${place}/${byDate}/${category}: "${res.metaDescription}"`,
+              ).toBeGreaterThanOrEqual(120);
+              expect(
+                res.metaDescription.length,
+                `${locale}/${place}/${byDate}/${category}: "${res.metaDescription}"`,
+              ).toBeLessThanOrEqual(156);
+              if (byDate !== "avui") {
+                expect(
+                  res.metaDescription.toLowerCase(),
+                  `${locale}/${place}/${byDate}/${category}`,
+                ).not.toMatch(/\b(avui|hoy|today)\b/);
+              }
+            }
+          }
+        }
+      }
+    });
+  });
 });

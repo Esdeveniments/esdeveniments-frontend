@@ -112,19 +112,14 @@ export async function generateMetadata({
     locale,
   });
 
-  // Noindex thin filter sub-pages for non-expandable places. See lib/seo/place-expandability.ts
-  // and [byDate]/page.tsx for full rationale (sitemap/index policy must stay in sync).
-  const expandable = await getPlaceExpandability(
-    filters.place,
-    placeTypeAndLabel.type,
-  );
-
+  // 3-segment date+category listings are always noindex, follow (canonical points
+  // to /[place]/[category]). Keep meta robots aligned with proxy.ts's X-Robots-Tag.
   return buildPageMeta({
     title: pageData.title,
     description: pageData.metaDescription,
     canonical: pageData.canonical,
     locale,
-    robotsOverride: expandable ? undefined : "noindex, follow",
+    robotsOverride: "noindex, follow",
   });
 }
 
