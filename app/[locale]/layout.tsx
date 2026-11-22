@@ -159,27 +159,6 @@ export default async function LocaleLayout({
           dangerouslySetInnerHTML={{ __html: REVEAL_THROTTLE_OFF_SCRIPT }}
         />
         <script dangerouslySetInnerHTML={{ __html: SIGNED_IN_HINT_SCRIPT }} />
-        {/* Early PWA install-prompt capture. Chromium fires `beforeinstallprompt`
-            once, often before lazy React chunks hydrate; if no listener exists
-            yet, the install CTA is lost for the whole session. This synchronous
-            inline script stashes the event so usePwaInstall (types/pwa.ts keeps
-            the event names in sync) can consume it whenever it mounts. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.addEventListener('beforeinstallprompt', function (e) {
-                e.preventDefault();
-                window.__pwaDeferredPrompt = e;
-                window.dispatchEvent(new Event('pwa:install-prompt-ready'));
-              });
-              window.addEventListener('appinstalled', function () {
-                window.__pwaDeferredPrompt = null;
-                window.__pwaInstalled = true;
-                window.dispatchEvent(new Event('pwa:installed'));
-              });
-            `,
-          }}
-        />
         {/* googlefcPresent iframe: Google requires it before Funding Choices
             loads. It lives here, not as a beforeInteractive <Script> in
             GoogleScripts: inside that streamed client tree the inline script

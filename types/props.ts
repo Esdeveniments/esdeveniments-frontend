@@ -471,11 +471,13 @@ export interface TextAreaProps {
 
 export interface SocialProps {
   links: {
+    whatsapp?: string;
     twitter?: string;
     instagram?: string;
     telegram?: string;
     facebook?: string;
     threads?: string;
+    bluesky?: string;
     linkedin?: string;
     tiktok?: string;
     mastodon?: string;
@@ -483,9 +485,22 @@ export interface SocialProps {
   };
 }
 
-export interface SocialPopupState {
-  dismissCount: number;
-  lastDismissedAt: number;
+export type CommunityStripContext =
+  | "listing_inline"
+  | "thin_town_inline"
+  | "event_inline";
+
+export interface CommunityStripProps {
+  /** Locale passed from Server Component (safe inside "use cache"). */
+  locale: AppLocale;
+  /** Placement context (drives GA4 `context` and thin-town vs follow mode). */
+  context: CommunityStripContext;
+  /** Place slug for GA4 `place_slug`. */
+  placeSlug?: string;
+  /** Place display label for thin-town organizer copy (e.g. "Terrassa"). */
+  placeLabel?: string;
+  /** Place type for Catalan preposition contraction ("town" | "region" | ""). */
+  placeType?: PlacePhraseType;
 }
 
 // Removed EventsListProps - no longer needed with server-side architecture

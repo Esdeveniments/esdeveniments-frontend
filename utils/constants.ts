@@ -67,6 +67,8 @@ export const FESTA_MAJOR_TERM = "festa major";
 export const FESTA_MAJOR_MIN_INDEXABLE_ACTS = 5;
 /** A Nadal collection (/fires-de-nadal…) needs events in this many towns to be indexed. */
 export const FESTIVITY_MIN_INDEXABLE_TOWNS = 5;
+/** Unfiltered town listings with fewer upcoming events show the inline organizer publish CTA. */
+export const THIN_TOWN_EVENT_THRESHOLD = 5;
 /**
  * server-festa-major-sitemap.xml waits this long for its reads. A cold read
  * (after a deploy purges everything, or once a quiet festivity's cache entry

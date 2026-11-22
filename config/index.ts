@@ -1,5 +1,5 @@
 import { normalizeHost } from "@utils/host-validation";
-import type { SocialLinks } from "types/common";
+import type { SocialLinks, SocialProfileMeta } from "types/common";
 
 /**
  * Get the site URL based on the environment
@@ -161,19 +161,34 @@ export const siteUrl = getSiteUrl();
 export const contactEmail =
   process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hola@esdeveniments.cat";
 
-/** Canonical social media links — single source of truth for footer, schema, popups. */
+/** Canonical social media links — single source of truth for footer, schema, inline strips. */
 export const socialLinks: SocialLinks = {
   web: "https://www.esdeveniments.cat",
-  twitter: "https://x.com/esdeveniments_",
+  whatsapp: "https://whatsapp.com/channel/0029VbDgBXq1XqudnnEs6i3W",
   instagram: "https://www.instagram.com/esdeveniments.cat",
+  twitter: "https://x.com/esdeveniments_",
   telegram: "https://t.me/esdeveniments",
   facebook: "https://www.facebook.com/esdeveniments.cat",
   threads: "https://www.threads.com/@esdeveniments.cat",
+  bluesky: "https://bsky.app/profile/esdeveniments.bsky.social",
   linkedin: "https://www.linkedin.com/company/esdeveniments-cat",
   // tiktok: "https://www.tiktok.com/@esdeveniments",
   mastodon: "https://mastodon.social/@esdeveniments",
   github: "https://github.com/esdeveniments",
 };
+
+/** Ordered community social profiles shared by Footer and CommunityStrip. */
+export const socialProfiles: readonly SocialProfileMeta[] = [
+  { platform: "whatsapp", label: "WhatsApp" },
+  { platform: "instagram", label: "Instagram" },
+  { platform: "telegram", label: "Telegram" },
+  { platform: "threads", label: "Threads" },
+  { platform: "bluesky", label: "Bluesky" },
+  { platform: "facebook", label: "Facebook" },
+  { platform: "twitter", label: "X" },
+  { platform: "mastodon", label: "Mastodon", relExtra: "me" },
+  { platform: "linkedin", label: "LinkedIn" },
+];
 
 /** Public source repo; its AGENTS.md documents the site for coding agents. */
 export const githubRepoUrl =
@@ -181,11 +196,13 @@ export const githubRepoUrl =
 
 /** Social links for JSON-LD sameAs (excludes web, telegram). */
 export const socialLinksSameAs: string[] = [
+  socialLinks.whatsapp,
   socialLinks.facebook,
   socialLinks.instagram,
   // socialLinks.tiktok,
   socialLinks.twitter,
   socialLinks.threads,
+  socialLinks.bluesky,
   socialLinks.mastodon,
   socialLinks.linkedin,
   socialLinks.github,

@@ -135,16 +135,25 @@ export interface NavigationItem {
 
 export interface SocialLinks {
   web: string;
-  twitter: string;
+  whatsapp: string;
   instagram: string;
+  twitter: string;
   telegram: string;
   facebook: string;
   threads: string;
+  bluesky: string;
   linkedin: string;
   tiktok?: string;
   mastodon: string;
   github: string;
   [key: string]: string | undefined;
+}
+
+/** Metadata for a social profile rendered in Footer and CommunityStrip. */
+export interface SocialProfileMeta {
+  platform: Exclude<keyof SocialLinks, "web" | number>;
+  label: string;
+  relExtra?: string;
 }
 
 /** SVG icon data for a social platform (viewBox + path). */
