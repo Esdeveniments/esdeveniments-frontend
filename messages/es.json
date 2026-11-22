@@ -577,6 +577,7 @@
       }
     },
     "EventMeta": {
+      "descriptionSuffixFull": "Consulta el horario, la ubicación, el precio y cómo llegar, y descubre más planes y actividades culturales cerca.",
       "descriptionSuffixExtended": "Consulta el horario, la ubicación, cómo llegar y descubre más planes culturales cerca.",
       "descriptionSuffix": "Consulta el horario, cómo llegar y más planes cerca.",
       "descriptionSuffixCompact": "Consulta horarios y cómo llegar."

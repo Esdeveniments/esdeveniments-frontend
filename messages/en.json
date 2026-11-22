@@ -577,6 +577,7 @@
       }
     },
     "EventMeta": {
+      "descriptionSuffixFull": "See times, venue details, prices and directions, and discover more local events and cultural plans nearby.",
       "descriptionSuffixExtended": "See times, venue details, directions and discover more local cultural events nearby.",
       "descriptionSuffix": "See times, directions and more things to do nearby.",
       "descriptionSuffixCompact": "See times and how to get there."

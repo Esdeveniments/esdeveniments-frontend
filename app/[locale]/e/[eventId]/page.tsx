@@ -119,6 +119,7 @@ async function buildEventPageMetadata(
     undefined,
     locale,
     [
+      t("descriptionSuffixFull"),
       t("descriptionSuffixExtended"),
       t("descriptionSuffix"),
       t("descriptionSuffixCompact"),

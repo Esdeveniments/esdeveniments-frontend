@@ -577,6 +577,7 @@
       }
     },
     "EventMeta": {
+      "descriptionSuffixFull": "Consulta l'horari, la ubicació, el preu i com arribar-hi, i descobreix més plans i activitats culturals a prop.",
       "descriptionSuffixExtended": "Consulta l'horari, la ubicació, com arribar-hi i descobreix més plans culturals a prop.",
       "descriptionSuffix": "Consulta l'horari, com arribar-hi i més plans a prop.",
       "descriptionSuffixCompact": "Consulta l'horari i la ubicació."

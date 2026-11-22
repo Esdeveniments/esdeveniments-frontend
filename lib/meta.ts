@@ -123,7 +123,7 @@ export function fitMetaDescription(
   const cleaned = sanitizeAndTrim(base);
   if (!cleaned) return "";
   if (cleaned.length > META_DESCRIPTION_MAX) {
-    return truncateAtWord(cleaned, META_DESCRIPTION_MAX);
+    return truncateAtWord(cleaned, META_DESCRIPTION_MAX - 1);
   }
   return appendSentenceIfShort(cleaned, sentences);
 }

@@ -769,8 +769,8 @@ jobs:
               *) echo "::error::A browser got '$CONTENT_TYPE' after an Accept: text/markdown request to the same URL. Add or reorder the Cloudflare bypass rule (docs/incidents/2026-04-04-cloudflare-rsc-cache-poisoning.md)"; FAILED=1 ;;
             esac
 
-            # Private owner paths must never be cached by Cloudflare Rule #1
-            # (guards against reverting Edge TTL to "Ignore cache-control").
+            # Private owner paths must stay out of Cloudflare's HTML cache
+            # (verifies Rule #1's path exclusions + origin private, no-store).
             cf_cache_status() {
               curl -s -D - -o /dev/null --max-time 10 -A "$1" "$2" \
                 | awk -F': ' 'tolower($1)=="cf-cache-status"{gsub(/\r/,"",$2); print toupper($2)}' | tail -1
@@ -778,12 +778,20 @@ jobs:
 
             EDITA_URL="${SITE_URL}/e/smoke-check-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/edita"
             cf_cache_status "Mozilla/5.0" "$EDITA_URL" > /dev/null || true
-            EDITA_CF=$(cf_cache_status "Mozilla/5.0" "$EDITA_URL") || EDITA_CF=""
-            if [ "$EDITA_CF" = "HIT" ]; then
-              echo "::error::Private /edita route returned cf-cache-status: HIT. Check Cloudflare Rule #1 uses 'Use cache-control header if present, bypass cache if not' and excludes edita/promote (LESSONS.md)."
+            EDITA_CF=""
+            for attempt in 1 2 3; do
+              EDITA_CF=$(cf_cache_status "Mozilla/5.0" "$EDITA_URL") || EDITA_CF=""
+              [ -n "$EDITA_CF" ] && break
+              [ "$attempt" -lt 3 ] && sleep 2
+            done
+            if [ -z "$EDITA_CF" ]; then
+              echo "::error::Could not read cf-cache-status from private /edita route after 3 attempts."
+              FAILED=1
+            elif [ "$EDITA_CF" = "HIT" ]; then
+              echo "::error::Private /edita route returned cf-cache-status: HIT. Check Cloudflare Rule #1 excludes edita/promote and uses 'Use cache-control header if present, bypass cache if not' (LESSONS.md)."
               FAILED=1
             else
-              echo "Private /edita kept out of CDN cache (${EDITA_CF:-unknown}): OK"
+              echo "Private /edita kept out of CDN cache (${EDITA_CF}): OK"
             fi
 
             # Sitemaps should edge-cache for search crawlers via Rule #2
