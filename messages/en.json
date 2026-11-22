@@ -95,14 +95,14 @@
     },
     "About": {
       "metaTitle": "About us - Cultural agenda of Catalonia | Esdeveniments.cat",
-      "metaDescription": "Meet the team behind Esdeveniments.cat, the collaborative agenda of concerts, exhibitions, theatre and cultural activities in Catalonia. Free citizen initiative.",
+      "metaDescription": "Meet the team behind Esdeveniments.cat: an independent project and free cultural agenda of concerts, theatre, festivals and activities in Catalonia.",
       "schemaName": "About us - Esdeveniments.cat",
-      "schemaDescription": "Meet the Esdeveniments.cat team and the mission behind the collaborative cultural agenda of Catalonia.",
+      "schemaDescription": "Meet the Esdeveniments.cat team, the independent project behind Catalonia's collaborative cultural agenda.",
       "heading": "Who are we?",
       "subheading": "esdeveniments.cat",
-      "paragraph1": "Esdeveniments.cat is a citizen initiative to easily and quickly see all the cultural events happening in Catalonia.",
-      "paragraph2": "The agenda is collaborative, and anyone organizing a cultural event can publish it <publish>here</publish> on their own.",
-      "paragraph3": "You can follow the cultural agenda on this website or follow us on social networks:",
+      "paragraph1": "Esdeveniments.cat is Catalonia's largest free cultural agenda: concerts, theatre, local festivals, fairs, markets and family activities across more than 900 municipalities.",
+      "paragraph2": "It is an independent, collaborative project: anyone organizing an event can publish it <publish>here</publish>.",
+      "paragraph3": "You can browse the full agenda on the website and follow highlighted picks on our social channels.",
       "contactHeading": "Contact",
       "contactBody": "For partnerships, press, or questions, email us.",
       "contactCta": "Email us",
@@ -415,7 +415,54 @@
         "shareTitle": "It's live! Now spread the word",
         "shareDescription": "Send it to your groups and contacts: it's the quickest way to reach more people."
       },
-      "dateEnded": "This event has already ended. Check the dates before you publish it."
+      "dateEnded": "This event has already ended. Check the dates before you publish it.",
+      "posterAutofill": {
+        "heading": "Fill from poster",
+        "description": "Upload, drop, or paste an image.",
+        "descriptionGuest": "Upload and sign in to scan it.",
+        "descriptionReady": "Scan this poster to fill the form.",
+        "descriptionReadyGuest": "Sign in to scan this poster.",
+        "headingSuccess": "Poster scanned",
+        "headingEmpty": "No event details found",
+        "headingError": "Couldn't scan poster",
+        "thumbAlt": "Poster preview",
+        "pickButton": "Choose poster",
+        "changeButton": "Change poster",
+        "analyzeExistingButton": "Scan poster",
+        "retryButton": "Try again",
+        "cancelButton": "Cancel",
+        "undoButton": "Undo fields",
+        "statusPreparing": "Preparing poster…",
+        "statusChecking": "Checking availability…",
+        "statusAnalyzing": "Reading poster…",
+        "statusHint": "Event details will fill automatically.",
+        "successSummary": "Filled: {fields}.",
+        "successWarningsOnly": "Review the notes below before publishing.",
+        "fields": {
+          "title": "title",
+          "description": "description",
+          "url": "link",
+          "town": "town",
+          "location": "venue",
+          "categories": "categories",
+          "dates": "dates",
+          "price": "price"
+        },
+        "emptyResult": "Poster kept. Fill in the details manually.",
+        "warningUnmatchedTown": "\"{town}\" not found, pick it in Location",
+        "warningDateInferred": "year inferred from poster",
+        "warningPastDate": "this date is in the past",
+        "warningPriceReview": "multiple prices or donation entry",
+        "warningMultiLabel": "programme",
+        "warningMultiEvent": "multiple events on poster",
+        "errorUnavailable": "Unavailable right now. Poster kept.",
+        "errorRateLimited": "Daily scan limit reached. Poster kept.",
+        "errorBusy": "Scanner is busy. Try again in a few seconds.",
+        "errorTimeout": "Scan timed out. Try again or fill manually.",
+        "errorInvalidImage": "Unreadable image. Try a JPG or PNG.",
+        "errorNetwork": "Connection failed. Try again.",
+        "errorGeneric": "Poster kept. Try again or fill in manually."
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",
@@ -530,7 +577,10 @@
       }
     },
     "EventMeta": {
-      "descriptionSuffix": "See times, directions and more things to do nearby."
+      "descriptionSuffixFull": "See times, venue details, prices and directions, and discover more local events and cultural plans nearby.",
+      "descriptionSuffixExtended": "See times, venue details, directions and discover more local cultural events nearby.",
+      "descriptionSuffix": "See times, directions and more things to do nearby.",
+      "descriptionSuffixCompact": "See times and how to get there."
     }
   },
   "Components": {
@@ -1102,6 +1152,8 @@
       "clear": "Clear dates"
     },
     "DatePicker": {
+      "startDate": "Start date",
+      "endDate": "End date",
       "startTime": "Start time",
       "endTime": "End time",
       "dateAndTime": "Date and time",
@@ -1277,13 +1329,13 @@
         "fires-i-mercats": {
           "titleSuffix": "Fairs and markets",
           "description": "markets, fairs, artisan markets, local products, crafts",
-          "context": "Markets today? Discover fairs and artisan markets with local products near you",
+          "context": "Discover fairs and artisan markets with local products near you",
           "noEvents": "fairs or markets in the area"
         },
         "festes-populars": {
           "titleSuffix": "Local festivals",
           "description": "local festivals, traditional celebrations, correfocs, castells, folk culture",
-          "context": "Festivals today? Discover correfocs, castellers, and the best Catalan traditional festivals",
+          "context": "Discover correfocs, castellers, and the best Catalan traditional festivals",
           "noEvents": "popular festivals or traditional celebrations"
         },
         "tallers-i-formacio": {
@@ -1337,25 +1389,25 @@
         "exposicions": {
           "titleSuffix": "Exhibitions and museums",
           "description": "exhibitions, museums, art galleries, visual art, cultural routes",
-          "context": "Exhibitions today? Discover museums, art galleries, and the best visual culture",
+          "context": "Discover exhibitions, museums, art galleries, and the best visual culture",
           "noEvents": "exhibitions or art activities"
         },
         "cinema": {
           "titleSuffix": "Cinema and movies",
           "description": "movies, cinema, film screenings, film festivals, what's on",
-          "context": "Movies today? Discover film screenings, festivals, and what's on at cinemas near you",
+          "context": "Discover film screenings, cinema listings, and festivals near you",
           "noEvents": "film screenings or audiovisual activities"
         },
         "musica": {
           "titleSuffix": "Concerts and live music",
           "description": "concerts, live music, music festivals, gigs, performances",
-          "context": "Concerts today? Discover live music, festivals, and performances near you",
+          "context": "Discover live music, concerts, festivals, and performances near you",
           "noEvents": "concerts, festivals, or musical shows"
         },
         "teatre": {
           "titleSuffix": "Theatre shows",
           "description": "theatre, plays, theatre shows, monologues, performing arts",
-          "context": "Theatre today? Discover plays, monologues, and the best performing arts shows",
+          "context": "Discover theatre plays, stand-up comedy, and performing arts shows",
           "noEvents": "theatre plays or performing arts shows"
         },
         "altres": {
@@ -1402,11 +1454,16 @@
           "notFound": "Sorry, there are no {noEventsText} this weekend {label}. Check other dates, explore activities across Catalonia, or adjust your search filters to discover more options."
         }
       },
+      "metaDescriptionSuffix": {
+        "extended": "Browse the updated agenda with times, locations, and local cultural plans.",
+        "standard": "Browse the updated agenda with times and locations.",
+        "compact": "Browse the agenda and times."
+      },
       "categoryNoDate": {
         "title": "{titleSuffix} {label} {year}",
         "subTitle": "Discover {titleSuffix} {label} with a curated selection of cultural events and activities. Concerts, workshops, exhibitions, family plans, and free options.",
         "metaTitle": "{categoryTitle} {label} {year} | What to do - Agenda and plans",
-        "metaDescription": "{context} {label}. Check the agenda.",
+        "metaDescription": "{context} {label}.",
         "notFound": "Sorry, there are no {noEventsText} {label} at this time. Try other dates, categories, or nearby locations to discover new cultural proposals."
       },
       "regionNoDate": {

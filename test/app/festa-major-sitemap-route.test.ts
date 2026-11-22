@@ -82,30 +82,75 @@ describe("server-festa-major-sitemap.xml", () => {
     expect(response.headers.get("Cache-Control")).toContain("s-maxage=21600");
   });
 
-  it("caches briefly when a Nadal collection failed to load", async () => {
+  it("does not cache a partial sitemap when a festivity collection failed to load", async () => {
     vi.mocked(fetchFestaMajorCalendar).mockResolvedValue(
-      summarizeTowns([], [], 2026, true),
+      summarizeTowns(
+        [10, 11, 12, 13, 14].map((day) => act("calella", day)),
+        [],
+        2026,
+        true,
+      ),
     );
     vi.mocked(fetchFestivityPage).mockImplementation(async (slug) =>
       festivity(slug, false, slug !== "fires-de-nadal"),
     );
 
     const response = await GET(request);
+    const xml = await response.text();
 
-    expect(response.headers.get("Cache-Control")).toContain("s-maxage=300");
+    expect(response.status).toBe(200);
+    expect(xml).toContain("/festa-major/calella</loc>");
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
   });
 
-  it("caches briefly when the calendar was cut short", async () => {
+  it("returns 503 when an incomplete read leaves only the static calendar path", async () => {
     vi.mocked(fetchFestaMajorCalendar).mockResolvedValue(
       summarizeTowns([], [], 2026, false),
+    );
+    vi.mocked(fetchFestivityPage).mockImplementation(async (slug) =>
+      festivity(slug, false, true),
     );
 
     const response = await GET(request);
 
-    expect(response.headers.get("Cache-Control")).toContain("s-maxage=300");
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("Retry-After")).toBe("300");
   });
 
-  it("keeps only the calendar, briefly cached, when the reads are too slow", async () => {
+  it("keeps the calendar when a festivity exceeds the budget, without caching", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(fetchFestaMajorCalendar).mockResolvedValue(
+        summarizeTowns(
+          [10, 11, 12, 13, 14].map((day) => act("calella", day)),
+          [],
+          2026,
+          true,
+        ),
+      );
+      vi.mocked(fetchFestivityPage).mockImplementation((slug) =>
+        slug === "fires-de-nadal"
+          ? new Promise(() => {})
+          : Promise.resolve(festivity(slug, slug === "cavalcades-de-reis")),
+      );
+
+      const pending = GET(request);
+      await vi.advanceTimersByTimeAsync(FESTA_SITEMAP_READ_BUDGET_MS);
+      const response = await pending;
+      const xml = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(xml).toContain("/festes-majors</loc>");
+      expect(xml).toContain("/festa-major/calella</loc>");
+      expect(xml).toContain("/cavalcades-de-reis</loc>");
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("returns 503 when the calendar exceeds the budget even if festivities resolve", async () => {
     vi.useFakeTimers();
     try {
       vi.mocked(fetchFestaMajorCalendar).mockReturnValue(new Promise(() => {}));
@@ -113,25 +158,35 @@ describe("server-festa-major-sitemap.xml", () => {
       const pending = GET(request);
       await vi.advanceTimersByTimeAsync(FESTA_SITEMAP_READ_BUDGET_MS);
       const response = await pending;
-      const xml = await response.text();
 
-      expect(xml).toContain("/festes-majors</loc>");
-      expect(xml).not.toContain("/festa-major/");
-      expect(xml).not.toContain("/cavalcades-de-reis");
-      expect(response.headers.get("Cache-Control")).toContain("s-maxage=300");
+      expect(response.status).toBe(503);
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+      expect(response.headers.get("Retry-After")).toBe("300");
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it("keeps only the calendar, briefly cached, when the backend fails", async () => {
+  it("returns 503 when the calendar backend fails even if festivities resolve", async () => {
     vi.mocked(fetchFestaMajorCalendar).mockResolvedValue(null);
 
     const response = await GET(request);
-    const xml = await response.text();
 
-    expect(xml).toContain("/festes-majors</loc>");
-    expect(xml).not.toContain("/festa-major/");
-    expect(response.headers.get("Cache-Control")).toContain("s-maxage=300");
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("Retry-After")).toBe("300");
+  });
+
+  it("returns 503 when all reads fail or reject", async () => {
+    vi.mocked(fetchFestaMajorCalendar).mockRejectedValue(new Error("boom"));
+    vi.mocked(fetchFestivityPage).mockImplementation(async (slug) =>
+      festivity(slug, false, false),
+    );
+
+    const response = await GET(request);
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("Retry-After")).toBe("300");
   });
 });

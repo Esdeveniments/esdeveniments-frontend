@@ -94,10 +94,12 @@ test.describe("Publish - Preview", () => {
     await nextBtn2.click();
 
     // Step 3: Dates & Image
-    await page.setInputFiles(
-      'input[type="file"]',
-      path.join(process.cwd(), "public/static/icons/icon-192x192.png"),
-    );
+    await page
+      .getByTestId("event-form")
+      .locator('input[type="file"]')
+      .setInputFiles(
+        path.join(process.cwd(), "public/static/icons/icon-192x192.png"),
+      );
 
     const previewButton = page.getByTestId("preview-button");
     await expect(previewButton).toBeVisible({ timeout: 20000 });

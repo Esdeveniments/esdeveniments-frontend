@@ -95,14 +95,14 @@
     },
     "About": {
       "metaTitle": "Quiénes somos - Agenda cultural de Cataluña | Esdeveniments.cat",
-      "metaDescription": "Conoce el equipo detrás de Esdeveniments.cat, la agenda colaborativa de conciertos, exposiciones, teatro y actividades culturales en Cataluña. Iniciativa ciudadana gratuita.",
+      "metaDescription": "Conoce al equipo de Esdeveniments.cat: proyecto independiente y agenda cultural gratuita de conciertos, teatro, fiestas y actividades en Cataluña.",
       "schemaName": "Quiénes somos - Esdeveniments.cat",
-      "schemaDescription": "Conoce el equipo de Esdeveniments.cat y la misión detrás de la agenda cultural colaborativa de Cataluña.",
-      "heading": "Quiénes somos?",
+      "schemaDescription": "Conoce al equipo de Esdeveniments.cat, el proyecto independiente detrás de la agenda cultural colaborativa de Cataluña.",
+      "heading": "¿Quiénes somos?",
       "subheading": "esdeveniments.cat",
-      "paragraph1": "Esdeveniments.cat es una iniciativa ciudadana para ver de forma fácil y rápida todos los actos culturales que se hacen en Cataluña.",
-      "paragraph2": "La agenda es colaborativa, y cada persona que organice un acto cultural podrá publicarlo <publish>aquí</publish> por su cuenta.",
-      "paragraph3": "Podrás seguir la agenda cultural en esta página web o seguirnos en las redes sociales:",
+      "paragraph1": "Esdeveniments.cat es la mayor agenda cultural gratuita de Cataluña: conciertos, teatro, fiestas mayores, ferias, mercados y actividades familiares en más de 900 municipios.",
+      "paragraph2": "Es un proyecto independiente y colaborativo: cualquier persona o entidad que organice un acto puede publicarlo <publish>aquí</publish>.",
+      "paragraph3": "Puedes consultar la agenda completa en la web y seguir las propuestas destacadas en nuestras redes sociales.",
       "contactHeading": "Contacto",
       "contactBody": "Para colaboraciones, prensa o dudas, escríbenos.",
       "contactCta": "Escríbenos",
@@ -415,7 +415,54 @@
         "shareTitle": "¡Publicado! Ahora compártelo",
         "shareDescription": "Envíalo a tus grupos y contactos: es la forma más rápida de llegar a más gente."
       },
-      "dateEnded": "Este evento ya ha terminado. Revisa las fechas antes de publicarlo."
+      "dateEnded": "Este evento ya ha terminado. Revisa las fechas antes de publicarlo.",
+      "posterAutofill": {
+        "heading": "Rellena con el cartel",
+        "description": "Sube, arrastra o pega la imagen.",
+        "descriptionGuest": "Súbelo e inicia sesión para leerlo.",
+        "descriptionReady": "Lee el cartel para rellenar los campos.",
+        "descriptionReadyGuest": "Inicia sesión para leer el cartel.",
+        "headingSuccess": "Cartel leído",
+        "headingEmpty": "No hemos encontrado datos",
+        "headingError": "No se ha podido leer el cartel",
+        "thumbAlt": "Vista previa del cartel",
+        "pickButton": "Elegir cartel",
+        "changeButton": "Cambiar cartel",
+        "analyzeExistingButton": "Leer cartel",
+        "retryButton": "Volver a intentarlo",
+        "cancelButton": "Cancelar",
+        "undoButton": "Deshacer campos",
+        "statusPreparing": "Preparando el cartel…",
+        "statusChecking": "Comprobando disponibilidad…",
+        "statusAnalyzing": "Leyendo el cartel…",
+        "statusHint": "Los campos se rellenarán automáticamente.",
+        "successSummary": "Rellenado: {fields}.",
+        "successWarningsOnly": "Revisa los avisos antes de publicar.",
+        "fields": {
+          "title": "título",
+          "description": "descripción",
+          "url": "enlace",
+          "town": "municipio",
+          "location": "lugar",
+          "categories": "categorías",
+          "dates": "fechas",
+          "price": "precio"
+        },
+        "emptyResult": "Hemos guardado el cartel. Rellena los campos a mano.",
+        "warningUnmatchedTown": "«{town}» no encontrado, selecciónalo en ubicación",
+        "warningDateInferred": "año deducido del cartel",
+        "warningPastDate": "esta fecha ya ha pasado",
+        "warningPriceReview": "varias tarifas o taquilla inversa",
+        "warningMultiLabel": "programa",
+        "warningMultiEvent": "varios actos en el cartel",
+        "errorUnavailable": "No disponible ahora. Hemos guardado el cartel.",
+        "errorRateLimited": "Límite diario alcanzado. Hemos guardado el cartel.",
+        "errorBusy": "Servicio ocupado. Inténtalo en unos segundos.",
+        "errorTimeout": "Ha tardado demasiado. Inténtalo de nuevo o rellénalo a mano.",
+        "errorInvalidImage": "Imagen ilegible. Prueba con un JPG o PNG.",
+        "errorNetwork": "Sin conexión. Inténtalo de nuevo.",
+        "errorGeneric": "Hemos guardado el cartel. Puedes intentarlo de nuevo o rellenarlo a mano."
+      }
     },
     "PlaceFallback": {
       "placeSuffix": " {placeIn}",
@@ -530,7 +577,10 @@
       }
     },
     "EventMeta": {
-      "descriptionSuffix": "Consulta el horario, cómo llegar y más planes cerca."
+      "descriptionSuffixFull": "Consulta el horario, la ubicación, el precio y cómo llegar, y descubre más planes y actividades culturales cerca.",
+      "descriptionSuffixExtended": "Consulta el horario, la ubicación, cómo llegar y descubre más planes culturales cerca.",
+      "descriptionSuffix": "Consulta el horario, cómo llegar y más planes cerca.",
+      "descriptionSuffixCompact": "Consulta horarios y cómo llegar."
     }
   },
   "Components": {
@@ -1102,6 +1152,8 @@
       "clear": "Borrar fechas"
     },
     "DatePicker": {
+      "startDate": "Fecha de inicio",
+      "endDate": "Fecha de fin",
       "startTime": "Hora de inicio",
       "endTime": "Hora de fin",
       "dateAndTime": "Fecha y hora",
@@ -1277,13 +1329,13 @@
         "fires-i-mercats": {
           "titleSuffix": "Ferias y mercados",
           "description": "mercados, ferias, mercados artesanales, productos locales, artesanía",
-          "context": "¿Mercados hoy? Descubre ferias y mercados artesanales con productos locales",
+          "context": "Descubre ferias y mercados artesanales con productos locales",
           "noEvents": "ferias ni mercados en la zona"
         },
         "festes-populars": {
           "titleSuffix": "Fiestas mayores y populares",
           "description": "fiestas mayores, fiestas populares, correfocs, castells, celebraciones tradicionales",
-          "context": "¿Fiestas mayores hoy? Descubre correfocs, castellers y las mejores fiestas populares catalanas",
+          "context": "Descubre correfocs, castellers y las mejores fiestas populares catalanas",
           "noEvents": "fiestas populares o celebraciones tradicionales"
         },
         "tallers-i-formacio": {
@@ -1337,25 +1389,25 @@
         "exposicions": {
           "titleSuffix": "Exposiciones y museos",
           "description": "exposiciones, museos, galerías de arte, arte visual, rutas culturales",
-          "context": "¿Exposiciones hoy? Descubre museos, galerías de arte y la mejor cultura visual",
+          "context": "Descubre exposiciones, museos, galerías de arte y la mejor cultura visual",
           "noEvents": "exposiciones o actividades de arte"
         },
         "cinema": {
           "titleSuffix": "Cartelera de cine",
           "description": "cartelera, cine, películas, proyecciones, festivales de cine",
-          "context": "¿Cartelera hoy? Descubre películas, proyecciones y festivales de cine",
+          "context": "Descubre la cartelera de cine, películas, proyecciones y festivales",
           "noEvents": "proyecciones de cine o actividades audiovisuales"
         },
         "musica": {
           "titleSuffix": "Conciertos y música en directo",
           "description": "conciertos, música en directo, festivales, espectáculos musicales, actuaciones",
-          "context": "¿Conciertos hoy? Descubre música en directo, festivales y actuaciones cerca de ti",
+          "context": "Descubre conciertos, música en directo, festivales y actuaciones cerca de ti",
           "noEvents": "conciertos, festivales o espectáculos musicales"
         },
         "teatre": {
           "titleSuffix": "Obras de teatro",
           "description": "teatro, obras de teatro, monólogos, ópera, artes escénicas",
-          "context": "¿Teatro hoy? Descubre obras, monólogos y los mejores espectáculos de artes escénicas",
+          "context": "Descubre obras de teatro, monólogos y los mejores espectáculos de artes escénicas",
           "noEvents": "obras de teatro o espectáculos de artes escénicas"
         },
         "altres": {
@@ -1402,11 +1454,16 @@
           "notFound": "Lo sentimos, pero no hay {noEventsText} este fin de semana {label}. Consulta otras fechas, explora actividades en el resto de Cataluña o ajusta los filtros de la búsqueda para descubrir más opciones."
         }
       },
+      "metaDescriptionSuffix": {
+        "extended": "Consulta la agenda actualizada con horarios, ubicaciones y planes culturales.",
+        "standard": "Consulta la agenda actualizada con horarios y ubicaciones.",
+        "compact": "Consulta la agenda y horarios."
+      },
       "categoryNoDate": {
         "title": "{titleSuffix} {label} {year}",
         "subTitle": "Descubre {titleSuffix} {label} con una selección de eventos y actividades culturales. Conciertos, talleres, exposiciones, planes familiares y propuestas gratuitas.",
         "metaTitle": "{categoryTitle} {label} {year} | Qué hacer - Agenda y planes",
-        "metaDescription": "{context} {label}. Consulta la agenda.",
+        "metaDescription": "{context} {label}.",
         "notFound": "Lo sentimos, pero no hay {noEventsText} {label} en este momento. Prueba con otras fechas, categorías o localidades cercanas para descubrir nuevas propuestas culturales."
       },
       "regionNoDate": {
@@ -1426,7 +1483,7 @@
         "default": {
           "title": "Qué hacer {label}. Agenda {year}",
           "metaTitle": "Qué hacer {label} - Agenda y planes {year}",
-          "metaDescription": "Descubre la agenda hoy {label} este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes."
+          "metaDescription": "Descubre qué hacer {label} este {month}: conciertos, fiestas, actividades familiares, talleres, exposiciones y otros planes."
         },
         "titleTest": {
           "metaTitle": "Agenda {placeOf}: conciertos, ferias y fiestas"

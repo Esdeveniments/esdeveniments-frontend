@@ -228,6 +228,8 @@ describe("PUBLIC_API_EXACT_PATHS includes expected routes", () => {
 
   it("includes other browser-initiated routes", () => {
     expect(PUBLIC_API_EXACT_PATHS).toContain("/api/favorites");
+    expect(PUBLIC_API_EXACT_PATHS).toContain("/api/events/extract-poster");
+    expect(ORIGIN_CHECK_EXEMPT.has("/api/events/extract-poster")).toBe(false);
   });
 
   it("does NOT include private routes", () => {

@@ -127,3 +127,68 @@ export async function cacheSetJson(
     console.warn("[redis-cache] set failed:", error);
   }
 }
+
+const ATOMIC_INCR_WITH_TTL_LUA =
+  "local c = redis.call('INCR', KEYS[1]); local t = redis.call('TTL', KEYS[1]); if c == 1 or t < 0 then redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1])); t = tonumber(ARGV[1]) end; return {c, t}";
+
+/**
+ * Atomic integer counter increment with TTL on first creation (or if key lacks
+ * expiry), executed in a single Lua script so a crash can never orphan a key
+ * without expiry. Returns `null` when Redis is unavailable so callers can fall back.
+ */
+export async function cacheIncrWithTtl(
+  key: string,
+  ttlSeconds: number,
+): Promise<{ count: number; ttlSeconds: number } | null> {
+  try {
+    const client = await getClient();
+    if (!client) return null;
+    const raw = (await client.eval(ATOMIC_INCR_WITH_TTL_LUA, {
+      keys: [key],
+      arguments: [String(Math.max(1, Math.trunc(ttlSeconds)))],
+    })) as unknown;
+    if (!Array.isArray(raw) || raw.length < 2) return null;
+    const count = Number(raw[0]);
+    const ttl = Number(raw[1]);
+    if (!Number.isFinite(count)) return null;
+    return { count, ttlSeconds: Math.max(1, Number.isFinite(ttl) ? ttl : ttlSeconds) };
+  } catch (error) {
+    console.warn("[redis-cache] incr failed:", error);
+    return null;
+  }
+}
+
+const ATOMIC_DECR_CLEANUP_LUA =
+  "local v = redis.call('DECR', KEYS[1]); if v <= 0 then redis.call('DEL', KEYS[1]); return 0 end; return v";
+
+/** Atomic decrement + conditional delete (single Lua script) for counter rollback/refund. */
+export async function cacheDecrClampZero(key: string): Promise<boolean> {
+  try {
+    const client = await getClient();
+    if (!client) return false;
+    await client.eval(ATOMIC_DECR_CLEANUP_LUA, { keys: [key], arguments: [] });
+    return true;
+  } catch (error) {
+    console.warn("[redis-cache] decr failed:", error);
+    return false;
+  }
+}
+
+/** Read-only lookup of an integer counter + remaining TTL in seconds. */
+export async function cacheGetCounter(
+  key: string,
+): Promise<{ count: number; ttlSeconds: number } | null> {
+  try {
+    const client = await getClient();
+    if (!client) return null;
+    const [raw, ttl] = await Promise.all([client.get(key), client.ttl(key)]);
+    if (raw === null) return { count: 0, ttlSeconds: 0 };
+    const count = Number(raw);
+    return {
+      count: Number.isFinite(count) ? count : 0,
+      ttlSeconds: Math.max(1, ttl > 0 ? ttl : 60),
+    };
+  } catch {
+    return null;
+  }
+}

@@ -1,22 +1,28 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { locale as rootLocale } from "next/root-params";
-import PressableAnchor from "@components/ui/primitives/PressableAnchor";
+import { LocalizedPressableAnchor } from "@components/ui/primitives/PressableAnchor";
 import { contactEmail, siteUrl, socialLinksSameAs } from "@config/index";
 import Image from "next/image";
-import type { NextPage } from "next";
 import type { TeamMember as TeamMemberType } from "types/common";
-import { buildPageMeta } from "@components/partials/seo-meta";
+import {
+  buildPageMeta,
+  generateBreadcrumbList,
+} from "@components/partials/seo-meta";
 import JsonLdServer from "@components/partials/JsonLdServer";
-import { DEFAULT_LOCALE } from "types/i18n";
-import type { AppLocale } from "types/i18n";
+import { requireLocale } from "@lib/i18n/require-locale";
+import { toLocalizedUrl } from "@utils/i18n-seo";
+import { SUPPORTED_LOCALES } from "types/i18n";
 
-export async function generateMetadata() {
-  const locale = (await rootLocale()) as AppLocale;
+const ABOUT_PATH = "/qui-som";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = requireLocale(await rootLocale());
   const t = await getTranslations({ locale, namespace: "App.About" });
   return buildPageMeta({
     title: t("metaTitle"),
     description: t("metaDescription"),
-    canonical: `${siteUrl}/qui-som`,
+    canonical: toLocalizedUrl(ABOUT_PATH, locale),
     locale,
   });
 }
@@ -26,15 +32,8 @@ const teamMembers: TeamMemberType[] = [
     name: "Albert Olivé Corbella",
     role: "Senior Full Stack Developer",
     title: "CTO Fundador",
-    image: "/static/images/linkedin_albert.jpeg",
+    image: "/static/images/albert_olive.jpg",
     linkedin: "https://www.linkedin.com/in/albertolivecorbella/",
-  },
-  {
-    name: "Andreu Benítez Moreno",
-    role: "UI Engineer | Graphic Designer",
-    title: "Co-Fundador",
-    image: "/static/images/linkedin_andreu.jpeg",
-    linkedin: "https://www.linkedin.com/in/andreubenitezmoreno/",
   },
   {
     name: "Gerard Rovellat Carbó",
@@ -45,31 +44,36 @@ const teamMembers: TeamMemberType[] = [
   },
 ];
 
-const QuiSom: NextPage = async () => {
-  const locale = (await rootLocale()) as AppLocale;
-  const t = await getTranslations({ locale, namespace: "App.About" });
-  const prefix = locale === DEFAULT_LOCALE ? "" : `/${locale}`;
-  const withLocale = (path: string) => {
-    if (!path.startsWith("/")) return path;
-    if (!prefix) return path;
-    if (path === "/") return prefix || "/";
-    if (path.startsWith(prefix)) return path;
-    return `${prefix}${path}`;
-  };
-  const absolute = (path: string) =>
-    path.startsWith("http") ? path : `${siteUrl}${withLocale(path)}`;
+export default async function QuiSom() {
+  const locale = requireLocale(await rootLocale());
+  const [t, tBreadcrumbs] = await Promise.all([
+    getTranslations({ locale, namespace: "App.About" }),
+    getTranslations({ locale, namespace: "Components.Breadcrumbs" }),
+  ]);
+
+  const pageUrl = toLocalizedUrl(ABOUT_PATH, locale);
+  const breadcrumbSchema = generateBreadcrumbList([
+    { name: tBreadcrumbs("home"), url: toLocalizedUrl("/", locale) },
+    { name: t("heading"), url: pageUrl },
+  ]);
+
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    "@id": `${absolute("/qui-som")}#about`,
-    url: absolute("/qui-som"),
+    "@id": `${pageUrl}#about`,
+    url: pageUrl,
     name: t("schemaName"),
     description: t("schemaDescription"),
     isPartOf: { "@id": `${siteUrl}#website` },
     mainEntity: {
       "@type": "Organization",
+      "@id": `${siteUrl}#organization`,
       name: "Esdeveniments.cat",
       url: siteUrl,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/static/images/logo-seo-meta.webp`,
+      },
       email: contactEmail,
       address: {
         "@type": "PostalAddress",
@@ -82,7 +86,7 @@ const QuiSom: NextPage = async () => {
           "@type": "ContactPoint",
           contactType: "general inquiries",
           email: contactEmail,
-          availableLanguage: ["ca", "es", "en"],
+          availableLanguage: [...SUPPORTED_LOCALES],
         },
       ],
       sameAs: socialLinksSameAs,
@@ -100,34 +104,42 @@ const QuiSom: NextPage = async () => {
   return (
     <>
       <JsonLdServer id="about-page-schema" data={organizationSchema} />
+      {breadcrumbSchema && (
+        <JsonLdServer id="about-breadcrumb-schema" data={breadcrumbSchema} />
+      )}
       <div className="container py-section-y">
-        <div className="stack gap-6 items-center">
-          <div className="stack gap-2 items-center">
-            <h1 className="heading-1 text-center">{t("heading")}</h1>
-            <h2 className="heading-2 text-center text-primary">{t("subheading")}</h2>
+        <div className="max-w-3xl mx-auto stack gap-section-y-sm">
+          <div className="stack gap-2 items-center text-center">
+            <h1 className="heading-1">{t("heading")}</h1>
+            <p className="body-large font-semibold text-primary">
+              {t("subheading")}
+            </p>
           </div>
-          <div className="w-full stack gap-6">
+          <div className="stack gap-element-gap">
             <p className="body-normal">{t("paragraph1")}</p>
             <p className="body-normal">
               {t.rich("paragraph2", {
                 publish: (chunks) => (
-                  <PressableAnchor
-                    href={withLocale("/publica")}
+                  <LocalizedPressableAnchor
+                    locale={locale}
+                    href="/publica"
                     prefetch={false}
                     className="text-primary hover:underline underline-offset-2 font-medium"
                     variant="inline"
                   >
                     {chunks}
-                  </PressableAnchor>
+                  </LocalizedPressableAnchor>
                 ),
               })}
             </p>
             <p className="body-normal">{t("paragraph3")}</p>
 
-            <section className="card-bordered rounded-card">
-              <div className="card-body stack gap-3">
-                <h3 className="heading-3">{t("contactHeading")}</h3>
-                <p className="body-normal text-foreground/80">{t("contactBody")}</p>
+            <section className="card-bordered mt-2">
+              <div className="card-body stack gap-element-gap">
+                <h2 className="heading-3">{t("contactHeading")}</h2>
+                <p className="body-normal text-muted-foreground">
+                  {t("contactBody")}
+                </p>
                 <a
                   href={`mailto:${contactEmail}`}
                   className="btn-primary w-fit transition-interactive"
@@ -138,37 +150,46 @@ const QuiSom: NextPage = async () => {
             </section>
           </div>
         </div>
-        <div className="w-full stack gap-8 items-center py-section-y">
+
+        <section className="max-w-3xl mx-auto stack gap-section-y-sm items-center pt-section-y">
           <h2 className="heading-2 text-center">{t("teamHeading")}</h2>
-          <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-lg justify-items-center">
             {teamMembers.map((member) => (
               <article
                 key={member.name}
-                className="card-elevated w-[200px] h-[414px] transition-card hover-lift"
+                className="card-elevated w-full max-w-60 flex flex-col overflow-hidden transition-card hover-lift"
               >
-                <div className="h-[185px] overflow-hidden">
+                <div className="aspect-square w-full overflow-hidden bg-muted">
                   <Image
-                    className="object-cover object-top rounded-t-card"
+                    className="w-full h-full object-cover object-top"
                     src={member.image}
                     alt={member.name}
-                    width={200}
-                    height={200}
+                    width={240}
+                    height={240}
+                    sizes="240px"
+                    quality={50}
                   />
                 </div>
-                <div className="stack gap-6 items-center p-card-padding-sm">
-                  <div className="flex-start gap-2 w-full pt-2">
-                    <div className="w-2 h-6 bg-primary"></div>
+                <div className="card-body flex-1 flex flex-col gap-element-gap">
+                  <div className="flex-start gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="w-1.5 h-6 bg-primary shrink-0 rounded-full"
+                    />
                     <h3 className="heading-4">{member.name}</h3>
                   </div>
-                  <div className="stack gap-1 w-full">
-                    <p className="body-normal text-foreground">{member.role}</p>
+                  <div className="stack gap-1">
+                    <p className="body-small text-muted-foreground">
+                      {member.role}
+                    </p>
                     <p className="body-small font-semibold text-foreground-strong">
                       {member.title}
                     </p>
                   </div>
                   <a
                     href={member.linkedin}
-                    className="btn-primary w-full transition-interactive"
+                    aria-label={`${t("linkedin")}: ${member.name}`}
+                    className="btn-outline w-full mt-auto transition-interactive"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -178,10 +199,8 @@ const QuiSom: NextPage = async () => {
               </article>
             ))}
           </div>
-        </div>
+        </section>
       </div>
     </>
   );
-};
-
-export default QuiSom;
+}
