@@ -298,6 +298,7 @@ const PublishForm = () => {
     handleRequestAuthForScan,
     handlePosterExtractionApplied,
     handlePosterUndo,
+    reportPosterAutofillPublishOutcome,
   } = usePublishPosterAutofill({
     form,
     setForm,
@@ -750,6 +751,7 @@ const PublishForm = () => {
 
       sendGoogleEvent("publish_success", {
         ...buildPublishContext({ form, imageFile }),
+        ...reportPosterAutofillPublishOutcome(),
         source: "publica",
         has_slug: Boolean(createdSlug),
       });
