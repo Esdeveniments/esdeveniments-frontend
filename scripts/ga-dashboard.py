@@ -26,9 +26,11 @@ import subprocess
 import sys
 import urllib.request
 import urllib.error
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 PROPERTY_ID = "406884331"
+PROPERTY_TIMEZONE = "Europe/Madrid"  # GA4 property reporting time zone
 QUOTA_PROJECT = "esdeveniments-3"
 BASE_URL = f"https://analyticsdata.googleapis.com/v1beta/properties/{PROPERTY_ID}"
 
@@ -49,6 +51,15 @@ AUTO_EVENTS = {"session_start", "first_visit", "user_engagement", "page_view",
 
 # Day names for temporal analysis
 DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+# Funnel health thresholds (good, warn). The health check and the
+# bottleneck share them, so a stage shown 🟢 is never also the bottleneck.
+ACTION_RATE_THRESHOLDS = (0.05, 0.02)   # action takers / all users
+VIEWER_RATE_THRESHOLDS = (0.10, 0.05)   # event page viewers / all users
+
+# Pareto table rows. Views are fetched only for these pages; the 80% math
+# runs over every page with an outbound click.
+PARETO_TOP_N = 15
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -249,7 +260,9 @@ def collect_data(days, sections, country=None):
     """
     d = {}
     d["country_filter"] = country
-    rng = [{"startDate": f"{days}daysAgo", "endDate": "today"}]
+    # Complete days only: "7daysAgo" → "yesterday" is 7 days. Ending at
+    # "today" added an 8th, partial day (cut off at the run time).
+    rng = [{"startDate": f"{days}daysAgo", "endDate": "yesterday"}]
 
     # ── Daily overview ──
     if "overview" in sections:
@@ -515,12 +528,14 @@ def collect_data(days, sections, country=None):
             "metrics": [{"name": "eventCount"}, {"name": "totalUsers"}],
             "dimensionFilter": with_country_filter(outbound_page_filter, country),
             "orderBys": [{"metric": {"metricName": "eventCount"}, "desc": True}],
-            "limit": 20,
+            # Every page, not a top-N: the Pareto total and the "N of M
+            # pages drive 80%" line must cover all outbound clicks.
+            "limit": 10000,
         }))
-        # Page views for exactly the pages above (to compute conversion rate).
-        # Listing the paths covers every locale prefix (/es/e/, /en/e/) and
-        # low-traffic pages a top-N views query would miss.
-        outbound_pages = [dims[0] for dims, _ in d["outbound_by_page"]]
+        # Page views and users for the pages shown in the table (to compute
+        # conversion). Listing the paths covers every locale prefix
+        # (/es/e/, /en/e/) and low-traffic pages a top-N views query would miss.
+        outbound_pages = [dims[0] for dims, _ in d["outbound_by_page"][:PARETO_TOP_N]]
         d["views_by_page"] = []
         if outbound_pages:
             outbound_pages_filter = {"filter": {
@@ -530,7 +545,7 @@ def collect_data(days, sections, country=None):
             d["views_by_page"] = extract_rows(api_call("runReport", {
                 "dateRanges": rng,
                 "dimensions": [{"name": "pagePath"}],
-                "metrics": [{"name": "screenPageViews"}],
+                "metrics": [{"name": "screenPageViews"}, {"name": "totalUsers"}],
                 "dimensionFilter": with_country_filter(outbound_pages_filter, country),
                 "limit": len(outbound_pages),
             }))
@@ -807,18 +822,26 @@ def compute_behavior(d, days):
                                        key=lambda x: x["count"], reverse=True)[:10],
     }
 
-    # Identify biggest bottleneck (Theory of Constraints)
+    # Identify biggest bottleneck (Theory of Constraints). A stage is a
+    # candidate only while its health check is below 🟢, using the same
+    # thresholds, so the report never shows a green stage as the bottleneck.
     discovery_drop = 1 - b["event_viewers_rate"]
     action_drop = 1 - b["view_to_action_rate"]
-    if discovery_drop > action_drop and b["event_viewers_rate"] < 0.15:
+    h_discovery = health(b["event_viewers_rate"], *VIEWER_RATE_THRESHOLDS)
+    h_action = health(b["action_rate"], *ACTION_RATE_THRESHOLDS)
+    discovery_weak = h_discovery != "🟢"
+    action_weak = h_action != "🟢"
+    if discovery_weak and (not action_weak or discovery_drop > action_drop):
         b["bottleneck"] = "discovery"
+        b["bottleneck_health"] = h_discovery
         b["bottleneck_label"] = "Discovery → Detail"
         b["bottleneck_msg"] = (
             f"Only {b['event_viewers_rate']:.0%} of users open an event page. "
             "Improve card design, titles, and images on listing pages."
         )
-    elif b["view_to_action_rate"] < 0.30:
+    elif action_weak:
         b["bottleneck"] = "action"
+        b["bottleneck_health"] = h_action
         b["bottleneck_label"] = "Detail → Action"
         b["bottleneck_msg"] = (
             f"Only {b['view_to_action_rate']:.0%} of event viewers take action. "
@@ -826,6 +849,7 @@ def compute_behavior(d, days):
         )
     else:
         b["bottleneck"] = None
+        b["bottleneck_health"] = "🟢"
         b["bottleneck_label"] = "None identified"
         b["bottleneck_msg"] = "Funnel is healthy."
 
@@ -878,9 +902,10 @@ def compute_behavior(d, days):
         b["weekend_avg"] = round(avg_wkend)
 
     # ── Pareto analysis (which pages drive outbound clicks?) ──
-    views_map = {}  # pagePath → views
+    views_map = {}  # pagePath → (views, users)
     for dims, mets in d.get("views_by_page", []):
-        views_map[dims[0]] = safe_int(mets[0])
+        views_map[dims[0]] = (safe_int(mets[0]),
+                              safe_int(mets[1]) if len(mets) > 1 else 0)
 
     pareto_pages = []
     total_outbound = 0
@@ -889,13 +914,17 @@ def compute_behavior(d, days):
         clicks = safe_int(mets[0])
         users = safe_int(mets[1])
         total_outbound += clicks
-        page_views = views_map.get(page, 0)
+        page_views, page_users = views_map.get(page, (0, 0))
         pareto_pages.append({
             "page": page,
             "clicks": clicks,
             "users": users,
             "views": page_views,
-            "conversion": (clicks / page_views) if page_views > 0 else 0,
+            "page_users": page_users,
+            # Users who clicked out / users on the page. Clicks / views went
+            # past 100% (one viewer clicking twice); clamp GA4's approximate
+            # user counts so it never does.
+            "conversion": min(users / page_users, 1.0) if page_users > 0 else 0,
         })
 
     # Calculate cumulative % for Pareto
@@ -904,11 +933,14 @@ def compute_behavior(d, days):
         running_total += p["clicks"]
         p["cum_pct"] = (running_total / total_outbound) if total_outbound else 0
 
-    b["pareto"] = pareto_pages[:15]
+    b["pareto"] = pareto_pages[:PARETO_TOP_N]
+    b["pareto_page_count"] = len(pareto_pages)
     b["total_outbound_clicks"] = total_outbound
-    # How many pages drive 80% of outbound clicks?
-    pages_for_80 = sum(1 for p in pareto_pages if p["cum_pct"] <= 0.80) + 1
-    b["pareto_80_pages"] = min(pages_for_80, len(pareto_pages))
+    # How many pages drive 80% of outbound clicks? (first page reaching 80%)
+    b["pareto_80_pages"] = next(
+        (i + 1 for i, p in enumerate(pareto_pages) if p["cum_pct"] >= 0.80),
+        len(pareto_pages),
+    )
 
     # ── Content-Market Fit (search demand vs results) ──
     search_demand = []
@@ -1025,12 +1057,13 @@ def generate_actions(d):
     opp = b.get("opportunity", {})
 
     ar = b["action_rate"]
-    if ar > 0 and ar < 0.02:
+    ar_good, ar_warn = ACTION_RATE_THRESHOLDS
+    if ar > 0 and ar < ar_warn:
         gain = opp.get("both_gain_monthly", 0)
         actions.append(("P1", "Very low action rate",
                         f"Only {ar:.1%} take action. Improve event page CTAs. "
                         f"Potential: +{gain} actions/month if fixed."))
-    elif ar > 0 and ar < 0.05:
+    elif ar > 0 and ar < ar_good:
         gain = opp.get("discovery_gain_monthly", 0)
         actions.append(("P2", f"Action rate {ar:.1%} — room to grow",
                         f"Test sticky CTA bar, larger buttons. "
@@ -1081,12 +1114,18 @@ def generate_actions(d):
                            f"Worst: {b['valley_day']} ({b['valley_users']}). "
                            "Time social posts and email digests for peak days."))
 
-    # Pareto insight
+    # Pareto insight: only a real 80/20 (≤ 20% of pages) is worth per-page work
     if b.get("pareto_80_pages", 0) > 0 and b.get("total_outbound_clicks", 0) > 5:
         n = b["pareto_80_pages"]
-        total = len(b.get("pareto", []))
-        actions.append(("INFO", f"Pareto: {n} of {total} pages drive 80% of outbound",
-                        "Focus CTA optimization on these high-converting pages first."))
+        total = b.get("pareto_page_count", 0)
+        if n == 1 or n <= total * 0.2:
+            actions.append(("INFO", f"Pareto: {n} of {total} pages drive 80% of outbound",
+                            "Focus CTA optimization on these high-converting pages first."))
+        else:
+            actions.append(("INFO", f"Outbound clicks spread thin: {n} of {total} "
+                            "pages needed for 80%",
+                            "No small group of pages dominates. Improve the event "
+                            "page CTA itself rather than individual pages."))
 
     if not actions:
         actions.append(("INFO", "All metrics healthy",
@@ -1242,7 +1281,7 @@ def render_text(d, days, sections):
         print(f"    → Detail:     {b['event_viewers']:>6} ({b['event_viewers_rate']:.0%})")
         print(f"    → Action:     {b['action_takers']:>6} ({b['action_rate']:.1%} of all)")
         if b.get("bottleneck"):
-            print(f"\n  🔴 Bottleneck: {b['bottleneck_label']}")
+            print(f"\n  {b['bottleneck_health']} Bottleneck: {b['bottleneck_label']}")
             print(f"     {b['bottleneck_msg']}")
         print(f"\n  Feature adoption:")
         for name, key in [("Search", "search"), ("Filters", "filter"),
@@ -1302,17 +1341,17 @@ def render_text(d, days, sections):
         # ── Pareto Analysis ──
         pareto = b.get("pareto", [])
         if pareto:
-            print(f"\n  📊 Pareto: Page Conversion (outbound clicks / views)")
-            print(f"    {'Clicks':>6}  {'Views':>6}  {'Conv%':>6}  {'Cum%':>5}  Page")
-            print(f"    {'─'*6}  {'─'*6}  {'─'*6}  {'─'*5}  {'─'*40}")
+            print(f"\n  📊 Pareto: Page Conversion (users who clicked out / page users)")
+            print(f"    {'Clicks':>6}  {'Users':>6}  {'PgUsr':>6}  {'Conv%':>6}  {'Cum%':>5}  Page")
+            print(f"    {'─'*6}  {'─'*6}  {'─'*6}  {'─'*6}  {'─'*5}  {'─'*40}")
             for p in pareto[:10]:
-                print(f"    {p['clicks']:>6}  {p['views']:>6}  "
+                print(f"    {p['clicks']:>6}  {p['users']:>6}  {p['page_users']:>6}  "
                       f"{p['conversion']:.1%}  {p['cum_pct']*100:.0f}%  {p['page'][:50]}")
             n80 = b.get("pareto_80_pages", 0)
             total_click = b.get("total_outbound_clicks", 0)
             if n80:
-                print(f"\n    → {n80} pages drive 80% of outbound "
-                      f"({total_click} total clicks)")
+                print(f"\n    → {n80} of {b.get('pareto_page_count', 0)} pages drive "
+                      f"80% of outbound ({total_click} total clicks)")
 
         # ── Content-Market Fit ──
         fits = b.get("content_fit", [])
@@ -1365,22 +1404,26 @@ def render_markdown(d, days):
     L = []  # lines
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # Same window as collect_data(): the last N complete days, ending yesterday.
+    # GA4 resolves "yesterday" in the property's time zone, not the runner's UTC.
+    analysis_end = datetime.now(ZoneInfo(PROPERTY_TIMEZONE)).date() - timedelta(days=1)
+    analysis_start = analysis_end - timedelta(days=days - 1)
+
     L.append(f"# 📊 Esdeveniments.cat — Weekly Dashboard")
     country = d.get("country_filter")
     filter_note = f" · Country: **{country}**" if country else ""
-    L.append(f"> Property `{PROPERTY_ID}` · Period: **last {days} days**{filter_note} · Generated: {now}")
+    L.append(f"> Property `{PROPERTY_ID}` · Period: **last {days} days** "
+             f"({analysis_start} → {analysis_end}){filter_note} · Generated: {now}")
     L.append("")
 
     # ── Context: holiday / seasonality annotation ──
     # Annotate both the analysis window AND the comparison window (previous N
     # days) so readers can tell seasonal shifts from behavioral shifts.
-    today = date.today()
-    analysis_start = today - timedelta(days=days - 1)
     compare_end = analysis_start - timedelta(days=1)
     compare_start = compare_end - timedelta(days=days - 1)
 
     holidays_data = load_holidays()
-    analysis_holidays = detect_holiday_overlap(analysis_start, today, holidays_data)
+    analysis_holidays = detect_holiday_overlap(analysis_start, analysis_end, holidays_data)
     compare_holidays = detect_holiday_overlap(compare_start, compare_end, holidays_data)
 
     if analysis_holidays or compare_holidays:
@@ -1388,7 +1431,7 @@ def render_markdown(d, days):
         L.append("")
         if analysis_holidays:
             L.append(
-                f"- **Analysis window ({analysis_start} → {today})** overlaps: "
+                f"- **Analysis window ({analysis_start} → {analysis_end})** overlaps: "
                 f"{', '.join(analysis_holidays)}."
             )
         if compare_holidays:
@@ -1408,8 +1451,8 @@ def render_markdown(d, days):
     if b:
         ar = b["action_rate"]
         vr = b["event_viewers_rate"]
-        h_ar = health(ar, 0.05, 0.02)
-        h_vr = health(vr, 0.10, 0.05)
+        h_ar = health(ar, *ACTION_RATE_THRESHOLDS)
+        h_vr = health(vr, *VIEWER_RATE_THRESHOLDS)
 
         L.append("## 🎯 Health Check")
         L.append("")
@@ -1421,7 +1464,7 @@ def render_markdown(d, days):
         L.append(f"| ⭐ **Action Rate (North Star)** | **{ar:.1%}** | {h_ar} |")
         L.append("")
         if b.get("bottleneck"):
-            L.append(f"> 🔴 **Bottleneck: {b['bottleneck_label']}** — {b['bottleneck_msg']}")
+            L.append(f"> {b['bottleneck_health']} **Bottleneck: {b['bottleneck_label']}** — {b['bottleneck_msg']}")
             L.append("")
 
     # ── Actions (top of page — most important) ──
@@ -1445,6 +1488,8 @@ def render_markdown(d, days):
         L.append("")
         L.append(f"⭐ Action Rate = {b['action_rate']:.1%}")
         L.append(f"   (outbound_click + add_to_calendar + share + favorite_add)")
+        L.append(f"   Action takers = users of the most-used action event, a lower")
+        L.append(f"   bound: GA4 can't dedupe users across events in this report.")
         L.append("```")
         L.append("")
 
@@ -1545,15 +1590,17 @@ def render_markdown(d, days):
             L.append("### 📊 Pareto: Page Conversion")
             L.append("")
             if n80:
-                L.append(f"> **{n80} pages** drive 80% of outbound clicks "
-                         f"({total_click} total).")
+                L.append(f"> **{n80} of {b.get('pareto_page_count', 0)} pages** "
+                         f"drive 80% of outbound clicks ({total_click} total).")
                 L.append("")
-            L.append("| Clicks | Views | Conv % | Cum % | Page |")
-            L.append("|-------:|------:|-------:|------:|------|")
+            L.append("| Clicks | Clickers | Page users | Conv % | Cum % | Page |")
+            L.append("|-------:|---------:|-----------:|-------:|------:|------|")
             for p in pareto[:10]:
-                L.append(f"| {p['clicks']} | {p['views']} | "
+                L.append(f"| {p['clicks']} | {p['users']} | {p['page_users']} | "
                          f"{p['conversion']:.1%} | {p['cum_pct']*100:.0f}% | "
                          f"`{p['page'][:50]}` |")
+            L.append("")
+            L.append("> Conv % = users who clicked out / users on the page.")
             L.append("")
 
         # ── Content-Market Fit ──
