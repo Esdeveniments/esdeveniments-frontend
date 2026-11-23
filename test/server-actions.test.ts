@@ -215,11 +215,14 @@ describe("Server Actions - Next.js 16 caching", () => {
       );
     });
 
-    it("rejects an imageFile whose content is not an image", async () => {
+    it("rejects an imageFile whose content is not an image with invalid-image", async () => {
       const formData = toFormData(buildEventData("Fake image"));
       formData.append("imageFile", fakePngFile());
 
-      await expect(createEventAction(formData)).rejects.toThrow("not a valid image");
+      await expect(createEventAction(formData)).resolves.toEqual({
+        success: false,
+        reason: "invalid-image",
+      });
       expect(mockCreateEvent).not.toHaveBeenCalled();
     });
 
@@ -326,6 +329,26 @@ describe("Server Actions - Next.js 16 caching", () => {
       );
       expect(captureException).not.toHaveBeenCalled();
     });
+
+    it.each([
+      [409, "HTTP error! status: 409, body: duplicate event", "duplicate"],
+      [413, "HTTP error! status: 413, body: request entity too large", "body-limit"],
+      [400, "HTTP error! status: 400, body: invalid date range", "validation"],
+      [undefined, "Image exceeds limit: event_image_upload_too_large", "image-too-large"],
+    ] as const)(
+      "returns structured reason %s instead of throwing so prod does not redact it",
+      async (status, message, expectedReason) => {
+        const backendError = status
+          ? Object.assign(new Error(message), { status })
+          : new Error(message);
+        mockCreateEvent.mockRejectedValue(backendError);
+
+        const result = await createEventAction(
+          toFormData(buildEventData("Test Event")),
+        );
+        expect(result).toEqual({ success: false, reason: expectedReason });
+      },
+    );
   });
 
   describe("editEvent", () => {

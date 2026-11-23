@@ -58,7 +58,13 @@ export function useEventsMapLibre({
   const selectedIdRef = useRef(selectedId);
   const onSelectRef = useRef(onSelect);
   const onHoverRef = useRef(onHover);
-  const [status, setStatus] = useState<EventsMapStatus>("loading");
+  const [readyMap, setReadyMap] = useState<MapLibre | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const status: EventsMapStatus = loadFailed
+    ? "error"
+    : readyMap
+      ? "ready"
+      : "loading";
 
   useEffect(() => {
     pointsRef.current = points;
@@ -85,14 +91,27 @@ export function useEventsMapLibre({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    let disposed = false;
     let loaded = false;
     let failed = false;
-    let map: MapLibre;
+    let map: MapLibre | null = null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const fail = (reason: EventsMapLoadFailure) => {
-      if (loaded || failed) return;
+      if (disposed || loaded || failed) return;
       failed = true;
-      setStatus("error");
+      setLoadFailed(true);
       sendGoogleEvent("map_load_error", { reason });
+    };
+    const cleanup = () => {
+      disposed = true;
+      if (timer) clearTimeout(timer);
+      mapRef.current = null;
+      // Under React <Activity> (router cache), effects unmount while state
+      // survives; clearing readyMap/loadFailed resets status and prevents
+      // same-commit effects from touching a freshly created, unloaded map.
+      setReadyMap(null);
+      setLoadFailed(false);
+      map?.remove();
     };
     try {
       map = new MapLibre({
@@ -107,36 +126,40 @@ export function useEventsMapLibre({
       });
     } catch {
       fail("init");
-      return;
+      return cleanup;
     }
-    mapRef.current = map;
-    map.touchZoomRotate.disableRotation();
-    map.addControl(new NavigationControl({ showCompass: false }), "top-right");
-    map.addControl(new GeolocateControl({ fitBoundsOptions: { maxZoom: EVENTS_MAP_MAX_ZOOM } }), "top-right");
+    const activeMap = map;
+    mapRef.current = activeMap;
+    activeMap.touchZoomRotate.disableRotation();
+    activeMap.addControl(new NavigationControl({ showCompass: false }), "top-right");
+    activeMap.addControl(new GeolocateControl({ fitBoundsOptions: { maxZoom: EVENTS_MAP_MAX_ZOOM } }), "top-right");
 
-    const timer = setTimeout(() => fail("timeout"), LOAD_TIMEOUT_MS);
+    timer = setTimeout(() => fail("timeout"), LOAD_TIMEOUT_MS);
     const featureAt = ({ x, y }: { x: number; y: number }) => {
       // Our layers exist only after "load"; querying them earlier fires an
       // "error" event, which would show the error screen on a hover.
       if (!loaded) return undefined;
       const box: [PointLike, PointLike] = [[x - HIT_PX, y - HIT_PX], [x + HIT_PX, y + HIT_PX]];
-      return map.queryRenderedFeatures(box, { layers: EVENTS_MAP_CLICK_LAYERS })[0];
+      return activeMap.queryRenderedFeatures(box, { layers: EVENTS_MAP_CLICK_LAYERS })[0];
     };
 
-    map.on("load", () => {
+    activeMap.on("load", () => {
+      if (disposed || mapRef.current !== activeMap) return;
       loaded = true;
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       // The container is `text-primary` inside a `text-foreground` wrapper:
       // the design tokens without hex copies.
       const colors = {
         primary: getComputedStyle(container).color,
         ink: getComputedStyle(container.parentElement ?? container).color,
       };
-      map.addSource(EVENTS_MAP_SOURCE, toEventsMapSource(pointsRef.current));
-      for (const layer of eventsMapLayers(colors)) map.addLayer(layer);
-      setStatus("ready");
+      activeMap.addSource(EVENTS_MAP_SOURCE, toEventsMapSource(pointsRef.current));
+      for (const layer of eventsMapLayers(colors)) activeMap.addLayer(layer);
+      setLoadFailed(false);
+      setReadyMap(activeMap);
     });
-    map.on("error", (event) => {
+    activeMap.on("error", (event) => {
+      if (disposed || mapRef.current !== activeMap) return;
       if (!("sourceId" in event)) fail("error");
     });
     let hovered: string | null = null;
@@ -145,13 +168,13 @@ export function useEventsMapLibre({
       hovered = id;
       onHoverRef.current(id);
     };
-    map.on("mousemove", (event) => {
+    activeMap.on("mousemove", (event) => {
       const feature = featureAt(event.point);
-      map.getCanvas().style.cursor = feature ? "pointer" : "";
+      activeMap.getCanvas().style.cursor = feature ? "pointer" : "";
       setHovered(feature && feature.properties?.cluster_id == null ? String(feature.properties?.id) : null);
     });
-    map.on("mouseout", () => setHovered(null));
-    map.on("click", async (event) => {
+    activeMap.on("mouseout", () => setHovered(null));
+    activeMap.on("click", async (event) => {
       const feature = featureAt(event.point);
       if (!feature || feature.geometry.type !== "Point") return;
       const center = feature.geometry.coordinates as [number, number];
@@ -163,71 +186,63 @@ export function useEventsMapLibre({
         onSelectRef.current(String(feature.properties?.id));
         return;
       }
-      const source = map.getSource<GeoJSONSource>(EVENTS_MAP_SOURCE);
+      const source = activeMap.getSource<GeoJSONSource>(EVENTS_MAP_SOURCE);
       const zoom = await source?.getClusterExpansionZoom(clusterId);
-      if (zoom != null && mapRef.current === map) map.easeTo({ center, zoom, duration: motion() });
+      if (zoom != null && mapRef.current === activeMap) activeMap.easeTo({ center, zoom, duration: motion() });
     });
 
-    return () => {
-      clearTimeout(timer);
-      mapRef.current = null;
-      map.remove();
-    };
+    return cleanup;
     // uiStrings only matter at creation; a locale change remounts the page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load more / filters: new data in place. Refit only if nothing is in view.
   useEffect(() => {
-    const map = mapRef.current;
-    if (status !== "ready" || !map) return;
-    map.getSource<GeoJSONSource>(EVENTS_MAP_SOURCE)?.setData(toFeatureCollection(points));
-    const view = map.getBounds();
+    if (!readyMap || mapRef.current !== readyMap) return;
+    readyMap.getSource<GeoJSONSource>(EVENTS_MAP_SOURCE)?.setData(toFeatureCollection(points));
+    const view = readyMap.getBounds();
     if (points.length && !points.some((p) => view.contains([p.lon, p.lat]))) fitAll();
-  }, [points, status, fitAll]);
+  }, [points, readyMap, fitAll]);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (status !== "ready" || !map || !selectedId) return;
+    if (!readyMap || mapRef.current !== readyMap || !selectedId) return;
     const target = { source: EVENTS_MAP_SOURCE, id: selectedId };
-    map.setFeatureState(target, { selected: true });
+    readyMap.setFeatureState(target, { selected: true });
     return () => {
-      if (mapRef.current === map) map.removeFeatureState(target, "selected");
+      if (mapRef.current === readyMap) readyMap.removeFeatureState(target, "selected");
     };
-  }, [selectedId, status]);
+  }, [selectedId, readyMap]);
 
   // Mobile: the bottom sheet covers the map, so camera moves centre above it.
   // Selecting a place grows the sheet; pan only if that hides its pin. Wait
   // for a running move (the panel's focus()) so the two don't fight.
   useEffect(() => {
-    const map = mapRef.current;
-    if (status !== "ready" || !map) return;
+    if (!readyMap || mapRef.current !== readyMap) return;
     const apply = () => {
-      map.setPadding({ top: 0, right: 0, left: 0, bottom: insetBottom });
+      readyMap.setPadding({ top: 0, right: 0, left: 0, bottom: insetBottom });
       const point = pointsRef.current.find((p) => p.id === selectedIdRef.current);
       if (!point) return;
       const center: [number, number] = [point.lon, point.lat];
-      const { y } = map.project(center);
-      if (y < HIT_PX || y > map.getContainer().clientHeight - insetBottom - HIT_PX) {
-        map.easeTo({ center, duration: motion() });
+      const { y } = readyMap.project(center);
+      if (y < HIT_PX || y > readyMap.getContainer().clientHeight - insetBottom - HIT_PX) {
+        readyMap.easeTo({ center, duration: motion() });
       }
     };
-    if (!map.isMoving()) return apply();
-    map.once("moveend", apply);
+    if (!readyMap.isMoving()) return apply();
+    readyMap.once("moveend", apply);
     return () => {
-      map.off("moveend", apply);
+      readyMap.off("moveend", apply);
     };
-  }, [insetBottom, status]);
+  }, [insetBottom, readyMap]);
 
   useEffect(() => {
-    const map = mapRef.current;
-    if (status !== "ready" || !map || !hoveredId) return;
+    if (!readyMap || mapRef.current !== readyMap || !hoveredId) return;
     const target = { source: EVENTS_MAP_SOURCE, id: hoveredId };
-    map.setFeatureState(target, { hover: true });
+    readyMap.setFeatureState(target, { hover: true });
     return () => {
-      if (mapRef.current === map) map.removeFeatureState(target, "hover");
+      if (mapRef.current === readyMap) readyMap.removeFeatureState(target, "hover");
     };
-  }, [hoveredId, status]);
+  }, [hoveredId, readyMap]);
 
   return { containerRef, status, fitAll, focus };
 }

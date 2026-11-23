@@ -409,9 +409,18 @@ export interface EditEventResult {
  * apart from a generic failure. Mirrors editEvent's existing
  * return-over-throw convention for actionable failures.
  */
+export type CreateEventFailureReason =
+  | "profile-incomplete"
+  | "stale-session"
+  | "duplicate"
+  | "image-too-large"
+  | "invalid-image"
+  | "body-limit"
+  | "validation";
+
 export type CreateEventActionResult =
   | { success: true; event: EventDetailResponseDTO }
-  | { success: false; reason: "profile-incomplete" | "stale-session" };
+  | { success: false; reason: CreateEventFailureReason };
 
 export interface UseEventsOptions {
   place?: string;

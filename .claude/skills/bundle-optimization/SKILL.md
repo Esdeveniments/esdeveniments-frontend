@@ -29,30 +29,17 @@ import Image from "@components/ui/common/image"; // picks ImageServer or ClientI
 
 `priority` sets `loading="eager"` and `fetchPriority="high"`. Give it to one image per page. On listings that is the first card **with an image** (`hasCardImage`, `utils/event-helpers.ts`); ads and imageless events can't be the LCP.
 
-Preload that same image from the page server component. Use the same helper, widths and quality as the `<img>`, or the browser downloads it twice:
+Preload that same image with `<ImagePreload>` (`components/ui/common/image/ImagePreload.tsx`), passing the same `context` and `cacheKey` as the `<img>` so widths, sizes, and quality match and the browser doesn't download it twice:
 
 ```tsx
-const lcp = buildResponsivePictureSourceUrls(
-  imageUrl,
-  cacheKey,
-  { quality: getOptimalImageQuality({ isPriority: true, isExternal: true }) },
-  getResponsiveWidths("list")
-);
+import ImagePreload from "@components/ui/common/image/ImagePreload";
 
-// `href` (a URL from the set) lets React hoist the preload into <head>; without
-// it the <link> stays where it is rendered and is found later.
-<link
-  rel="preload"
-  as="image"
-  href={lcp.webp}
-  imageSrcSet={lcp.webpSrcSet}
-  imageSizes={getOptimalImageSizes("list")}
-  type="image/webp"
-  fetchPriority="high"
-/>
+<ImagePreload image={featured.imageUrl} cacheKey={featured.updatedAt} context="featured" />
 ```
 
-Real code: `components/ui/common/image/CardImagePreload.tsx` (listings), `app/[locale]/e/[eventId]/page.tsx` (event hero). The home hero is a static AVIF/WebP set in `config/hero-image.ts`, with one preload per `<picture>` source.
+`ImagePreload` is a `"use client"` leaf that calls `ReactDOM.preload()` and returns `null` (the same pattern `next/image` uses). Avoid JSX `<link rel="preload" href imageSrcSet>` in Server Components: React 19 emits both a Flight hint and the JSX tag, duplicating `<link>` elements (`facebook/react#35889`). Avoid calling `ReactDOM.preload()` directly in a Server Component inside streamed `<Suspense>` or `"use cache"`: Fizz drops the HTML `<link>` when Flight `:HL` arrives after the shell flushes.
+
+Real code: `components/ui/common/image/ImagePreload.tsx` (shared leaf), `components/ui/common/image/CardImagePreload.tsx` (listings and festivity pages), `app/[locale]/e/[eventId]/page.tsx` (event hero), `components/noticies/NewsList.tsx` (featured news card), and `components/ui/festaMajor/FestaMajorPageView.tsx` (town hub cover). The home hero is a static AVIF/WebP set in `config/hero-image.ts` preloaded with server-side `preload()` in `app/[locale]/page.tsx`, one hint per `<picture>` source.
 
 ## Repeated icons
 
@@ -85,6 +72,6 @@ CI (`.github/workflows/ci.yml`) builds, runs `scripts/analyze-bundles-cli.mjs` a
 ## Files
 
 - `utils/image-quality.ts`, `utils/image-cache.ts`
-- `components/ui/common/image/` (`index.tsx`, `ImageServer.tsx`, `ClientImage.tsx`), `components/hooks/useImageRetry.ts`
+- `components/ui/common/image/` (`index.tsx`, `ImageServer.tsx`, `ClientImage.tsx`, `ImagePreload.tsx`, `CardImagePreload.tsx`), `components/hooks/useImageRetry.ts`
 - `components/ui/common/IconSprite.tsx`, `config/hero-image.ts`
 - `next.config.js` (`images.qualities`), `bundle-size-baseline.json`

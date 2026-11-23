@@ -1,21 +1,37 @@
-import type { JSX } from "react";
+import { Fragment, type JSX } from "react";
 import type { ListEvent } from "types/api/event";
 import type { ListItem, ListProps } from "types/common";
 
 export default function List<T extends ListItem = ListEvent>({
   events,
   children,
+  inlineSlot,
+  inlineSlotAfterIndex,
 }: ListProps<T>): JSX.Element {
+  const insertAfterIndex =
+    inlineSlot && events?.length
+      ? Math.min(
+          Math.max(inlineSlotAfterIndex ?? events.length - 1, 0),
+          events.length - 1,
+        )
+      : -1;
+
   return (
     // useListingAnalytics and the .list-appended CSS find the grid by this attribute.
     <ul data-listing-grid className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
       {events?.map((event, index) => (
-        <li
-          key={event.id ?? `item-${index}`}
-          className={event.isAd ? "md:col-span-2 xl:col-span-3 content-auto-ad" : "content-auto"}
-        >
-          {children(event, index)}
-        </li>
+        <Fragment key={event.id ?? `item-${index}`}>
+          <li
+            className={event.isAd ? "md:col-span-2 xl:col-span-3 content-auto-ad" : "content-auto"}
+          >
+            {children(event, index)}
+          </li>
+          {index === insertAfterIndex ? (
+            <li data-listing-slot="" className="md:col-span-2 xl:col-span-3">
+              {inlineSlot}
+            </li>
+          ) : null}
+        </Fragment>
       ))}
     </ul>
   );

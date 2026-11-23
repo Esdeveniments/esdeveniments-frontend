@@ -1,13 +1,20 @@
 import { JSX } from "react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { socialProfiles } from "@config/index";
 import { SocialIcon } from "./icons";
+import type { SocialProfileMeta } from "types/common";
 import { SocialProps } from "types/props";
 
 const SOCIAL_BUTTON_CLASS =
   "flex-center h-button w-button bg-muted/60 hover:bg-primary/10 border border-border/40 hover:border-primary/40 rounded-full transition duration-normal hover:scale-110 hover:shadow-md focus-ring";
 
 const ICON_CLASS = "w-5 h-5 fill-primary transition-colors";
+
+const FOOTER_PROFILES: readonly SocialProfileMeta[] = [
+  ...socialProfiles,
+  { platform: "github", label: "GitHub" },
+];
 
 /**
  * Renders a social media button with icon for the footer.
@@ -27,6 +34,7 @@ function renderSocialButton(
 
   return (
     <Link
+      key={platform}
       href={link}
       className={`no-underline ${SOCIAL_BUTTON_CLASS}`}
       rel={rel}
@@ -46,15 +54,14 @@ export default async function Social({ links }: SocialProps): Promise<JSX.Elemen
         {t("followUs")}
       </h3>
       <div className="flex justify-center items-center gap-3 flex-wrap">
-        {renderSocialButton("instagram", "Instagram", links.instagram)}
-        {renderSocialButton("facebook", "Facebook", links.facebook)}
-        {renderSocialButton("twitter", "Twitter", links.twitter)}
-        {renderSocialButton("threads", "Threads", links.threads)}
-        {/* {renderSocialButton("tiktok", "TikTok", links.tiktok)} */}
-        {renderSocialButton("mastodon", "Mastodon", links.mastodon, "me")}
-        {renderSocialButton("linkedin", "LinkedIn", links.linkedin)}
-        {renderSocialButton("telegram", "Telegram", links.telegram)}
-        {renderSocialButton("github", "GitHub", links.github)}
+        {FOOTER_PROFILES.map(({ platform, label, relExtra }) =>
+          renderSocialButton(
+            String(platform),
+            label,
+            links[platform as keyof SocialProps["links"]],
+            relExtra,
+          ),
+        )}
       </div>
     </div>
   );

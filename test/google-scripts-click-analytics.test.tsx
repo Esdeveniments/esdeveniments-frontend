@@ -89,3 +89,101 @@ describe("GoogleScriptsHeavy click analytics", () => {
     ]);
   });
 });
+
+describe("GoogleScriptsHeavy ad-free checkout routes", () => {
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllEnvs();
+    window.history.pushState({}, "", "/");
+    delete document.documentElement.dataset.adFree;
+    document
+      .querySelectorAll('script[src*="adsbygoogle"]')
+      .forEach((el) => el.remove());
+  });
+
+  it("matches /patrocina and /e/[slug]/promote across all locales", async () => {
+    const { isAdFreePath } = await import("@utils/analytics");
+    expect(isAdFreePath("/patrocina")).toBe(true);
+    expect(isAdFreePath("/patrocina/upload")).toBe(true);
+    expect(isAdFreePath("/es/patrocina")).toBe(true);
+    expect(isAdFreePath("/en/patrocina/success")).toBe(true);
+    expect(isAdFreePath("/e/festa-major/promote")).toBe(true);
+    expect(isAdFreePath("/es/e/festa-major/promote/cancel")).toBe(true);
+    expect(isAdFreePath("/")).toBe(false);
+    expect(isAdFreePath("/barcelona")).toBe(false);
+    expect(isAdFreePath("/e/festa-major")).toBe(false);
+  });
+
+  it("suppresses adsbygoogle.js and marks html[data-ad-free] on /patrocina", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_ADS", "ca-pub-123456");
+    window.history.pushState({}, "", "/es/patrocina/upload");
+    const GoogleScriptsHeavy = (await import("../app/GoogleScriptsHeavy")).default;
+
+    render(<GoogleScriptsHeavy adsAllowed={true} adsScriptReady={true} />);
+
+    expect(document.documentElement.dataset.adFree).toBe("true");
+    expect(document.querySelector('script[src*="adsbygoogle"]')).toBeNull();
+  });
+
+  it("loads adsbygoogle.js normally on non-ad-free routes", async () => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_GOOGLE_ADS", "ca-pub-123456");
+    window.history.pushState({}, "", "/barcelona");
+    const GoogleScriptsHeavy = (await import("../app/GoogleScriptsHeavy")).default;
+
+    render(<GoogleScriptsHeavy adsAllowed={true} adsScriptReady={true} />);
+
+    expect(document.documentElement.dataset.adFree).toBeUndefined();
+    expect(
+      document.querySelector('script[src*="adsbygoogle"]'),
+    ).not.toBeNull();
+  });
+
+  it("cancels a queued idle callback if unmounted before Auto Ads initializes", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.resetModules();
+      vi.stubEnv("NEXT_PUBLIC_GOOGLE_ADS", "ca-pub-123456");
+      window.history.pushState({}, "", "/barcelona");
+      delete window.__autoAdsInitialized;
+      delete window.__autoAdsInitPending;
+      const pushSpy = vi.fn();
+      (window as unknown as { adsbygoogle: { push: typeof pushSpy } }).adsbygoogle = {
+        push: pushSpy,
+      };
+      let queuedIdle: (() => void) | null = null;
+      const cancelIdleSpy = vi.fn(() => {
+        queuedIdle = null;
+      });
+      const origRic = window.requestIdleCallback;
+      const origCic = window.cancelIdleCallback;
+      window.requestIdleCallback = vi.fn((cb: IdleRequestCallback) => {
+        queuedIdle = () => cb({ didTimeout: false, timeRemaining: () => 50 });
+        return 42;
+      });
+      window.cancelIdleCallback = cancelIdleSpy;
+
+      try {
+        const GoogleScriptsHeavy = (await import("../app/GoogleScriptsHeavy")).default;
+        const { unmount } = render(
+          <GoogleScriptsHeavy adsAllowed={true} adsScriptReady={false} />,
+        );
+        // Fire the 1s timer so pushAutoAds queues the idle callback.
+        vi.advanceTimersByTime(1000);
+        expect(queuedIdle).not.toBeNull();
+
+        // Simulate navigating away before the idle callback fires.
+        unmount();
+        expect(cancelIdleSpy).toHaveBeenCalledWith(42);
+        expect(pushSpy).not.toHaveBeenCalled();
+      } finally {
+        window.requestIdleCallback = origRic;
+        window.cancelIdleCallback = origCic;
+        delete (window as unknown as { adsbygoogle?: unknown }).adsbygoogle;
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

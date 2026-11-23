@@ -332,6 +332,56 @@ export function sentryTunnelFor(
   return `${tunnelPath}?o=${orgId}&p=${projectId}${region ? `&r=${region}` : ""}`;
 }
 
+const FUNDING_CHOICES_SCRIPT_URL =
+  /^https?:\/\/fundingchoicesmessages\.google\.com\//i;
+
+const EXTENSION_FETCH_FAILURE_PATTERN =
+  /^(?:TypeError:\s*)?(?:Failed to fetch|Load failed|NetworkError when attempting to fetch resource)\b/i;
+
+function matchesUrlPatterns(
+  url: string | undefined,
+  patterns: Array<string | RegExp>,
+): boolean {
+  if (!url) return false;
+  return patterns.some((pattern) =>
+    typeof pattern === "string" ? url.includes(pattern) : pattern.test(url),
+  );
+}
+
+function exceptionHasFrameMatching(
+  ex: NonNullable<NonNullable<Event["exception"]>["values"]>[number],
+  patterns: Array<string | RegExp>,
+): boolean {
+  return (
+    ex.stacktrace?.frames?.some(
+      (frame) =>
+        matchesUrlPatterns(frame.abs_path, patterns) ||
+        matchesUrlPatterns(frame.filename, patterns),
+    ) ?? false
+  );
+}
+
+function isExtensionWrappedFetchFailure(event: ErrorEvent): boolean {
+  return (
+    event.exception?.values?.some(
+      (ex) =>
+        EXTENSION_FETCH_FAILURE_PATTERN.test(ex.value ?? "") &&
+        exceptionHasFrameMatching(ex, SENTRY_DENY_URLS),
+    ) ?? false
+  );
+}
+
+function isFundingChoicesFocusLoop(event: ErrorEvent): boolean {
+  return (
+    event.exception?.values?.some(
+      (ex) =>
+        ex.type === "RangeError" &&
+        /maximum call stack size exceeded/i.test(ex.value ?? "") &&
+        exceptionHasFrameMatching(ex, [FUNDING_CHOICES_SCRIPT_URL]),
+    ) ?? false
+  );
+}
+
 /**
  * Client-specific beforeSend handler.
  * Browser runtime expects ErrorEvent type.
@@ -340,6 +390,17 @@ export function beforeSendClient(
   event: ErrorEvent,
   hint: EventHint,
 ): ErrorEvent | null {
+  // Sentry's eventFiltersIntegration(denyUrls) only checks the last (innermost)
+  // non-native frame, so extension-wrapped fetch failures whose innermost frame
+  // is our own Sentry wrapper slip through. Scope this all-frame check to fetch
+  // failures so real first-party bugs under extension-patched listeners stay reported.
+  if (isExtensionWrappedFetchFailure(event)) {
+    return null;
+  }
+  // Third-party focus-trap recursion inside Google Funding Choices scripts on iOS.
+  if (isFundingChoicesFocusLoop(event)) {
+    return null;
+  }
   return beforeSend(event, hint) as ErrorEvent | null;
 }
 

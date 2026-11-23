@@ -5,8 +5,7 @@
  * Retries until `window.gtag` is available (capped at ~10 seconds). Safe
  * under SSR and in browsers without localStorage (graceful fallbacks).
  *
- * Storage key `ed_first_seen` follows the same localStorage pattern used by
- * `SocialFollowPopup.tsx` — try/catch, JSON-free scalar for resilience.
+ * Storage key `ed_first_seen` uses a try/catch, JSON-free scalar for resilience.
  */
 import { isE2ETestMode } from "./env";
 import type { WindowWithGtag } from "types/common";
@@ -51,6 +50,8 @@ const SOCIAL_SUFFIXES = [
   "linkedin.com",
   "tiktok.com",
   "threads.net",
+  "threads.com",
+  "bsky.app",
   "telegram.org",
   "t.me",
   "whatsapp.com",

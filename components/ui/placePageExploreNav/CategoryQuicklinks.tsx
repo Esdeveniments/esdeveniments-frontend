@@ -43,7 +43,7 @@ export default async function CategoryQuicklinks({
   }
 
   // Sort categories: priority first, then by API order
-  const displayCategories = [...filteredCategories].sort((a, b) => {
+  const displayCategories = filteredCategories.toSorted((a, b) => {
     const aIsPriority = PRIORITY_CATEGORY_SLUGS.includes(a.slug);
     const bIsPriority = PRIORITY_CATEGORY_SLUGS.includes(b.slug);
 

@@ -67,11 +67,11 @@ import type { AppLocale } from "types/i18n";
 import { getCategoryLabel } from "@utils/category-helpers";
 import FavoriteButton from "@components/ui/common/favoriteButton";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
-import { buildResponsivePictureSourceUrls } from "@utils/image-cache";
-import { getOptimalImageQuality, getResponsiveWidths, getOptimalImageSizes } from "@utils/image-quality";
+import ImagePreload from "@components/ui/common/image/ImagePreload";
 import EventSidebar from "./components/EventSidebar";
 import CollapsibleDescription from "./components/CollapsibleDescription";
 import CulturalMessage from "@components/ui/common/culturalMessage";
+import CommunityStrip from "@components/ui/common/social/CommunityStrip";
 import DetailSectionTracker from "./components/DetailSectionTracker";
 import EventMoreEvents from "./components/EventMoreEvents";
 import EventRelatedEvents from "./components/EventRelatedEvents";
@@ -471,16 +471,6 @@ async function EventPageBody({
   ];
   const breadcrumbJsonLd = generateBreadcrumbList(breadcrumbItems);
 
-  // Preload LCP hero image — React 19 hoists <link> to <head> automatically.
-  // Uses responsive srcSet so the browser picks the right width for the viewport,
-  // instead of always downloading the full 1200px version on mobile.
-  const lcpSources = event.imageUrl
-    ? buildResponsivePictureSourceUrls(event.imageUrl, undefined, {
-      quality: getOptimalImageQuality({ isPriority: true, isExternal: true }),
-    }, getResponsiveWidths("hero"))
-    : null;
-  const lcpSizes = getOptimalImageSizes("hero");
-
   const venue = getEventVenue(event.location, title);
   // Venue plus its town once ("Tesr, Aguilar de Segarra, Bages" stays as is).
   const placeText = buildDisplayLocation({
@@ -494,17 +484,7 @@ async function EventPageBody({
   return (
     <>
       {/* Preload LCP hero image for faster Largest Contentful Paint */}
-      {lcpSources && (
-        <link
-          rel="preload"
-          as="image"
-          href={lcpSources.webp}
-          imageSrcSet={lcpSources.webpSrcSet}
-          imageSizes={lcpSizes}
-          type="image/webp"
-          fetchPriority="high"
-        />
-      )}
+      {event.imageUrl && <ImagePreload image={event.imageUrl} context="hero" />}
       {/* Main Event JSON-LD */}
       <JsonLdServer
         id={event.id ? String(event.id) : undefined}
@@ -674,6 +654,13 @@ async function EventPageBody({
                 <DetailSectionTracker section="categories">
                   <EventCategories categories={event.categories} place={primaryPlaceSlug} />
                 </DetailSectionTracker>
+
+                {/* Inline community follow strip (WhatsApp Channel + Instagram + other networks) */}
+                <CommunityStrip
+                  locale={locale}
+                  context="event_inline"
+                  placeSlug={primaryPlaceSlug}
+                />
 
                 <EventReportLink
                   ownerId={event.owner?.id}

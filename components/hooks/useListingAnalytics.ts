@@ -56,7 +56,10 @@ export default function useListingAnalytics(
     const reportedStopIds = new Set<string>();
     const cappedDwellById = new Map<string, number>();
 
-    const controller = observeCardVisibility(root, "[data-listing-grid] > *", {
+    const controller = observeCardVisibility(
+      root,
+      "[data-listing-grid] > :not([data-listing-slot])",
+      {
       onSeenProgress: (seen, cards) => {
         if (cards.length === 0) return;
         const pctSeen =

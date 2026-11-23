@@ -17,7 +17,7 @@ export type CacheOptions = { storeEmpty?: boolean };
 export type SingleCacheOptions = CacheOptions & { globalKey?: string };
 
 /** maxEntries: drop the oldest entry beyond this size. */
-export type KeyedCacheOptions = CacheOptions & { maxEntries?: number };
+export type KeyedCacheOptions = SingleCacheOptions & { maxEntries?: number };
 
 /**
  * Keyed cache function type that fetches and caches data by key
@@ -26,6 +26,13 @@ export type KeyedCacheFn<T> = (
   key: string | number,
   fetcher: (_key: string | number) => Promise<T>
 ) => Promise<T>;
+
+/** Handle returned by createKeyedCache (and stored on globalThis with globalKey). */
+export type KeyedCacheHandle<T> = {
+  cache: KeyedCacheFn<T>;
+  clear: () => void;
+  delete: (key: string | number) => void;
+};
 
 /** A cached backend list for Proxy checks (lib/api/proxy-list.ts). */
 export type ProxyListLoader<T> = {

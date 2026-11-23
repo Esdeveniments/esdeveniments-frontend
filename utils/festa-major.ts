@@ -82,7 +82,7 @@ export function toFestaMajorAct(
 export function dedupeActs<T extends FestaMajorAct>(acts: T[]): T[] {
   const seen = new Set<string>();
   const kept = new Set<T>();
-  const preferred = [...acts].sort(
+  const preferred = acts.toSorted(
     (a, b) => b.endDate.localeCompare(a.endDate) || a.id.localeCompare(b.id),
   );
   for (const act of preferred) {
@@ -106,7 +106,7 @@ function toEdition(
   name: FestaMajorName,
   acts: FestaMajorAct[],
 ): FestaMajorEdition {
-  const sorted = [...acts].sort(compareActs);
+  const sorted = acts.toSorted(compareActs);
   return {
     ...name,
     start: sorted[0].startDate,
@@ -130,7 +130,7 @@ function clusterByTime(
   const clusters: FestaMajorAct[][] = [];
   let latest = Number.NEGATIVE_INFINITY;
   let first = Number.NEGATIVE_INFINITY;
-  for (const act of [...acts].sort(compareActs)) {
+  for (const act of acts.toSorted(compareActs)) {
     const day = dayNumber(act.startDate);
     if (
       clusters.length === 0 ||
@@ -241,7 +241,7 @@ export function groupByDay<T extends FestaMajorAct>(
   acts: T[],
 ): [string, T[]][] {
   const days = new Map<string, T[]>();
-  for (const act of [...acts].sort(compareActs)) {
+  for (const act of acts.toSorted(compareActs)) {
     days.set(act.startDate, [...(days.get(act.startDate) ?? []), act]);
   }
   return [...days];

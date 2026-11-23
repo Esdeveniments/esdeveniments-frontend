@@ -1,22 +1,29 @@
 import { NextResponse } from "next/server";
-import { getUserByUsernameExternal } from "@lib/api/users-external";
+import { getUserByUsernameExternalResult } from "@lib/api/users-external";
 import { handleApiError } from "@utils/api-error-handler";
-import type { UserPublicResponseDTO } from "types/api/user";
 
-// GET /api/users/[username] - server-only proxy with server-side HMAC and caching
+// GET /api/users/[username] - browser-facing proxy with server-side HMAC and caching
 export async function GET(
   _request: Request,
   context: RouteContext<"/api/users/[username]">
 ) {
   try {
     const { username } = await context.params;
-    const user: UserPublicResponseDTO | null =
-      await getUserByUsernameExternal(username);
+    const { data: user, error, status } =
+      await getUserByUsernameExternalResult(username);
 
-    // Cache successful 200 responses with a short TTL so the internal fetch
-    // in fetchUserBySlug (next: { revalidate }) can cache. 404s use no-store
-    // to avoid negative caching — a newly registered user would otherwise see
-    // a cached 404 for up to 30 min.
+    if (error) {
+      return NextResponse.json(
+        { error: "Failed to load profile" },
+        {
+          status: status !== null && status >= 400 ? status : 502,
+          headers: { "Cache-Control": "no-store" },
+        },
+      );
+    }
+
+    // 404s use no-store to avoid negative caching — a newly registered user
+    // would otherwise see a cached 404.
     const headers: Record<string, string> =
       user
         ? { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=1800" }

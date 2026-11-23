@@ -84,8 +84,8 @@ Give each thread a verdict (AGREE / PARTIAL / DECLINE). Read the flagged code be
 | Declare a type inline | All types in `types/` (ESLint) | `types/README.md` |
 | Use `gray-*`, hex or arbitrary utilities | Semantic tokens, e.g. `text-muted-foreground` | `design-system-conventions` |
 | Read `searchParams` in a listing page | Never: makes pages dynamic ($300+ incident) | `url-canonicalization` |
-| Add `next: { revalidate }` to a `fetchWithHmac` call in `lib/api/*-external.ts` | Never: fetch-cache explosion (`revalidate` on same-origin `fetch()` in `lib/api/*.ts` is fine) | `api-layer-patterns` |
-| Call the backend directly, or use raw `fetch()`/axios for the backend or other services | `lib/api` → `app/api` → `*-external.ts`; `fetchWithHmac` / `safeFetch`. Plain `fetch()` to same-origin internal routes is fine | `api-layer-patterns`, `security-headers-csp` |
+| Add `next: { revalidate }` to a `fetchWithHmac` call in `lib/api/*-external.ts` | Never: fetch-cache explosion (use `createCache`/`createKeyedCache` or `"use cache"` in `lib/api/*.ts`, `Cache-Control` in `app/api/*`) | `api-layer-patterns` |
+| Call the backend directly from pages/browser, loop back to `/api/*` from `lib/api/*.ts`, or use raw `fetch()`/axios | Server: `lib/api/*.ts` → `*-external.ts` (`fetchWithHmac`); browser: SWR → `app/api/*` → `*-external.ts`; non-backend: `safeFetch` | `api-layer-patterns`, `security-headers-csp` |
 | Skip Zod on external data | Zod in `lib/validation/`, safe fallback | `data-validation-patterns` |
 | Add an env var in one place | Update all 5 places | `env-variable-management` |
 | Add an `index.ts` re-exporting `"use client"` components used by different routes | Direct file imports (single-component entry points like `components/ui/addToCalendar/index.tsx` are fine) | AGENTS.md › Hard rules |

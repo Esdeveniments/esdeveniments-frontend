@@ -43,6 +43,12 @@ const ADS_SCRIPT_FALLBACK_MS = 4500;
 // first TCF event; wait longer than that before showing the box by hand.
 const CONSENT_FALLBACK_DELAY_MS = 3000;
 
+// Any Funding Choices overlay already in the DOM (GDPR, revocation, ad-block
+// recovery, or message iframe). Opening a second FC UI creates competing focus
+// traps that overflow the call stack on iOS WebKit.
+const FC_UI_SELECTOR =
+  '.fc-consent-root, .fc-message-root, .fc-dialog-container, iframe[src*="fundingchoicesmessages.google.com"]';
+
 // WORKAROUND: on some pages (seen on "/") Funding Choices loads but never
 // shows its box to a new visitor, so show it by hand. Only when FC's first TCF
 // event says GDPR applies and there is no stored consent string, and FC has
@@ -80,7 +86,7 @@ export function armConsentFallback(): () => void {
     if (tcData.gdprApplies !== true) return;
     timer ??= setTimeout(() => {
       stopListening();
-      if (settled || document.querySelector(".fc-consent-root")) return;
+      if (settled || document.querySelector(FC_UI_SELECTOR)) return;
       try {
         window.googlefc?.showRevocationMessage?.();
       } catch {

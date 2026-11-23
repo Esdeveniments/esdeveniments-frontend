@@ -597,11 +597,9 @@ not on its parents. `router.push` doesn't trigger vignettes. Vignettes on Back,
 on inactivity and on tab revisit can't be turned off per link: use AdSense ›
 Auto ads › "Allow additional triggers for vignette ads".
 
-## React hoists a preload `<link>` into `<head>` only when it has `href`
+## Image preloads: use `ReactDOM.preload()`, not JSX `<link rel="preload">`
 
-`<link rel="preload" as="image" imageSrcSet={…} media={…}>` without `href`
-renders in `<body>`, where the browser finds it late. Pass `href` (a fallback
-URL) as well as `imageSrcSet`, as the home hero preload does (#508).
+In React 19, a Server Component rendering JSX `<link rel="preload" as="image" imageSrcSet={…}>` without `href` stays in `<body>` (#508), while passing `href` makes RSC emit both a Flight `:HL` hint (without `href`) and the JSX `<link>` (with `href`), producing duplicate `<link rel="preload">` tags on cached and initial shells (`facebook/react#35889`). Use `preload()` from `react-dom` instead: it emits a single deduplicated `<link>` and omits `href` when `imageSrcSet` is set (per WHATWG spec). Call `preload()` directly in the initial shell for static sets (the home hero in `app/[locale]/page.tsx`), and render the `"use client"` leaf `<ImagePreload>` (`components/ui/common/image/ImagePreload.tsx`) inside streamed `<Suspense>` or `"use cache"` boundaries — calling `preload()` from a Server Component inside a streamed boundary only emits Flight `:HL` after Fizz's request context closes, so Fizz drops the HTML `<link>`.
 
 ## Next keeps visited pages mounted: never find page content by global id or edit React's DOM
 
@@ -1317,3 +1315,21 @@ rules, run Purge Everything once so old forced-TTL entries do not linger.
 `deploy-coolify.yml` checks `/edita` (must not `HIT`) and `/sitemap.xml` as
 `bingbot` (`HIT`) on every production deploy.
 
+## Server readers must never self-fetch `/api/*` through the public hostname
+
+When `fetchEventBySlug` (`lib/api/events.ts`), `lib/api/news.ts`, and
+`lib/api/profiles.ts` read through `getInternalApiUrl('/api/...')`, every
+request inside `"use cache"` (which skips `headers()` and fell back to
+`NEXT_PUBLIC_SITE_URL`) left the Hetzner container, went out through
+Cloudflare, and came back to itself. Cloudflare Bot Fight / WAF periodically
+answered those datacenter-IP self-fetches with HTTP 403 (`JAVASCRIPT-NEXTJS-63`
+on `getCachedEventBySlug`, Nov 2026), and during `deploy-coolify.yml` E2E runs
+without `INTERNAL_SITE_URL` they hit the old production container instead of
+the build under test (#630).
+
+All server readers in `lib/api/*.ts` now call their `lib/api/*-external.ts`
+wrapper directly (passing `skipConnection: true` inside `"use cache"` and
+sharing bounded `globalKey` caches via `createKeyedCache` where needed).
+`getInternalApiUrl` and `getVercelProtectionBypassHeaders` were deleted, and
+ESLint flags raw `fetch()` in `lib/api/*.ts` so this loopback pattern cannot
+return. `app/api/*` routes are strictly for browser code (SWR hooks).

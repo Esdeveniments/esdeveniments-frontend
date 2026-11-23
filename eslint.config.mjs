@@ -207,7 +207,6 @@ export default [
       "utils/safe-fetch.ts", // The safe-fetch utility
       "test/**/*", // Tests can mock fetch
       "app/api/**/*", // API routes are the endpoints themselves
-      "lib/api/*.ts", // Internal API client calls (same-origin, Next.js handles)
       "components/hooks/use*.ts", // SWR fetchers (same-origin)
     ],
     rules: {
@@ -216,7 +215,7 @@ export default [
         {
           name: "fetch",
           message:
-            "Review: prefer fetchWithHmac (internal API) or safeFetch (external webhooks) for timeout & error handling. Ignore if calling same-origin internal routes.",
+            "Review: prefer fetchWithHmac (backend API via lib/api/*-external.ts) or safeFetch (external services) for timeout & error handling. Server readers in lib/api/*.ts must call *-external.ts directly, never loop back to /api/*.",
         },
       ],
     },

@@ -48,7 +48,7 @@ export default function EventsMapPanel({
 
   const places = useMemo(
     () =>
-      [...points].sort(
+      points.toSorted(
         (a, b) =>
           b.events.length - a.events.length ||
           comparePlaceNames(a.label, b.label, locale),

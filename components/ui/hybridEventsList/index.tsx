@@ -1,5 +1,8 @@
 import { ReactElement, Suspense } from "react";
+import { locale as rootLocale } from "next/root-params";
 import { HybridEventsListProps } from "types/props";
+import type { AppLocale } from "types/i18n";
+import { isEventSummaryResponseDTO } from "types/api/isEventSummaryResponseDTO";
 import NoEventsFound from "@components/ui/common/noEventsFound";
 import HybridEventsListClient from "./HybridEventsListClient";
 import SearchRecoveryLinks from "./SearchRecoveryLinks";
@@ -10,7 +13,12 @@ import SearchAwareHeading from "./SearchAwareHeading";
 import CountLine from "./CountLine";
 import HeadingLayout from "./HeadingLayout";
 import SponsorBannerSlot from "@components/ui/sponsor/SponsorBannerSlot";
-import { omitDefaultFilterValue } from "@utils/constants";
+import CommunityStrip from "@components/ui/common/social/CommunityStrip";
+import {
+  COMMUNITY_STRIP_LIST_AFTER_INDEX,
+  omitDefaultFilterValue,
+  THIN_TOWN_EVENT_THRESHOLD,
+} from "@utils/constants";
 import { hasCardImage } from "@utils/event-helpers";
 import { buildEventMapPoints } from "@utils/event-map";
 import { ListingEventsProvider } from "@components/context/ListingEventsContext";
@@ -19,6 +27,7 @@ import ListingAnalyticsTracker from "@components/analytics/ListingAnalyticsTrack
 
 async function HybridEventsList({
   initialEvents = [],
+  placeTypeLabel,
   pageData,
   noEventsFound = false,
   place,
@@ -31,7 +40,9 @@ async function HybridEventsList({
   promotedSlot,
   countLine,
 }: HybridEventsListProps): Promise<ReactElement> {
+  const locale = (await rootLocale()) as AppLocale;
   const priorityIndex = initialEvents.findIndex(hasCardImage);
+  const realEventCount = initialEvents.filter(isEventSummaryResponseDTO).length;
   const showMap = buildEventMapPoints(initialEvents).length >= 2;
   const titleClass = place ? "heading-2" : "heading-1";
   const subtitleClass = place ? "body-normal" : "body-large";
@@ -72,6 +83,14 @@ async function HybridEventsList({
 
   const analyticsCategorySlug = omitDefaultFilterValue(category);
   const analyticsDateSlug = omitDefaultFilterValue(date);
+  const isThinTown =
+    !profileSlug &&
+    placeTypeLabel?.type === "town" &&
+    !analyticsCategorySlug &&
+    !analyticsDateSlug &&
+    !serverHasMore &&
+    realEventCount > 0 &&
+    realEventCount < THIN_TOWN_EVENT_THRESHOLD;
 
   if (noEventsFound || initialEvents.length === 0) {
     return (
@@ -142,6 +161,18 @@ async function HybridEventsList({
             events={initialEvents}
             priorityIndex={priorityIndex}
             headingLevel="h2"
+            inlineSlot={
+              !profileSlug ? (
+                <CommunityStrip
+                  locale={locale}
+                  context={isThinTown ? "thin_town_inline" : "listing_inline"}
+                  placeSlug={place || undefined}
+                  placeLabel={isThinTown ? placeTypeLabel?.label : undefined}
+                  placeType={isThinTown ? placeTypeLabel?.type : undefined}
+                />
+              ) : undefined
+            }
+            inlineSlotAfterIndex={COMMUNITY_STRIP_LIST_AFTER_INDEX}
           />
           <AdArticle slot="9643657007" />
         </SsrListWrapper>

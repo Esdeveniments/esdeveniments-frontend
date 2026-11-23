@@ -81,6 +81,24 @@ describe("fetchNewsBySlugExternal", () => {
     expect(result?.events).toEqual([]);
   });
 
+  it("returns null on 404 and on 400 for malformed slugs, and throws with status on outages", async () => {
+    mockFetchWithHmac.mockResolvedValueOnce({ ok: false, status: 404 } as Response);
+    expect(await fetchNewsBySlugExternal("missing-slug")).toBeNull();
+
+    mockFetchWithHmac.mockResolvedValueOnce({ ok: false, status: 400 } as Response);
+    expect(await fetchNewsBySlugExternal("<script>")).toBeNull();
+
+    mockFetchWithHmac.mockResolvedValueOnce({ ok: false, status: 503 } as Response);
+    await expect(fetchNewsBySlugExternal("valid-slug")).rejects.toMatchObject({
+      status: 503,
+    });
+
+    mockFetchWithHmac.mockResolvedValueOnce(jsonResponse({ invalid: true }));
+    await expect(fetchNewsBySlugExternal("valid-slug")).rejects.toMatchObject({
+      status: 502,
+    });
+  });
+
 });
 
 describe("fetchNewsExternal", () => {

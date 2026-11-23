@@ -22,16 +22,10 @@ const EVENT_DETAIL_TTL_MS = 30 * 60 * 1000; // 30 minutes
 // past this cap (same bound as fetchPlaceBySlug).
 const EVENT_DETAIL_MAX_ENTRIES = 5000;
 
-const globalForEventDetail = globalThis as unknown as {
-  __appEventDetailCache?: ReturnType<
-    typeof createKeyedCache<EventDetailResponseDTO | null>
-  >;
-};
-
 const { cache: eventDetailCache, delete: deleteEventDetailCache } =
-  (globalForEventDetail.__appEventDetailCache ??=
-    createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS, {
-      maxEntries: EVENT_DETAIL_MAX_ENTRIES,
-    }));
+  createKeyedCache<EventDetailResponseDTO | null>(EVENT_DETAIL_TTL_MS, {
+    maxEntries: EVENT_DETAIL_MAX_ENTRIES,
+    globalKey: "events:detail",
+  });
 
 export { eventDetailCache, deleteEventDetailCache };

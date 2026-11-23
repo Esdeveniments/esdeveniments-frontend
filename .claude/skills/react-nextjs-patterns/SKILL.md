@@ -42,7 +42,7 @@ Don't build a new list or `useSWR` call for events. Reuse:
 - `components/ui/hybridEventsList/index.tsx` (`HybridEventsList`, server): renders `initialEvents` as given. The page calls `insertAds` (`lib/api/events.ts`) before passing them, as `app/[locale]/[place]/page.tsx` does; a new listing that skips it has no SSR ad slots.
 - `components/ui/hybridEventsList/HybridEventsListClient.tsx` + `components/hooks/useEvents.ts` (`useSWRInfinite`): load more and client filters (`search`, `distance`, `lat`, `lon`, `from`, `to`).
 
-The append/dedupe/ads contract is in AGENTS.md › Rendering. `getInternalApiUrl` (`utils/api-helpers.ts`) is async and server-only, and so are the `lib/api/*` helpers; client code fetches relative `/api/*` URLs (e.g. `components/hooks/useEvents.ts`).
+The append/dedupe/ads contract is in AGENTS.md › Rendering. `lib/api/*` readers are server-only and call `lib/api/*-external.ts` directly (never our own `/api/*` routes); client code fetches relative `/api/*` URLs (e.g. `components/hooks/useEvents.ts`).
 
 ## Loading UI
 
