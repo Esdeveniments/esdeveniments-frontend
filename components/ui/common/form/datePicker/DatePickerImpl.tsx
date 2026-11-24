@@ -7,6 +7,7 @@ import {
   setSeconds,
   addMinutes,
   addDays,
+  startOfDay,
 } from "date-fns";
 import { useTranslations } from "next-intl";
 import type { DatePickerComponentProps, TimeSelectorProps } from "types/props";
@@ -15,7 +16,7 @@ import { nowInMadrid } from "@utils/constants";
 import DateRangeCalendar from "../DateRangeCalendar";
 
 function toDate(dateStr: string): Date {
-  const fallback = () => setHours(setMinutes(new Date(), 0), 9);
+  const fallback = () => setHours(startOfDay(new Date()), 9);
   if (!dateStr) return fallback();
   const parsed = /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
     ? new Date(`${dateStr}T09:00`)

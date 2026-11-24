@@ -9,6 +9,7 @@ import {
   parsePagedEvents,
 } from "lib/validation/event";
 import { buildEventsQuery, getApiUrl, emptyPagedResponse } from "@utils/api-helpers";
+import { BACKEND_EVENTS_MAX_PAGE_SIZE } from "@utils/constants";
 import { addDaysYmd, daysBetweenYmd } from "@utils/date-helpers";
 import type {
   EventDetailResponseDTO,
@@ -136,7 +137,7 @@ export async function fetchEventCountExternal(
 }
 
 const PARALLEL_REQUESTS = 4;
-const MAX_PAGE_SIZE = 50; // the backend clamps larger pages
+const MAX_PAGE_SIZE = BACKEND_EVENTS_MAX_PAGE_SIZE;
 // Windows are cut to about half a page, so most fit on the first try.
 const WINDOW_FILL = 0.5;
 

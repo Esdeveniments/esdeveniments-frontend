@@ -1346,8 +1346,9 @@ received Cloudflare's 403 HTML instead of an RSC stream and threw
 bytes and user text inside a `Next-Action` multipart `FormData` body can
 accidentally match emergency RSC/Flight WAF regexes. Mitigated with Cloudflare
 Security Custom Rule #4 (`Skip → All managed rules`, ordered below bot/country/
-threat rules #1–#3, scoped to `POST` with `Next-Action` ending in `/publica` or
-`/edita`). For new upload flows, always use regular `/api/*` Route Handlers
+threat rules #1–#3, scoped to `POST` with `Next-Action` on `/publica` or
+`/e/<slug>/edita` — excluding `/perfil/edita`). For new upload flows, always use
+regular `/api/*` Route Handlers
 (like `/api/users/me/avatar` and `/api/publica/poster-autofill`), never
 `"use server"` actions carrying `File` uploads. See
 [docs/incidents/2026-11-19-cloudflare-waf-server-action-403.md](docs/incidents/2026-11-19-cloudflare-waf-server-action-403.md).

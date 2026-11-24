@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { siteUrl } from "@config/index";
 import { Feed } from "feed";
-import { fetchEvents } from "@lib/api/events";
+import { fetchAllEventPagesExternal } from "@lib/api/events-external";
 import { getPlaceTypeAndLabel, getFormattedDate } from "@utils/helpers";
 import { BACKEND_EVENTS_MAX_PAGE_SIZE } from "@utils/constants";
 import { captureException } from "@sentry/nextjs";
@@ -34,15 +34,18 @@ const getAllArticles = async (
       until.setDate(now.getDate() + 7); // Default to 7 days if invalid
     }
 
-    const response = await fetchEvents({
-      page: 0,
-      size: BACKEND_EVENTS_MAX_PAGE_SIZE,
-      place: town || regionLabel,
-      from: from.toISOString().split("T")[0],
-      to: until.toISOString().split("T")[0],
-    });
+    const { events: rawEvents } = await fetchAllEventPagesExternal(
+      {
+        place: town || regionLabel,
+        from: from.toISOString().split("T")[0],
+        to: until.toISOString().split("T")[0],
+      },
+      { maxRequests: 15, pageSize: BACKEND_EVENTS_MAX_PAGE_SIZE },
+    );
 
-    const events: EventSummaryResponseDTO[] = response.content;
+    const events: EventSummaryResponseDTO[] = [...rawEvents].sort((a, b) =>
+      a.startDate.localeCompare(b.startDate),
+    );
 
     const mappedEvents = events.map((event) => {
       const { formattedStart, nameDay } = getFormattedDate(
