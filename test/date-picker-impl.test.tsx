@@ -323,5 +323,42 @@ describe("DatePickerImpl", () => {
         expectedLocalTime("2026-03-07", 10, 15),
       );
     });
+
+    it("ignores cleared or malformed start and end times without throwing RangeError", () => {
+      render(<DatePickerImpl {...baseProps} />);
+
+      const startTime = screen.getByLabelText("Hora d'inici");
+      const endTime = screen.getByLabelText("Hora de fi");
+
+      for (const bad of ["", "25:00", "12:99", "invalid"]) {
+        expect(() =>
+          fireEvent.change(endTime, { target: { value: bad } }),
+        ).not.toThrow();
+        expect(() =>
+          fireEvent.change(startTime, { target: { value: bad } }),
+        ).not.toThrow();
+      }
+      expect(baseProps.onChange).not.toHaveBeenCalled();
+
+      fireEvent.change(endTime, { target: { value: "14:30" } });
+      expect(baseProps.onChange).toHaveBeenCalledWith(
+        "endDate",
+        expectedLocalTime("2026-03-07", 14, 30),
+      );
+    });
+
+    it("falls back cleanly when given an invalid date prop instead of crashing", () => {
+      expect(() =>
+        render(
+          <DatePickerImpl
+            {...baseProps}
+            startDate="not-a-date"
+            endDate="also-invalid"
+          />,
+        ),
+      ).not.toThrow();
+      expect(screen.getByLabelText("Hora d'inici")).toHaveValue("09:00");
+      expect(screen.getByLabelText("Hora de fi")).toHaveValue("10:00");
+    });
   });
 });

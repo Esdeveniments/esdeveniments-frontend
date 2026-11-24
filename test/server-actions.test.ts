@@ -72,6 +72,18 @@ vi.mock("@lib/cdn/cloudflare-purge", () => ({
     mockPurgeEventPagesFromCdn(...args),
 }));
 
+let mockRequestHost: string | null = null;
+vi.mock("next/headers", () => ({
+  headers: async () =>
+    new Headers(mockRequestHost ? { host: mockRequestHost } : {}),
+}));
+
+const mockFireAndForgetFetch = vi.fn();
+vi.mock("@utils/safe-fetch", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@utils/safe-fetch")>()),
+  fireAndForgetFetch: (...args: unknown[]) => mockFireAndForgetFetch(...args),
+}));
+
 const pngFile = () =>
   new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])], "c.png", { type: "image/png" });
 const fakePngFile = () => new File(["<html>"], "c.png", { type: "image/png" });
@@ -159,6 +171,7 @@ describe("Server Actions - Next.js 16 caching", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    mockRequestHost = null;
     process.env = { ...originalEnv };
     process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
     // Default to a creator session and a matching event.
@@ -349,6 +362,60 @@ describe("Server Actions - Next.js 16 caching", () => {
         expect(result).toEqual({ success: false, reason: expectedReason });
       },
     );
+
+    it("sends the new-event email webhook only when both site URL and request host are production", async () => {
+      mockCreateEvent.mockResolvedValue(
+        buildEvent({ title: "Prod Event", slug: "prod-event" }),
+      );
+      process.env.NEW_EVENT_EMAIL_URL = "https://pipedream.example.com/hook";
+      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+      mockRequestHost = "www.esdeveniments.cat";
+
+      await createEventAction(toFormData(buildEventData("Prod Event")));
+      // Flush after() async callback
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFireAndForgetFetch).toHaveBeenCalledTimes(1);
+      expect(mockFireAndForgetFetch).toHaveBeenCalledWith(
+        "https://pipedream.example.com/hook",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ title: "Prod Event", slug: "prod-event" }),
+        }),
+      );
+    });
+
+    it("never sends the new-event email webhook from staging even when NODE_ENV=production and NEXT_PUBLIC_VERCEL_ENV is unset", async () => {
+      mockCreateEvent.mockResolvedValue(
+        buildEvent({ title: "Staging Event", slug: "staging-event" }),
+      );
+      process.env.NEW_EVENT_EMAIL_URL = "https://pipedream.example.com/hook";
+      process.env.NEXT_PUBLIC_SITE_URL = "https://staging.esdeveniments.cat";
+      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
+      mockRequestHost = "staging.esdeveniments.cat";
+
+      await createEventAction(toFormData(buildEventData("Staging Event")));
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFireAndForgetFetch).not.toHaveBeenCalled();
+    });
+
+    it("never sends the new-event email webhook when a non-prod host falls back to the production site URL", async () => {
+      mockCreateEvent.mockResolvedValue(
+        buildEvent({ title: "Preview Event", slug: "preview-event" }),
+      );
+      process.env.NEW_EVENT_EMAIL_URL = "https://pipedream.example.com/hook";
+      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
+      mockRequestHost = "pr-872.esdeveniments.cat";
+
+      await createEventAction(toFormData(buildEventData("Preview Event")));
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockFireAndForgetFetch).not.toHaveBeenCalled();
+    });
   });
 
   describe("editEvent", () => {

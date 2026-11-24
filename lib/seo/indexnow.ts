@@ -1,12 +1,8 @@
 import "server-only";
-import { headers } from "next/headers";
 import { getSiteUrl } from "@config/index";
+import { isProductionDeploymentRequest } from "@lib/production-request";
 import { buildLocalizedUrls } from "@utils/i18n-seo";
 import { INDEXNOW_KEY } from "@utils/constants";
-import {
-  isProductionHost,
-  isProductionSiteUrl,
-} from "@utils/production-host";
 import { safeFetch } from "@utils/safe-fetch";
 
 const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
@@ -23,8 +19,8 @@ export async function submitEventsToIndexNow(
   slugs: readonly (string | null | undefined)[],
   extraPaths: readonly string[] = [],
 ): Promise<void> {
+  if (!(await isProductionDeploymentRequest())) return;
   const siteUrl = getSiteUrl();
-  if (!isProductionSiteUrl(siteUrl) || !(await isProductionRequest())) return;
 
   const paths = [
     ...slugs.filter(Boolean).map((slug) => `/e/${slug}`),
@@ -46,12 +42,4 @@ export async function submitEventsToIndexNow(
     expectJson: false,
     context: { tags: { section: "indexnow" } },
   });
-}
-
-async function isProductionRequest(): Promise<boolean> {
-  try {
-    return isProductionHost((await headers()).get("host"));
-  } catch {
-    return false;
-  }
 }

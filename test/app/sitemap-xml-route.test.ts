@@ -23,9 +23,9 @@ vi.mock("../../lib/api/places", () => ({
   ),
 }));
 
-// Event chunk count comes from the backend's totalElements (500 per chunk).
+// Event chunk count comes from the backend's totalElements (100 per chunk).
 vi.mock("../../lib/api/events-external", () => ({
-  // Default: 2,200 events → 5 chunks
+  // Default: 2,200 events → 22 chunks
   fetchEventsExternalResult: vi.fn().mockResolvedValue({
     data: { totalElements: 2200 },
     error: null,
@@ -132,7 +132,14 @@ describe("app/sitemap.xml/route", () => {
       error: null,
       status: 200,
     });
-    expect(await eventChunkCount()).toBe(9);
+    expect(await eventChunkCount()).toBe(43);
+
+    vi.mocked(fetchEventsExternalResult).mockResolvedValueOnce({
+      data: { totalElements: 50000 } as never,
+      error: null,
+      status: 200,
+    });
+    expect(await eventChunkCount()).toBe(100);
 
     vi.mocked(fetchEventsExternalResult).mockResolvedValueOnce({
       data: null,

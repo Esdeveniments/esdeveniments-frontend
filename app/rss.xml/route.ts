@@ -3,6 +3,7 @@ import { siteUrl } from "@config/index";
 import { Feed } from "feed";
 import { fetchEvents } from "@lib/api/events";
 import { getPlaceTypeAndLabel, getFormattedDate } from "@utils/helpers";
+import { BACKEND_EVENTS_MAX_PAGE_SIZE } from "@utils/constants";
 import { captureException } from "@sentry/nextjs";
 import { formatPlacePhrases } from "@utils/string-helpers";
 import type { RssEvent } from "types/common";
@@ -35,7 +36,7 @@ const getAllArticles = async (
 
     const response = await fetchEvents({
       page: 0,
-      size: 1000,
+      size: BACKEND_EVENTS_MAX_PAGE_SIZE,
       place: town || regionLabel,
       from: from.toISOString().split("T")[0],
       to: until.toISOString().split("T")[0],

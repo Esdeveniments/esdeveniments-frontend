@@ -1333,3 +1333,44 @@ sharing bounded `globalKey` caches via `createKeyedCache` where needed).
 `getInternalApiUrl` and `getVercelProtectionBypassHeaders` were deleted, and
 ESLint flags raw `fetch()` in `lib/api/*.ts` so this loopback pattern cannot
 return. `app/api/*` routes are strictly for browser code (SWR hooks).
+
+## Never upload binary files via Next.js Server Actions (Cloudflare WAF false positives)
+
+On 2026-11-19, Cloudflare's Free Managed Ruleset rule
+`3114709a3c3b4e3685052c7b251e86aa` (`React - Leaking Server Functions - CVE:CVE-2025-55183`)
+blocked 59 legitimate `POST /publica` attempts from one organizer with HTTP 403
+in 79–227 ms, even though `next@16.4.6` + `react@19.3.1` is patched. Next.js
+received Cloudflare's 403 HTML instead of an RSC stream and threw
+`"An unexpected response was received from the server."` (`JAVASCRIPT-NEXTJS-54`,
+50 `publish_error` `generic` events in GA4, zero origin logs). Binary JPEG
+bytes and user text inside a `Next-Action` multipart `FormData` body can
+accidentally match emergency RSC/Flight WAF regexes. Mitigated with Cloudflare
+Security Custom Rule #4 (`Skip → All managed rules`, ordered below bot/country/
+threat rules #1–#3, scoped to `POST` with `Next-Action` ending in `/publica` or
+`/edita`). For new upload flows, always use regular `/api/*` Route Handlers
+(like `/api/users/me/avatar` and `/api/publica/poster-autofill`), never
+`"use server"` actions carrying `File` uploads. See
+[docs/incidents/2026-11-19-cloudflare-waf-server-action-403.md](docs/incidents/2026-11-19-cloudflare-waf-server-action-403.md).
+
+## Never gate prod-only side effects on `env === "prod"` on Coolify
+
+`env` in `utils/misc-helpers.ts` only returns `"staging"` when
+`NEXT_PUBLIC_VERCEL_ENV` is `"preview"` or `"development"`. Coolify containers
+run with `NODE_ENV=production` and no `NEXT_PUBLIC_VERCEL_ENV`, so `env`
+evaluates to `"prod"` on staging and PR previews. Because `esdeveniments-staging`
+also had `NEW_EVENT_EMAIL_URL` set, every staging publish fired the production
+Pipedream notification email webhook. Use `isProductionDeploymentRequest()`
+(`lib/production-request.ts`, which checks both `isProductionSiteUrl(getSiteUrl())`
+and `isProductionHost((await headers()).get("host"))`, failing closed outside a
+request context) for any production-only server side effect (emails, IndexNow,
+etc.).
+
+## Backend `GET /api/events` enforces `size <= 100`
+
+The backend rejects `GET /api/events` requests with `size > 100` (`400
+Validation failed - size: must be less than or equal to 100`). Both
+`SITEMAP_EVENTS_PER_CHUNK` (`utils/constants.ts`) and `app/rss.xml/route.ts`
+must stay at or below `BACKEND_EVENTS_MAX_PAGE_SIZE` (`100`). When raising or
+lowering `SITEMAP_EVENTS_PER_CHUNK`, `EVENT_CHUNKS_MAX` in
+`lib/seo/sitemap-chunks.ts` derives from `Math.ceil(10_000 / SITEMAP_EVENTS_PER_CHUNK)`
+so the 10,000-event sitemap cap stays constant.
