@@ -228,18 +228,21 @@ export const getShareItemId = (url: string): string => {
 };
 
 const PROMOTE_PATH_RE = /^\/e\/[^/]+\/promote(?:\/|$)/;
+const AD_FREE_PREFIXES = ["/patrocina", "/publica"] as const;
 
 /**
- * Commercial checkout and sponsorship pages never show third-party AdSense
- * ads: running Auto Ads on /patrocina or /e/[slug]/promote clashes with our
- * own paid offers and clutters checkout/upload flows.
+ * Commercial checkout, sponsorship, and event-submission pages never show
+ * third-party AdSense ads: running Auto Ads on /patrocina, /e/[slug]/promote,
+ * or /publica clashes with our own paid offers and event-supply forms.
  */
 export const isAdFreePath = (pathname: string | null | undefined): boolean => {
   if (!pathname) return false;
   const { pathnameWithoutLocale } = stripLocalePrefix(pathname);
   return (
-    pathnameWithoutLocale === "/patrocina" ||
-    pathnameWithoutLocale.startsWith("/patrocina/") ||
-    PROMOTE_PATH_RE.test(pathnameWithoutLocale)
+    AD_FREE_PREFIXES.some(
+      (prefix) =>
+        pathnameWithoutLocale === prefix ||
+        pathnameWithoutLocale.startsWith(`${prefix}/`)
+    ) || PROMOTE_PATH_RE.test(pathnameWithoutLocale)
   );
 };

@@ -52,7 +52,7 @@ These were tuned for Core Web Vitals. Keep each where it is:
 | --- | --- | --- |
 | Funding Choices (consent box) | Plain `<script async src={FUNDING_CHOICES_SRC}>` in the `<head>` of `app/[locale]/layout.tsx`, next to the `googlefcPresent` iframe script | As a `<Script>` in the client tree it waited for hydration and the load event; on a first visit the consent box became the LCP (about 5 s on a slow phone). |
 | AdSense | `app/GoogleScripts.tsx` arms the trigger at mount: first tap/key/scroll or `ADS_SCRIPT_FALLBACK_MS` (4.5 s), via `onFirstInteractionOrTimeout` (`utils/browser.ts`), then an idle callback. `app/GoogleScriptsHeavy.tsx` mounts after consent and injects `adsbygoogle.js` once the trigger fired. | Keeps the ads script off the main thread during page load. |
-| GA (gtag) | `<Script strategy="lazyOnload">` in `app/GoogleScripts.tsx`, production host only | Not needed until the page is idle. |
+| GA (gtag) | Inline `GTAG_SHIM` + consent-gated `<Script strategy="lazyOnload">` in `app/GoogleScripts.tsx`, production host only (Basic Consent Mode v2) | Keeps `gtag.js` off the main thread during initial load and out of Funding Choices' synchronous consent click handler (~72 ms INP saving on slow phones). |
 
 `armConsentFallback` (`app/GoogleScripts.tsx`) handles pages where Funding Choices shows no box. Test consent changes against the real FC host, not `localhost`: see LESSONS.md "Funding Choices: `googlefcInactive` is no signal".
 

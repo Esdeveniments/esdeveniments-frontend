@@ -126,6 +126,29 @@ describe("AdContext consent detection", () => {
       expect(window.__adsConsentGranted).toBe(false);
     });
 
+    it("should set adsAllowed=true when gdprApplies is false (non-EEA visitor)", () => {
+      window.__tcfapi = vi.fn(
+        (
+          command: string,
+          _version: number,
+          callback: (tcData: TcfData, success: boolean) => void
+        ) => {
+          if (command === "getTCData" || command === "addEventListener") {
+            callback({ eventStatus: "tcloaded", gdprApplies: false }, true);
+          }
+        }
+      );
+
+      render(
+        <AdProvider>
+          <TestConsumer />
+        </AdProvider>
+      );
+
+      expect(screen.getByTestId("ads-allowed").textContent).toBe("true");
+      expect(window.__adsConsentGranted).toBe(true);
+    });
+
     it("should register both getTCData and addEventListener", () => {
       installMockCmp(true);
 

@@ -10,7 +10,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import type { TcfCallback, AdContextType, AdContextInternal } from "types/ads";
+import type { TcfCallback, TcfData, AdContextType, AdContextInternal } from "types/ads";
 import {
   createExternalStore,
   useExternalStore,
@@ -67,10 +67,10 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
       adsAllowed.set(allowed);
     };
 
-    const hasAdConsent = (tcData: {
-      purpose?: { consents?: Record<string, boolean> };
-      vendor?: { consents?: Record<string, boolean> };
-    }) => {
+    const hasAdConsent = (tcData: TcfData) => {
+      // Outside the EEA/UK/Switzerland, GDPR does not apply and TCF omits
+      // purpose/vendor consent bitmasks.
+      if (tcData.gdprApplies === false) return true;
       const purposeConsent = tcData.purpose?.consents ?? {};
       const vendorConsent = tcData.vendor?.consents ?? {};
       // Purpose 1 (storage) + Google vendor 755 are the minimum signals we respect
