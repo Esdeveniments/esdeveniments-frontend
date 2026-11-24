@@ -37,7 +37,9 @@ SCOPE_HINT = (
     'https://www.googleapis.com/auth/cloud-platform,'
     'https://www.googleapis.com/auth/analytics.readonly,'
     'https://www.googleapis.com/auth/webmasters.readonly,'
-    'https://www.googleapis.com/auth/adsense.readonly"'
+    'https://www.googleapis.com/auth/adsense.readonly"\n'
+    '  (If gcloud blocks non-GCP scopes on the default client ID, pass '
+    '--client-id-file=<path-to-oauth-client.json>.)'
 )
 
 
@@ -64,14 +66,14 @@ def api_get(token: str, path: str, params: dict | None = None) -> dict:
         with urllib.request.urlopen(req, timeout=20) as resp:
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as exc:
-        body = exc.read().decode()[:400]
+        body = exc.read().decode()
         if exc.code == 403 and "SCOPE_INSUFFICIENT" in body:
             sys.stderr.write(
                 "Missing adsense.readonly scope in gcloud ADC. Re-login with:\n"
                 f"  {SCOPE_HINT}\n"
             )
             raise SystemExit(1)
-        raise RuntimeError(f"AdSense API HTTP {exc.code}: {body}") from exc
+        raise RuntimeError(f"AdSense API HTTP {exc.code}: {body[:400]}") from exc
 
 
 def date_params(days: int) -> tuple[dict, str, str]:
