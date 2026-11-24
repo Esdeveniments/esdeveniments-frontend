@@ -206,7 +206,10 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
           }
         });
       },
-      { rootMargin: "0px 0px 320px 0px" } // Same rootMargin as before
+      // Pre-fetch ~600px before a slot enters the viewport (both directions)
+      // so scrolling visitors see filled ads without firing off-screen slots
+      // 3+ screens below the fold.
+      { rootMargin: "600px 0px 600px 0px" }
     );
 
     return () => {
