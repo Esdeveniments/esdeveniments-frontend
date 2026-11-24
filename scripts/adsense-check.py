@@ -74,18 +74,24 @@ def api_get(token: str, path: str, params: dict | None = None) -> dict:
         raise RuntimeError(f"AdSense API HTTP {exc.code}: {body}") from exc
 
 
-def date_params(days: int) -> dict:
-    end = dt.date.today()
-    start = end - dt.timedelta(days=days)
-    return {
-        "dateRange": "CUSTOM",
-        "startDate.year": start.year,
-        "startDate.month": start.month,
-        "startDate.day": start.day,
-        "endDate.year": end.year,
-        "endDate.month": end.month,
-        "endDate.day": end.day,
-    }
+def date_params(days: int) -> tuple[dict, str, str]:
+    # AdSense presets (LAST_7_DAYS, LAST_30_DAYS) cover completed days ending
+    # yesterday; both startDate and endDate are inclusive.
+    end = dt.date.today() - dt.timedelta(days=1)
+    start = end - dt.timedelta(days=days - 1)
+    return (
+        {
+            "dateRange": "CUSTOM",
+            "startDate.year": start.year,
+            "startDate.month": start.month,
+            "startDate.day": start.day,
+            "endDate.year": end.year,
+            "endDate.month": end.month,
+            "endDate.day": end.day,
+        },
+        start.isoformat(),
+        end.isoformat(),
+    )
 
 
 def rows_as_dicts(report: dict) -> list[dict]:
@@ -124,7 +130,7 @@ def main() -> None:
         parser.error("--days must be >= 1")
 
     token = get_token()
-    dates = date_params(args.days)
+    dates, start_iso, end_iso = date_params(args.days)
 
     sites = api_get(token, f"{ACCOUNT}/sites").get("sites", [])
     alerts = api_get(token, f"{ACCOUNT}/alerts").get("alerts", [])
@@ -155,6 +161,8 @@ def main() -> None:
     payload = {
         "domain": args.domain,
         "days": args.days,
+        "startDate": start_iso,
+        "endDate": end_iso,
         "site": next((s for s in sites if s.get("domain") == args.domain), None),
         "alerts": alerts,
         "byFormat": rows_as_dicts(by_format),
@@ -167,14 +175,20 @@ def main() -> None:
 
     site = payload["site"] or {}
     print(
-        f"AdSense {args.domain} (last {args.days}d) | "
+        f"AdSense {args.domain} ({start_iso}..{end_iso}, {args.days}d) | "
         f"state={site.get('state', '?')} | autoAds={site.get('autoAdsEnabled', '?')} | "
         f"alerts={len(alerts)}"
     )
+    for alert in alerts:
+        print(
+            f"  [{alert.get('severity', 'INFO')}] "
+            f"{alert.get('type', 'alert')}: {alert.get('message', '')}"
+        )
     cols = [
         ("AD_FORMAT_NAME", "Format"),
         ("PLATFORM_TYPE_NAME", "Platform"),
         ("AD_REQUESTS", "Req"),
+        ("AD_REQUESTS_COVERAGE", "Coverage"),
         ("IMPRESSIONS", "Imp"),
         ("ACTIVE_VIEW_VIEWABILITY", "Viewability"),
         ("CLICKS", "Clicks"),
