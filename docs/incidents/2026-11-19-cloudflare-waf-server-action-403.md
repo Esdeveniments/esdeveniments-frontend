@@ -38,7 +38,7 @@ Every blocked request was a false positive from Cloudflare's **Free Managed Rule
   - Action: `Skip` → **All managed rules** (keeping custom rules, threat challenge, bot blocks, and rate limiting active).
   - Recommended expression (Free-plan compatible, covers all locales for `/publica` and `/e/<slug>/edita` while excluding `/perfil/edita`):
     ```
-    (http.host eq "www.esdeveniments.cat" and http.request.method eq "POST" and any(http.request.headers["next-action"][*] ne "") and (ends_with(http.request.uri.path, "/publica") or (contains(http.request.uri.path, "/e/") and ends_with(http.request.uri.path, "/edita"))))
+    (http.host eq "www.esdeveniments.cat" and http.request.method eq "POST" and any(http.request.headers["next-action"][*] ne "") and (ends_with(http.request.uri.path, "/publica") or (http.request.uri.path contains "/e/" and ends_with(http.request.uri.path, "/edita"))))
     ```
 - **Secondary issues uncovered and fixed in the same investigation:**
   - `DatePickerImpl.tsx`: guarded `handleStartTimeChange` / `handleEndTimeChange` with `parseTime()` and `toDate()` with an `Invalid Date` fallback (`JAVASCRIPT-NEXTJS-53`).
