@@ -1,11 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, act } from "@testing-library/react";
 
+const visibilityState = vi.hoisted(() => ({
+  autoIntersect: true,
+  callbacks: [] as Array<() => void>,
+}));
+
 vi.mock("@lib/context/AdContext", () => ({
   ADS_SCRIPT_SETTLED_EVENT: "ads-script-settled",
   useAdContext: () => ({
     adsAllowed: true,
-    observeVisibility: (_el: Element, callback: () => void) => callback(),
+    observeVisibility: (_el: Element, callback: () => void) => {
+      if (visibilityState.autoIntersect) {
+        callback();
+      } else {
+        visibilityState.callbacks.push(callback);
+      }
+    },
     unobserveVisibility: () => {},
     observeMutations: () => {},
     unobserveMutations: () => {},
@@ -22,6 +33,8 @@ describe("GoogleAdsense no-fill fallback", () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
+    visibilityState.autoIntersect = true;
+    visibilityState.callbacks = [];
     window.adsbygoogle = [];
     setDisplayAd = vi.fn<(display: boolean) => void>();
     mockedOffsetWidth = 360;
@@ -185,6 +198,32 @@ describe("GoogleAdsense no-fill fallback", () => {
     const visibleIns = container.querySelector("#slot-visible");
     expect(hiddenIns).not.toHaveClass("adsbygoogle");
     expect(visibleIns).toHaveClass("adsbygoogle");
+    expect(window.adsbygoogle).toHaveLength(1);
+  });
+
+  it("keeps off-screen slots unmounted until IntersectionObserver fires (no blind timer push)", () => {
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    visibilityState.autoIntersect = false;
+    window.__adsScriptSettled = true;
+    const { container } = renderSlot();
+
+    // Even after 10 s off-screen, no <ins> is mounted and no ad is pushed
+    act(() => vi.advanceTimersByTime(10_000));
+    expect(container.querySelector("ins")).toBeNull();
+    expect(window.adsbygoogle).toHaveLength(0);
+    expect(setDisplayAd).not.toHaveBeenCalledWith(false);
+    expect(visibilityState.callbacks).toHaveLength(1);
+
+    // Scrolling within rootMargin mounts <ins> and pushes once
+    act(() => visibilityState.callbacks[0]());
+    expect(container.querySelector("ins")).not.toBeNull();
     expect(window.adsbygoogle).toHaveLength(1);
   });
 
