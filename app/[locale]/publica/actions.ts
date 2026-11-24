@@ -12,7 +12,7 @@ import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { submitEventsToIndexNow } from "@lib/seo/indexnow";
 import { hubPathsFor } from "@utils/festivity";
 import { fireAndForgetFetch } from "@utils/safe-fetch";
-import { env } from "@utils/misc-helpers";
+import { isProductionDeploymentRequest } from "@lib/production-request";
 import { getValidatedImageFile } from "@utils/image-validation";
 import { matchCreateEventFailureReason } from "@utils/publica-analytics";
 
@@ -23,9 +23,8 @@ import { matchCreateEventFailureReason } from "@utils/publica-analytics";
  */
 async function sendNewEventEmail(title: string, slug: string): Promise<void> {
   const webhookUrl = process.env.NEW_EVENT_EMAIL_URL;
-  const isProduction = env === "prod";
 
-  if (!webhookUrl || !isProduction) {
+  if (!webhookUrl || !(await isProductionDeploymentRequest())) {
     return;
   }
 

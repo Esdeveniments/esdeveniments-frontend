@@ -8,7 +8,7 @@ import {
 // Used when the backend can't be read, so an index keeps the usual chunks.
 const CHUNKS_FALLBACK = 5;
 // Caps the backend work one sitemap crawl can trigger (10,000 events).
-const EVENT_CHUNKS_MAX = 20;
+const EVENT_CHUNKS_MAX = Math.ceil(10_000 / SITEMAP_EVENTS_PER_CHUNK);
 
 // Chunk count for /sitemap-events/N.xml, from the same query those chunks
 // page through. A fixed count left upcoming events past the 2,500th out.
