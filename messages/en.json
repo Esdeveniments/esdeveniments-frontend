@@ -921,8 +921,7 @@
     "CategoryEventsSection": {
       "heading": "The {categoryPhrase} agenda in Catalonia",
       "headingNoArticle": "Agenda in Catalonia · {categoryName}",
-      "seeMore": "See more",
-      "sponsored": "Sponsored content"
+      "seeMore": "See more"
     },
     "Weather": {
       "title": "Weather",

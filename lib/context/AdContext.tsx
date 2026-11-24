@@ -68,9 +68,6 @@ export const AdProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const hasAdConsent = (tcData: TcfData) => {
-      // Outside the EEA/UK/Switzerland, GDPR does not apply and TCF omits
-      // purpose/vendor consent bitmasks.
-      if (tcData.gdprApplies === false) return true;
       const purposeConsent = tcData.purpose?.consents ?? {};
       const vendorConsent = tcData.vendor?.consents ?? {};
       // Purpose 1 (storage) + Google vendor 755 are the minimum signals we respect

@@ -921,8 +921,7 @@
     "CategoryEventsSection": {
       "heading": "La agenda {categoryPhrase} en Cataluña",
       "headingNoArticle": "Agenda en Cataluña · {categoryName}",
-      "seeMore": "Ver más",
-      "sponsored": "Contenido patrocinado"
+      "seeMore": "Ver más"
     },
     "Weather": {
       "title": "El tiempo",

@@ -936,7 +936,6 @@
     "CategoryEventsSection": {
       "heading": "L'agenda {categoryPhrase} a Catalunya",
       "seeMore": "Veure més",
-      "sponsored": "Contingut patrocinat",
       "headingNoArticle": "Agenda a Catalunya · {categoryName}"
     },
     "Weather": {

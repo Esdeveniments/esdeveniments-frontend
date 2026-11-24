@@ -13,10 +13,10 @@ export const sendGoogleEvent = (
   ensureGtag()?.gtag("event", event, obj);
 };
 
-// How long gtag.js holds its hits (the landing page_view) for our consent
-// update after it loads. Funding Choices answers asynchronously; without a
-// wait, the page_view of a visitor who consented on an earlier visit goes out
-// denied, and GA reports leave denied hits out.
+// Fallback grace window in Consent Mode v2 default. With Basic Consent Mode
+// (#875), gtag.js loads only after `adsAllowed` is true (so the granted update
+// is already queued in `dataLayer` before gtag.js runs); `wait_for_update`
+// remains as a safety buffer if consent updates arrive right as gtag.js boots.
 export const CONSENT_WAIT_FOR_UPDATE_MS = 1000;
 
 // Consent Mode v2 baseline, pushed once by ensureGtag() below. Exported so
