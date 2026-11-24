@@ -7,6 +7,7 @@ import {
   setSeconds,
   addMinutes,
   addDays,
+  startOfDay,
 } from "date-fns";
 import { useTranslations } from "next-intl";
 import type { DatePickerComponentProps, TimeSelectorProps } from "types/props";
@@ -15,11 +16,21 @@ import { nowInMadrid } from "@utils/constants";
 import DateRangeCalendar from "../DateRangeCalendar";
 
 function toDate(dateStr: string): Date {
-  if (!dateStr) return setHours(setMinutes(new Date(), 0), 9);
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return new Date(`${dateStr}T09:00`);
-  }
-  return new Date(dateStr);
+  const fallback = () => setHours(startOfDay(new Date()), 9);
+  if (!dateStr) return fallback();
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(dateStr)
+    ? new Date(`${dateStr}T09:00`)
+    : new Date(dateStr);
+  return Number.isNaN(parsed.getTime()) ? fallback() : parsed;
+}
+
+function parseTime(time: string): [number, number] | null {
+  const match = /^(\d{2}):(\d{2})(?::\d{2})?$/.exec(time);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return [hours, minutes];
 }
 
 function computeEndDate(
@@ -194,7 +205,9 @@ export default function DatePickerImpl({
   };
 
   const handleStartTimeChange = (time: string) => {
-    const [h, m] = time.split(":").map(Number);
+    const parsed = parseTime(time);
+    if (!parsed) return;
+    const [h, m] = parsed;
     const newStart = new Date(startDate);
     newStart.setHours(h, m, 0, 0);
     onChange("startDate", toLocalDateTimeString(newStart));
@@ -206,7 +219,9 @@ export default function DatePickerImpl({
   };
 
   const handleEndTimeChange = (time: string) => {
-    const [h, m] = time.split(":").map(Number);
+    const parsed = parseTime(time);
+    if (!parsed) return;
+    const [h, m] = parsed;
     const newEnd = new Date(endDate);
     newEnd.setHours(h, m, 0, 0);
 

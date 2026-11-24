@@ -74,6 +74,9 @@ describe("app/sitemap-events/[...parts]/route", () => {
     expect(Object.keys(bySlug)).not.toContain("expired-long-ago");
     expect(Object.keys(bySlug)).not.toContain("expired-single-day");
     expect(Object.keys(bySlug)).toHaveLength(3);
+
+    const { fetchEvents } = await import("@lib/api/events");
+    expect(fetchEvents).toHaveBeenCalledWith({ page: 0, size: 100 });
   });
 
   it("lists every locale version as its own <url> with the same alternates", async () => {

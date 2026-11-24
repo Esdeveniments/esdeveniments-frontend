@@ -318,7 +318,7 @@ describe("fetchAllEventPagesExternal", () => {
     origin: "MANUAL",
     categories: [],
   });
-  // 6 events a day for 30 days: 180, over three pages of 50.
+  // 6 events a day for 30 days: 180, over two pages of 100.
   const days = Array.from(
     { length: 30 },
     (_, i) => `2026-12-${String(i + 1).padStart(2, "0")}`,
@@ -387,7 +387,7 @@ describe("fetchAllEventPagesExternal", () => {
       { term: "fira", from: "2026-12-08", to: "2026-12-08" },
       { maxRequests: 30 },
     );
-    expect(fetchWithHmac).toHaveBeenCalledTimes(3);
+    expect(fetchWithHmac).toHaveBeenCalledTimes(2);
     expect(result.complete).toBe(result.events.length === 120);
   });
 
