@@ -1157,11 +1157,9 @@ export interface CategoryEventsSectionProps {
   categoryPhrase: string;
   categories?: CategorySummaryResponseDTO[];
   shouldUsePriority?: boolean;
-  showAd?: boolean;
   labels: {
     heading: string;
     seeMore: string;
-    sponsored: string;
   };
   badgeLabels?: DateFilterBadgeLabels;
 }

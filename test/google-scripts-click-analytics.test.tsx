@@ -107,6 +107,9 @@ describe("GoogleScriptsHeavy ad-free checkout routes", () => {
     expect(isAdFreePath("/patrocina/upload")).toBe(true);
     expect(isAdFreePath("/es/patrocina")).toBe(true);
     expect(isAdFreePath("/en/patrocina/success")).toBe(true);
+    expect(isAdFreePath("/publica")).toBe(true);
+    expect(isAdFreePath("/es/publica")).toBe(true);
+    expect(isAdFreePath("/en/publica")).toBe(true);
     expect(isAdFreePath("/e/festa-major/promote")).toBe(true);
     expect(isAdFreePath("/es/e/festa-major/promote/cancel")).toBe(true);
     expect(isAdFreePath("/")).toBe(false);

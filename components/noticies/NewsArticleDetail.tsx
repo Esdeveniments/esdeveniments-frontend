@@ -3,7 +3,6 @@ import type {
   NewsArticleDetailProps,
 } from "types/props";
 import { generateWebPageSchema } from "@components/partials/seo-meta";
-import AdArticle from "@components/ui/adArticle";
 import NewsEventsSection from "@components/noticies/NewsEventsSection";
 import SectionHeading from "@components/ui/common/SectionHeading";
 import CategoryBadge from "@components/ui/common/cardContent/CategoryBadge";
@@ -150,8 +149,6 @@ export default async function NewsArticleDetail({
             {plainDescription && <p className="body-large">{plainDescription}</p>}
             <NewsShareButtons place={place} slug={article} label={t("shareArticle")} />
           </header>
-
-          <AdArticle slot="news_in_article" isDisplay={false} />
 
           {events.length > 0 && (
             <div

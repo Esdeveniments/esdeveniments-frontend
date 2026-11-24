@@ -490,15 +490,6 @@ export async function ServerEventsCategorizedContent({
     return `${localePrefix}${path}`;
   };
 
-  // Ad Logic
-  const adPositions = new Set<number>();
-  for (let i = 1; i < categorySectionsToRender.length; i += 3) {
-    adPositions.add(i);
-  }
-  if (categorySectionsToRender.length > 3) {
-    adPositions.add(categorySectionsToRender.length - 1);
-  }
-
   return (
     <>
       <Suspense fallback={null}>
@@ -544,7 +535,7 @@ export async function ServerEventsCategorizedContent({
 
       {/* Categories Render */}
       <div className="container">
-        {categorySectionsToRender.map((section, index) => {
+        {categorySectionsToRender.map((section) => {
           const localizedCategoryName = getCategoryLabel(
             section.categorySlug,
             section.categoryName,
@@ -561,7 +552,6 @@ export async function ServerEventsCategorizedContent({
                 categoryPhrase={categoryPhrase}
                 categories={categories}
                 shouldUsePriority={false}
-                showAd={adPositions.has(index)}
                 labels={{
                   heading:
                     locale === DEFAULT_LOCALE
@@ -572,7 +562,6 @@ export async function ServerEventsCategorizedContent({
                         categoryName: localizedCategoryName,
                       }),
                   seeMore: tCategory("seeMore"),
-                  sponsored: tCategory("sponsored"),
                 }}
                 badgeLabels={badgeLabels}
               />

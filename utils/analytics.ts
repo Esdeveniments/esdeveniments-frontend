@@ -13,10 +13,10 @@ export const sendGoogleEvent = (
   ensureGtag()?.gtag("event", event, obj);
 };
 
-// How long gtag.js holds its hits (the landing page_view) for our consent
-// update after it loads. Funding Choices answers asynchronously; without a
-// wait, the page_view of a visitor who consented on an earlier visit goes out
-// denied, and GA reports leave denied hits out.
+// Fallback grace window in Consent Mode v2 default. With Basic Consent Mode
+// (#875), gtag.js loads only after `adsAllowed` is true (so the granted update
+// is already queued in `dataLayer` before gtag.js runs); `wait_for_update`
+// remains as a safety buffer if consent updates arrive right as gtag.js boots.
 export const CONSENT_WAIT_FOR_UPDATE_MS = 1000;
 
 // Consent Mode v2 baseline, pushed once by ensureGtag() below. Exported so
@@ -228,18 +228,21 @@ export const getShareItemId = (url: string): string => {
 };
 
 const PROMOTE_PATH_RE = /^\/e\/[^/]+\/promote(?:\/|$)/;
+const AD_FREE_PREFIXES = ["/patrocina", "/publica"] as const;
 
 /**
- * Commercial checkout and sponsorship pages never show third-party AdSense
- * ads: running Auto Ads on /patrocina or /e/[slug]/promote clashes with our
- * own paid offers and clutters checkout/upload flows.
+ * Commercial checkout, sponsorship, and event-submission pages never show
+ * third-party AdSense ads: running Auto Ads on /patrocina, /e/[slug]/promote,
+ * or /publica clashes with our own paid offers and event-supply forms.
  */
 export const isAdFreePath = (pathname: string | null | undefined): boolean => {
   if (!pathname) return false;
   const { pathnameWithoutLocale } = stripLocalePrefix(pathname);
   return (
-    pathnameWithoutLocale === "/patrocina" ||
-    pathnameWithoutLocale.startsWith("/patrocina/") ||
-    PROMOTE_PATH_RE.test(pathnameWithoutLocale)
+    AD_FREE_PREFIXES.some(
+      (prefix) =>
+        pathnameWithoutLocale === prefix ||
+        pathnameWithoutLocale.startsWith(`${prefix}/`)
+    ) || PROMOTE_PATH_RE.test(pathnameWithoutLocale)
   );
 };

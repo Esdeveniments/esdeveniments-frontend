@@ -1039,13 +1039,13 @@ visitors who had consented on an earlier visit (`gcs=G100`). GA reports leave
 denied hits out, and most visits are a single page: GA4 sessions fell from
 ~440 to 31-80 a day after the release on 2026-11-04, while Search Console
 clicks fell about half. GoogleScripts also pushed a "denied" update for the
-CMP's not-yet-known state. Fix: `wait_for_update` in the default, no update
-until the CMP has decided, updates pushed at once (not on idle), and one
-`page_view` after a grant that comes after gtag's wait ran out (a first visit
-where the visitor read the box). To check, watch `/g/collect` requests: the
-`page_view` of a consented visitor must carry `gcs=G111`
-(`docs/performance/baselines.md` method: local build served as the
-production host through a TLS proxy).
+CMP's not-yet-known state. Fix (#680, then simplified to Basic Consent Mode in
+#875): keep `wait_for_update` in the default, push no update until the CMP has
+decided, and load `gtag.js` only after `adsAllowed` is true so `dataLayer`
+already carries the granted update when `gtag.js` boots (this also removes
+~72 ms of synchronous `gtag.js` work from Funding Choices' consent click
+handler). To check, watch `/g/collect` requests: the `page_view` of a consented
+visitor must carry `gcs=G111` (single `page_view`, no resend needed).
 
 ## Card "Avui"/"Demà" can be up to 30 minutes stale after midnight
 
