@@ -98,10 +98,13 @@ export const POST_PUBLISH_UPSELL_STORAGE_PREFIX = "esdeveniments:post_publish_up
 export const POST_PUBLISH_UPSELL_TTL_MS = 60 * 60 * 1000;
 export const PUBLISH_DRAFT_MAX_FORM_BYTES = 64 * 1024;
 export const PUBLISH_DRAFT_MAX_COUNT = 5;
+// Backend GET /api/events rejects size > 100 (400 Validation failed).
+export const BACKEND_EVENTS_MAX_PAGE_SIZE = 100;
 // Sitemap chunking: places per chunk to keep response sizes manageable
 export const SITEMAP_PLACES_PER_CHUNK = 100;
-// Events per /sitemap-events/N.xml chunk (one <url> per locale: ~1,500 URLs, ~2 MB)
-export const SITEMAP_EVENTS_PER_CHUNK = 500;
+// Events per /sitemap-events/N.xml chunk (capped at backend's max page size;
+// 100 events × 3 locales = ~300 <url> entries per chunk)
+export const SITEMAP_EVENTS_PER_CHUNK = BACKEND_EVENTS_MAX_PAGE_SIZE;
 // Minimum event count for a place to get full date/category expansion in sitemap.
 // Places below this threshold only get the base /[place] URL to avoid
 // submitting thin/empty filtered pages that waste crawl budget.
