@@ -1,6 +1,5 @@
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import EventsAroundServer from "@components/ui/eventsAround/EventsAroundServer";
-import AdArticle from "@components/ui/adArticle";
 import PressableAnchor from "@components/ui/primitives/PressableAnchor";
 import { buildCanonicalUrl } from "@utils/url-filters";
 import { DEFAULT_FILTER_VALUE, SEE_ALL_LINK_CLASS } from "@utils/constants";
@@ -14,7 +13,6 @@ export function CategoryEventsSection({
   categoryPhrase: _categoryPhrase,
   categories,
   shouldUsePriority,
-  showAd,
   labels,
   badgeLabels,
 }: CategoryEventsSectionProps) {
@@ -62,17 +60,6 @@ export function CategoryEventsSection({
         analyticsListName="home_category"
         analyticsContext={{ placeSlug: "catalunya", categorySlug }}
       />
-
-      {showAd && (
-        <div className="w-full flex flex-col items-start mt-element-gap mb-element-gap-sm max-w-lg">
-          <div className="mb-element-gap">
-            <h2 className="heading-2">{labels.sponsored}</h2>
-          </div>
-          <div className="w-full">
-            <AdArticle slot="8139041285" />
-          </div>
-        </div>
-      )}
     </section>
   );
 }

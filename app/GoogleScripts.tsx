@@ -13,7 +13,6 @@ import {
 import {
   ensureGtag,
   CONSENT_MODE_DEFAULTS,
-  CONSENT_WAIT_FOR_UPDATE_MS,
   FUNDING_CHOICES_SRC,
 } from "@utils/analytics";
 import type { GoogleScriptsHeavyProps, TcfCallback } from "types/ads";
@@ -160,27 +159,22 @@ export default function GoogleScripts() {
 
   // Last consent state sent to GA; null until the CMP has decided.
   const lastConsentStateRef = useRef<"granted" | "denied" | null>(null);
-  // When gtag.js finished loading: its wait for our consent update starts then.
-  const gtagLoadedAtRef = useRef<number | null>(null);
 
-  // Keep GA consent state aligned with CMP decisions (Consent Mode v2).
-  // Note: We use the same consent signal (adsAllowed) for both ads and analytics
-  // because our TCF implementation (AdContext) provides a unified consent model.
-  // This is intentional and aligns with our CMP's consent structure.
+  // Keep GA consent state aligned with CMP decisions (Consent Mode v2, Basic
+  // mode: gtag.js only loads after consent is granted, so Funding Choices'
+  // synchronous consent update inside its click handler only pushes to
+  // dataLayer instead of running gtag.js synchronously during the click).
   useEffect(() => {
     if (!GA_MEASUREMENT_ID || isE2ETestBuild || !isProdHost) return;
     const consentState: "granted" | "denied" = adsAllowed ? "granted" : "denied";
     if (lastConsentStateRef.current === consentState) return;
     // adsAllowed starts false before the CMP answers. The default is already
-    // denied, and an early "denied" update would end gtag's wait_for_update,
-    // so the landing page_view would go out denied for everyone.
+    // denied, and an early "denied" update would override it before consent.
     if (lastConsentStateRef.current === null && consentState === "denied") return;
     const win = ensureGtag();
     if (!win) return;
     lastConsentStateRef.current = consentState;
 
-    // Pushed right away (a dataLayer push is cheap) so it lands inside
-    // gtag's wait window.
     win.gtag("consent", "update", {
       ad_user_data: consentState,
       ad_personalization: consentState,
@@ -192,18 +186,6 @@ export default function GoogleScripts() {
       consent_state: consentState,
       consent_timestamp: Date.now(),
     });
-
-    // Granted after gtag's wait ran out (a first visit where the visitor
-    // read the consent box): this page's page_view already went out denied,
-    // which GA reports leave out. Send it again with consent.
-    const loadedAt = gtagLoadedAtRef.current;
-    if (
-      consentState === "granted" &&
-      loadedAt !== null &&
-      performance.now() - loadedAt > CONSENT_WAIT_FOR_UPDATE_MS
-    ) {
-      win.gtag("event", "page_view");
-    }
   }, [adsAllowed, isProdHost]);
 
   // Load heavy tracking + Auto Ads only after hydration.
@@ -230,21 +212,22 @@ export default function GoogleScripts() {
 
   return (
     <>
-      {/* Google Analytics - Consent Mode v2 (default pushed by GTAG_SHIM, see
-          its comment above, for why this can't unconditionally re-push it) */}
+      {/* Google Analytics - Basic Consent Mode v2: keep the lightweight
+          dataLayer shim ready so Funding Choices and early trackers can queue
+          without blocking the consent click, and load gtag.js only after
+          consent is granted. */}
       {GA_MEASUREMENT_ID && !isE2ETestBuild && isProdHost && (
         <>
           <Script id="google-analytics-consent" strategy="lazyOnload">
             {GTAG_SHIM}
           </Script>
-          <Script
-            id="google-analytics-gtag"
-            strategy="lazyOnload"
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-            onLoad={() => {
-              gtagLoadedAtRef.current = performance.now();
-            }}
-          />
+          {adsAllowed && (
+            <Script
+              id="google-analytics-gtag"
+              strategy="lazyOnload"
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+            />
+          )}
         </>
       )}
 

@@ -416,7 +416,7 @@ Production, first visit; `all` = as served, `noGtag` / `noFC` / `none` = gtag.js
 - A tap 1 s after load (5 runs per variant) took 16-88 ms in every variant: gtag hadn't started yet.
 - Because FC delays `load`, `lazyOnload` already starts gtag.js 5-6.5 s after navigation on this profile. "First interaction or timeout" (as AdSense) would start it **earlier** for visitors who scroll or tap first, and put its 250-580 ms of frames right after that first interaction, where the next tap is likely. Lab TBT would only drop because `perf-lab.mjs` stops counting 5 s after load.
 - Cost side: page_view, consent-mode pings and early `web_vitals` events stay queued in `dataLayer` until gtag.js loads, so visits that end before the trigger are lost.
-- **Decision: not built.** The work doesn't go away, and its timing gets worse for engaged visitors. INP (186 ms phone p75, 81% good) is the metric to watch: when the GA4 API is available, check `web_vitals` INP by `load_state` and `element`; only INPs during gtag's frames would justify moving it.
+- **Decision: not built** on 2026-11-06; revisited and shipped as Basic Consent Mode on 2026-11-24 (#875, see below) once GA4 + live traces showed Funding Choices running `gtag.js` synchronously inside the consent click handler.
 - **The "event page paints 9464 ms late" case** (2026-11-05, event without an image, local TLS proxy) does not reproduce on production. On a no-image event the LCP is the FC consent box at **3.56-3.82 s** with or without gtag (3 runs each); with FC blocked the h1 paints at 0.77-0.85 s. FC stays where it is (hard rule); its box is the LCP of first visits on pages without an LCP image.
 
 ### Stored listing pages
@@ -562,3 +562,22 @@ GA4 mobile supporting vitals (Spain, 2026-11-14 to 2026-11-20): FCP 93.6% good (
 - Raw HTML remains heavier than peers (762 KB home, 433 KB event pages vs `vine.cat` 127 / 30 KB), though Cloudflare keeps home TTFB at 76 ms.
 
 **Next check:** CrUX after 2026-11-29 (full post-banner-ads window) and ~2 weeks after `#835` for INP.
+
+## 2026-11-24: INP — Basic Consent Mode (`gtag.js` after consent, #875)
+
+**Field (CrUX, phone, p75, 2026-10-26 to 2026-11-22):** INP rose from **186 ms** (80.5% good, 1.0% poor, ending Nov 7) → **191 ms** (Nov 14) → **197 ms** (Nov 21) → **198 ms** (75.35% good, 2.07% poor, Nov 22), and Search Console flagged a 392-URL event-page group at **206 ms**. GA4 Chrome mobile `web_vitals` (Nov 5–24) showed event pages at 75.0–75.7% good even after `#835` (93% new visitors, >50% of slow interactions on `(not set)` / `button.fc-cta-consent`).
+
+**Live trace on production (Pixel 7, 6× CPU):** `#835` moved our `AdContext` state update past paint (`t=7139 ms` vs paint `t=7133 ms`), but Funding Choices itself still called `gtag("set", "developer_id.dM2E2ND")` + `gtag("consent", "update")` synchronously inside the click handler (`108–115 ms` click processing, `71.9 ms` self-time in `gtag.js`, `192–200 ms` total INP).
+
+**Lab A/B on live production (Pixel 7, 6× CPU, 1.6 Mbps / 150 ms, 5 runs each; Tap 1 = consent click, Tap 2 = "Llegir més" +900 ms after consent):**
+
+| Variant | Tap 1 (consent) median (runs) | Tap 2 (+900 ms) median (runs) | Page INP (max) |
+|---|---|---|---|
+| Control (current prod, `gtag.js` early) | **160 ms** (176, 152, 168, 136, 160) | 24 ms (40, 24, 24, 32, 24) | **160 ms** |
+| Deferred `gtag.js` (released after `ads-consent-changed`) | **88 ms** (96, 80, 80, 88, 88) | **24 ms** (24, 24, 24, 24, 24) | **88 ms** |
+
+End-to-end network check with real `gtag.js` released after `ads-consent-changed`: queued `dataLayer` events (`FCP`, `TTFB`, `user_properties`, `view_event_page`, `section_view`) replayed cleanly and emitted 1 single `en=page_view` with `gcs=G111` and `npa=0`.
+
+**Change (#875):** Load `gtag.js` (`strategy="lazyOnload"`) only once `adsAllowed` is `true` (Basic Consent Mode v2), keep `GTAG_SHIM` on `lazyOnload`, drop the unused `gtagLoadedAtRef` resend path, remove broken `news_in_article` and €0.007/30d home slot `8139041285`, and add `/publica` to `isAdFreePath`.
+
+**Next check:** GA4 Chrome mobile `web_vitals` INP split by `element` and `load_state` at +7 days (~2026-12-01) to confirm both consent-click and post-consent taps stay fast; CrUX phone INP at +14–28 days.
