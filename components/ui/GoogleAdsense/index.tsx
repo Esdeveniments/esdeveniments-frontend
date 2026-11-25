@@ -60,7 +60,10 @@ const GoogleAdsenseContainer = ({
     }
   }, [adsAllowed]);
 
-  // Visibility Observer
+  // Visibility Observer: keep off-screen slots unmounted until the user scrolls
+  // within AdContext's IntersectionObserver rootMargin (no blind fallback timer,
+  // which pushed off-screen ads 3+ screens below the fold and held mobile Active
+  // View viewability at 20–29%).
   useEffect(() => {
     if (!adsAllowed || shouldRenderSlot) return;
     const target = wrapperRef.current;
@@ -74,13 +77,6 @@ const GoogleAdsenseContainer = ({
       unobserveVisibility(target);
     };
   }, [adsAllowed, shouldRenderSlot, observeVisibility, unobserveVisibility]);
-
-  // Safety fallback if observer never fires
-  useEffect(() => {
-    if (!adsAllowed || shouldRenderSlot) return;
-    const timer = setTimeout(() => setShouldRenderSlot(true), 1200);
-    return () => clearTimeout(timer);
-  }, [adsAllowed, shouldRenderSlot]);
 
   // Push Ad once adsbygoogle.js has settled AND the <ins> slot has positive
   // width. Pushing before adsbygoogle.js loads queues {} into a raw array that

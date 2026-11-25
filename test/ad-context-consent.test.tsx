@@ -146,6 +146,30 @@ describe("AdContext consent detection", () => {
         expect.any(Function)
       );
     });
+
+    it("configures shared visibility IntersectionObserver with 600px vertical pre-fetch margin", () => {
+      let observedOptions: IntersectionObserverInit | undefined;
+      class SpyIntersectionObserver {
+        constructor(_cb: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+          observedOptions = options;
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      }
+      vi.stubGlobal("IntersectionObserver", SpyIntersectionObserver);
+      try {
+        installMockCmp(true);
+        render(
+          <AdProvider>
+            <TestConsumer />
+          </AdProvider>
+        );
+        expect(observedOptions).toEqual({ rootMargin: "600px 0px 600px 0px" });
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
   });
 
   describe("CMP loads after mount but before 5s timeout", () => {
