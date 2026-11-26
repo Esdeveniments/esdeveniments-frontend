@@ -17,6 +17,7 @@ import {
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
 import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
+import { detectIsoBmffImageType } from "@utils/image-validation";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
 import { getErrorChain } from "@utils/error-chain";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
@@ -319,15 +320,8 @@ function sniffImageContentType(buffer: Buffer): string {
     return "image/webp";
   }
 
-  // AVIF (ISO-BMFF): look for "ftypavif" early
-  const head = buffer
-    .subarray(0, Math.min(buffer.length, 64))
-    .toString("binary");
-  if (head.includes("ftypavif")) {
-    return "image/avif";
-  }
-
-  return "";
+  // HEIC and HEIF share AVIF's container, and only Safari shows them.
+  return detectIsoBmffImageType(buffer) === "image/avif" ? "image/avif" : "";
 }
 
 function hasStrongCacheKey(upstreamUrl: string): boolean {
@@ -601,7 +595,14 @@ export async function GET(request: Request) {
         // it's undefined in Docker/Coolify.
         const isVercel = !!process.env.VERCEL_ENV;
 
-        if (process.env.NODE_ENV === "production" && !isVercel) {
+        // An image over MAX_INPUT_PIXELS is the sender's doing, not a broken Sharp.
+        const isOverPixelLimit = errorMessage.includes("exceeds pixel limit");
+
+        if (
+          process.env.NODE_ENV === "production" &&
+          !isVercel &&
+          !isOverPixelLimit
+        ) {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
           });
