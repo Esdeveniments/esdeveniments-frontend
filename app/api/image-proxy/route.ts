@@ -17,6 +17,7 @@ import {
 } from "@utils/image-cache";
 import { isDevelopmentHost } from "@utils/host-validation";
 import { IMAGE_PROXY_USER_AGENT } from "@utils/constants";
+import { detectIsoBmffImageType } from "@utils/image-validation";
 import { getPublicFetchSafety } from "@utils/public-fetch-safety";
 import { getErrorChain } from "@utils/error-chain";
 import { buildPinnedDnsDispatcher } from "@utils/pinned-dns-dispatcher";
@@ -36,6 +37,10 @@ import type { Sharp } from "sharp";
 // cap the browser loads the original itself, so a lower one only moves the bytes
 // to the visitor's phone.
 const MAX_BYTES = 15_000_000;
+// Sharp's default is 268 MP. A 0.7 MB interlaced PNG of that size took 0.9 GB of
+// memory to decode, on a box that serves the whole site. 50 MP still fits a
+// phone's largest photo and an A2 poster at 300 dpi.
+const MAX_INPUT_PIXELS = 50_000_000;
 const TIMEOUT_MS = 5000; // DNS check, connect, headers and redirects
 // Whole upstream exchange, body included. Linked to the client's signal so a
 // disconnect also frees the socket and the buffered chunks.
@@ -118,6 +123,12 @@ function shouldBypassTlsVerification(candidateUrl: string): boolean {
     return false;
   }
 }
+
+// These responses carry bytes a stranger chose, served from our origin. If one
+// is ever shown as a document, it may not run script or load anything.
+const UPSTREAM_BYTES_HEADERS = {
+  "Content-Security-Policy": "default-src 'none'; sandbox",
+};
 
 function buildPlaceholder(status = 502) {
   // Return empty response (not valid image data) so browser triggers onerror
@@ -263,11 +274,6 @@ async function fetchWithTimeout(
   }
 }
 
-function normalizeHeaderContentType(contentType: string | null): string {
-  if (!contentType) return "";
-  return contentType.split(";")[0]?.trim().toLowerCase() || "";
-}
-
 function sniffImageContentType(buffer: Buffer): string {
   if (buffer.length < 12) return "";
 
@@ -314,21 +320,8 @@ function sniffImageContentType(buffer: Buffer): string {
     return "image/webp";
   }
 
-  // AVIF (ISO-BMFF): look for "ftypavif" early
-  const head = buffer
-    .subarray(0, Math.min(buffer.length, 64))
-    .toString("binary");
-  if (head.includes("ftypavif")) {
-    return "image/avif";
-  }
-
-  return "";
-}
-
-function isAllowedRasterContentType(contentType: string): boolean {
-  if (!contentType) return false;
-  if (contentType === "image/svg+xml") return false;
-  return contentType.startsWith("image/");
+  // HEIC and HEIF share AVIF's container, and only Safari shows them.
+  return detectIsoBmffImageType(buffer) === "image/avif" ? "image/avif" : "";
 }
 
 function hasStrongCacheKey(upstreamUrl: string): boolean {
@@ -458,10 +451,6 @@ export async function GET(request: Request) {
         continue;
       }
 
-      const headerType = normalizeHeaderContentType(
-        response.headers.get("content-type")
-      );
-
       // Buffer the entire image for Sharp processing
       const body = response.body;
       if (!body) continue;
@@ -469,17 +458,12 @@ export async function GET(request: Request) {
       const imageBuffer = await readBodyWithLimit(body, MAX_BYTES);
       if (!imageBuffer?.length) continue;
 
-      // Sniff content type
-      const sniffBuffer = imageBuffer.subarray(
-        0,
-        Math.min(imageBuffer.length, SNIFF_BYTES)
+      // The type comes from the bytes only. The upstream header is just the
+      // sender's claim. "image/png,text/html" starts with image/ and a browser
+      // reads it as HTML, which would run their script on our origin.
+      const sourceType = sniffImageContentType(
+        imageBuffer.subarray(0, Math.min(imageBuffer.length, SNIFF_BYTES)),
       );
-      const sniffedType = sniffImageContentType(sniffBuffer);
-
-      const sourceType =
-        (isAllowedRasterContentType(headerType) && headerType) ||
-        (isAllowedRasterContentType(sniffedType) && sniffedType) ||
-        "";
       if (!sourceType) continue;
 
       // Skip optimization for very small images (already optimized or icons)
@@ -489,6 +473,7 @@ export async function GET(request: Request) {
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
+            ...UPSTREAM_BYTES_HEADERS,
             "Content-Type": sourceType,
             "Cache-Control": getCacheControl(hasCacheKey),
             "X-Image-Proxy-Optimized": "skipped-small",
@@ -502,7 +487,9 @@ export async function GET(request: Request) {
         // CommonJS require returns the sharp function itself; its ESM typings
         // (picked by moduleResolution "bundler") expose it as `default`.
         const sharp = eval("require")("sharp") as typeof import("sharp").default;
-        let sharpInstance: Sharp = sharp(imageBuffer);
+        let sharpInstance: Sharp = sharp(imageBuffer, {
+          limitInputPixels: MAX_INPUT_PIXELS,
+        });
 
         // Get image metadata to determine if resize is needed
         const metadata = await sharpInstance.metadata();
@@ -518,6 +505,7 @@ export async function GET(request: Request) {
           return new NextResponse(new Uint8Array(imageBuffer), {
             status: 200,
             headers: {
+              ...UPSTREAM_BYTES_HEADERS,
               "Content-Type": sourceType,
               "Cache-Control": getCacheControl(hasCacheKey),
               "X-Image-Proxy-Optimized": "skipped-animated",
@@ -585,6 +573,7 @@ export async function GET(request: Request) {
         return new NextResponse(responseBody, {
           status: 200,
           headers: {
+            ...UPSTREAM_BYTES_HEADERS,
             "Content-Type": outputContentType,
             "Cache-Control": getCacheControl(hasCacheKey),
             "X-Image-Proxy-Optimized": "true",
@@ -606,7 +595,14 @@ export async function GET(request: Request) {
         // it's undefined in Docker/Coolify.
         const isVercel = !!process.env.VERCEL_ENV;
 
-        if (process.env.NODE_ENV === "production" && !isVercel) {
+        // An image over MAX_INPUT_PIXELS is the sender's doing, not a broken Sharp.
+        const isOverPixelLimit = errorMessage.includes("exceeds pixel limit");
+
+        if (
+          process.env.NODE_ENV === "production" &&
+          !isVercel &&
+          !isOverPixelLimit
+        ) {
           Sentry.captureException(sharpError, {
             tags: { route: "/api/image-proxy", stage: "sharp-processing" },
           });
@@ -622,13 +618,14 @@ export async function GET(request: Request) {
 
         // If the caller explicitly required JPEG and Sharp could not convert a
         // non-JPEG source, never cache/serve non-JPEG bytes as 200.
-        if (preferJpeg && sniffedType !== "image/jpeg") {
+        if (preferJpeg && sourceType !== "image/jpeg") {
           return buildPlaceholder(502);
         }
 
         return new NextResponse(new Uint8Array(imageBuffer), {
           status: 200,
           headers: {
+            ...UPSTREAM_BYTES_HEADERS,
             "Content-Type": sourceType,
             "Cache-Control": "public, max-age=300, s-maxage=300",
             "X-Image-Proxy-Optimized": "fallback-sharp-error",

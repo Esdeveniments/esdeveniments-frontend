@@ -161,6 +161,10 @@ Production runs on Coolify/Docker/Node 26; Vercel previews are a different runti
 
 That real-socket design has a cost: it's a real HTTP server on a real (ephemeral) port, so it can flake under CPU/port contention rather than a code bug. It failed once in `yarn test --run` right after a `git push` (2213/2215) while a dev server and browser automation were still running in the background, then passed 3/3 in isolation and 2215/2215 once those processes were killed. Before "fixing" a failure here, rule out background load (`next dev`, headless browsers, other test runs) rather than touching the dispatcher code.
 
+## An upstream `Content-Type` is a claim, and a comma list means its last type
+
+The image proxy sent the upstream `Content-Type` back when it started with `image/`. A host that answers `image/png,text/html` passes that check, and browsers read a comma list as its last valid type, so the browser showed the body as HTML on our origin. `X-Content-Type-Options: nosniff` does not stop it, because the header names the type and the browser has nothing to guess. A route that relays bytes from another host sets the type from the bytes or from a fixed list. `test/image-proxy-content-type.test.ts` checks it on a real socket.
+
 ## Council WAFs block the image proxy's default User-Agent
 
 Some council sites sit behind a CloudFront WAF that answers 403 to undici's default `user-agent: undici` and to an empty one, while browsers get the image. The proxy turned that 403 into a 502, so the card showed the default image and nothing else looked broken. Seen on 2026-11-13 with Santa Susanna on staging. Probing the home pages of the 947 town websites in the dashboard registry found 7 that answer the same way (Badalona, Figueres, Matadepera, Mollet del Vallès, Salou, Santa Susanna, Vic), and two more (L'Esquirol, and Lleida's paeria.cat) block an empty User-Agent only.

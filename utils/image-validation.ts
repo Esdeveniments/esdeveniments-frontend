@@ -20,7 +20,7 @@ const HEIF_BRANDS = new Set(["mif1", "msf1"]);
 // HEIC and AVIF are ISO-BMFF files: "ftyp" at offset 4, then the major brand
 // and, after a 4-byte version, the compatible brands up to the box size.
 // A generic major brand (mif1) needs the compatible list to tell them apart.
-function detectIsoBmffImageType(bytes: Uint8Array): string | null {
+export function detectIsoBmffImageType(bytes: Uint8Array): string | null {
   if (bytes.length < 12 || ascii(bytes, 4) !== "ftyp") return null;
   const boxSize = ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0;
   const end = Math.min(bytes.length, boxSize > 0 ? boxSize : bytes.length);
