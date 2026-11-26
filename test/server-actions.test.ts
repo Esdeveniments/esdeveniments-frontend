@@ -317,9 +317,30 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(captureException).toHaveBeenCalledTimes(1);
       const [, context] = vi.mocked(captureException).mock.calls[0];
       expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        section: "publica-create",
         authStatus: "401",
         nextAction: "logout-and-relogin",
         publish_alert: "immediate",
+      });
+    });
+
+    it("downgrades local session-expiry 401 to spike and avoids publica-create section", async () => {
+      const sessionError = Object.assign(new Error("Authentication required"), {
+        status: 401,
+        authSource: "session",
+      });
+      mockCreateEvent.mockRejectedValue(sessionError);
+
+      const result = await createEventAction(toFormData(buildEventData("Test Event")));
+      expect(result).toEqual({ success: false, reason: "stale-session" });
+
+      expect(captureException).toHaveBeenCalledTimes(1);
+      const [, context] = vi.mocked(captureException).mock.calls[0];
+      expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        section: "publica-session",
+        authStatus: "401",
+        nextAction: "logout-and-relogin",
+        publish_alert: "spike",
       });
     });
 

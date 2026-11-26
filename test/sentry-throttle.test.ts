@@ -81,6 +81,29 @@ describe("throttleEvent", () => {
     expect(publishEvents.filter(Boolean)).toHaveLength(5);
   });
 
+  it("caps untracked immediate publish alerts even when the per-error map is full", () => {
+    for (let i = 0; i < 500; i++) {
+      helpers.throttleEvent(
+        {
+          ...errorEvent(`createEvent: unique error ${i}`),
+          tags: { publish_alert: "immediate" },
+        },
+        0,
+      );
+    }
+
+    const overflow = Array.from({ length: 8 }, (_, i) =>
+      helpers.throttleEvent(
+        {
+          ...errorEvent(`createEvent: overflow error ${i}`),
+          tags: { publish_alert: "immediate" },
+        },
+        1,
+      ),
+    );
+    expect(overflow.filter(Boolean)).toHaveLength(5);
+  });
+
   it("preserves immediate publish alerts matching generic non-json or network noise filters", () => {
     const hint = { originalException: "string-error" };
     const wafEvent: Event = {

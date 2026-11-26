@@ -111,7 +111,7 @@ export function getCreateEventHttpAlertLevel(
   status: number,
 ): PublishAlertLevel | null {
   if (status === 401 || status === 403) return null;
-  if (status === 400 || status === 409 || status === 422) {
+  if (status === 400 || status === 409 || status === 413 || status === 422) {
     return PUBLISH_ALERT_SPIKE;
   }
   return PUBLISH_ALERT_IMMEDIATE;

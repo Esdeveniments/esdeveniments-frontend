@@ -3,7 +3,7 @@ import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
-import { getErrorStatus } from "@utils/error-status";
+import { getErrorStatus, isSessionAuthError } from "@utils/error-status";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import type { CreateEventActionResult } from "types/event";
@@ -15,6 +15,7 @@ import { getValidatedImageFile } from "@utils/image-validation";
 import { matchCreateEventFailureReason } from "@utils/publica-analytics";
 import {
   PUBLISH_ALERT_IMMEDIATE,
+  PUBLISH_ALERT_SPIKE,
   PUBLISH_ALERT_TAG,
 } from "@utils/sentry-helpers";
 
@@ -76,16 +77,31 @@ export async function createEventAction(
     const message = err instanceof Error ? err.message : String(err);
 
     if (status === 401 || status === 403) {
+      const isLocalSessionExpiry = status === 401 && isSessionAuthError(err);
       const nextAction =
         status === 401 ? "logout-and-relogin" : "complete-profile";
       console.error(
-        `createEventAction: backend rejected with ${status} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
+        `createEventAction: ${isLocalSessionExpiry ? "local session expired (401)" : `backend rejected with ${status}`} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
       );
-      capturePublicaCreateError(
-        new Error(`createEvent rejected: ${status}`),
-        { authStatus: String(status), nextAction },
-        { dataFields: Object.keys(data ?? {}) },
-      );
+      if (isLocalSessionExpiry) {
+        // Use a distinct section so Sentry rule 1542803 (immediate OR section:publica-create)
+        // never pages on one expired browser tab; bursts still trigger spike rule 1542804.
+        captureException(new Error("createEvent session expired: 401"), {
+          tags: {
+            section: "publica-session",
+            [PUBLISH_ALERT_TAG]: PUBLISH_ALERT_SPIKE,
+            authStatus: "401",
+            nextAction,
+          },
+          extra: { dataFields: Object.keys(data ?? {}) },
+        });
+      } else {
+        capturePublicaCreateError(
+          new Error(`createEvent rejected: ${status}`),
+          { authStatus: String(status), nextAction },
+          { dataFields: Object.keys(data ?? {}) },
+        );
+      }
       return {
         success: false,
         reason: status === 401 ? "stale-session" : "profile-incomplete",

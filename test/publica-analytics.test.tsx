@@ -131,11 +131,11 @@ describe("publica analytics helpers", () => {
   it("getCreateEventHttpAlertLevel classifies immediate, spike, and action-handled auth statuses", () => {
     expect(getCreateEventHttpAlertLevel(500)).toBe("immediate");
     expect(getCreateEventHttpAlertLevel(503)).toBe("immediate");
-    expect(getCreateEventHttpAlertLevel(413)).toBe("immediate");
     expect(getCreateEventHttpAlertLevel(415)).toBe("immediate");
     expect(getCreateEventHttpAlertLevel(429)).toBe("immediate");
     expect(getCreateEventHttpAlertLevel(400)).toBe("spike");
     expect(getCreateEventHttpAlertLevel(409)).toBe("spike");
+    expect(getCreateEventHttpAlertLevel(413)).toBe("spike");
     expect(getCreateEventHttpAlertLevel(422)).toBe("spike");
     expect(getCreateEventHttpAlertLevel(401)).toBeNull();
     expect(getCreateEventHttpAlertLevel(403)).toBeNull();

@@ -109,6 +109,16 @@ describe("createEvent Sentry publish_alert tagging", () => {
     expect(tags?.publish_alert).toBeUndefined();
   });
 
+  it("marks missing local session token errors with authSource: session without capturing", async () => {
+    mockGetValidAccessToken.mockResolvedValueOnce(null);
+
+    await expect(createEvent(data)).rejects.toMatchObject({
+      status: 401,
+      authSource: "session",
+    });
+    expect(mockCaptureException).not.toHaveBeenCalled();
+  });
+
   it("captures immediate publish alerts on network throws and invalid JSON responses", async () => {
     mockFetchWithHmac.mockRejectedValueOnce(new Error("connect ECONNREFUSED"));
     await expect(createEvent(data)).rejects.toThrow("connect ECONNREFUSED");

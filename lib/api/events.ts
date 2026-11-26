@@ -74,8 +74,10 @@ export async function requireAuth({
   }
   const authToken = await getValidAccessToken({ forceRefresh });
   if (!authToken) {
-    const err = new Error("Authentication required");
-    (err as Error & { status: number }).status = 401;
+    const err = Object.assign(new Error("Authentication required"), {
+      status: 401,
+      authSource: "session",
+    });
     throw err;
   }
   return { apiUrl: getApiUrl(), authToken };
