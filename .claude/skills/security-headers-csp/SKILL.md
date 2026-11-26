@@ -9,7 +9,7 @@ Rule (AGENTS.md › Security): the CSP is a relaxed host allowlist with `'unsafe
 
 ## Where it lives
 
-- **CSP**: `buildCsp()` in `utils/proxy-csp.ts` builds the policy once per process (`CSP_VALUE`). `proxy.ts` calls `applyCsp(response)` on HTML page responses only. Routes Proxy skips (API, `/sw.js`, machine-readable routes in the matcher exclusions) send no CSP; they return JSON/text, and a CSP on `/sw.js` would apply to the service worker itself and block Workbox's CDN `importScripts`.
+- **CSP**: `buildCsp()` in `utils/proxy-csp.ts` builds the policy once per process (`CSP_VALUE`). `proxy.ts` calls `applyCsp(response)` on HTML page responses only. Routes Proxy skips (API, `/sw.js`, machine-readable routes in the matcher exclusions) send no CSP (except `/api/image-proxy`, which sends its own `default-src 'none'; sandbox` because it serves bytes a stranger chose); they return JSON/text, and a CSP on `/sw.js` would apply to the service worker itself and block Workbox's CDN `importScripts`.
 - **Static headers**: `headers()` in `next.config.js` sends the rest of the table below on every response (pages, API, assets, redirects), so no branch can skip them.
 
 Read `buildCsp()` for the current allowlist; don't copy it into docs or other files.
