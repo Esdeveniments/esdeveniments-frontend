@@ -40,8 +40,14 @@ import {
   ACTION_FAILURE_ANALYTICS_REASON,
   buildPublishContext,
   classifyPublishError,
+  getClientPublishAlertLevel,
+  hasServerActionDigest,
   matchCreateEventFailureReason,
 } from "@utils/publica-analytics";
+import {
+  PUBLISH_ALERT_IMMEDIATE,
+  PUBLISH_ALERT_TAG,
+} from "@utils/sentry-helpers";
 
 import Modal from "@components/ui/common/modal";
 import { useAuth } from "@components/hooks/useAuth";
@@ -667,7 +673,12 @@ const PublishForm = () => {
           });
           setError(t("errorCreate"));
           captureException(new Error("publica: createEventAction returned no event"), {
-            tags: { section: "publica", action: "create-event", result: "empty" },
+            tags: {
+              section: "publica",
+              action: "create-event",
+              result: "empty",
+              [PUBLISH_ALERT_TAG]: PUBLISH_ALERT_IMMEDIATE,
+            },
             extra: {
               publish_context: buildPublishContext({ form, imageFile }),
             },
@@ -694,17 +705,18 @@ const PublishForm = () => {
           normalizedMessage.includes("unexpected end of form") ||
           normalizedMessage.includes("failed to parse body as formdata");
         const isDuplicate = matchedReason === "duplicate";
+        const category = classifyPublishError({
+          isImageUploadLimit,
+          isBodyLimit,
+          isRequestTooLarge,
+          isFormParsingError,
+          isDuplicate,
+        });
 
         sendGoogleEvent("publish_error", {
           ...buildPublishContext({ form, imageFile }),
           source: "publica",
-          reason: classifyPublishError({
-            isImageUploadLimit,
-            isBodyLimit,
-            isRequestTooLarge,
-            isFormParsingError,
-            isDuplicate,
-          }),
+          reason: category,
         });
 
         if (isImageUploadLimit) {
@@ -723,25 +735,17 @@ const PublishForm = () => {
           setError(t("errorGeneric"));
         }
 
-        if (
-          !(
-            isBodyLimit ||
-            isRequestTooLarge ||
-            isImageUploadLimit ||
-            isFormParsingError
-          )
-        ) {
+        if (category !== "image_too_large") {
+          const publishAlert = getClientPublishAlertLevel({
+            category,
+            hasServerDigest: hasServerActionDigest(error),
+          });
           captureException(error, {
             tags: {
               section: "publica",
               action: "create-event",
-              category: classifyPublishError({
-                isImageUploadLimit,
-                isBodyLimit,
-                isRequestTooLarge,
-                isFormParsingError,
-                isDuplicate,
-              }),
+              category,
+              ...(publishAlert ? { [PUBLISH_ALERT_TAG]: publishAlert } : {}),
             },
             extra: {
               publish_context: buildPublishContext({ form, imageFile }),

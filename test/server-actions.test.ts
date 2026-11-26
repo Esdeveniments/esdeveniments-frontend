@@ -72,16 +72,8 @@ vi.mock("@lib/cdn/cloudflare-purge", () => ({
     mockPurgeEventPagesFromCdn(...args),
 }));
 
-let mockRequestHost: string | null = null;
 vi.mock("next/headers", () => ({
-  headers: async () =>
-    new Headers(mockRequestHost ? { host: mockRequestHost } : {}),
-}));
-
-const mockFireAndForgetFetch = vi.fn();
-vi.mock("@utils/safe-fetch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@utils/safe-fetch")>()),
-  fireAndForgetFetch: (...args: unknown[]) => mockFireAndForgetFetch(...args),
+  headers: async () => new Headers(),
 }));
 
 const pngFile = () =>
@@ -171,7 +163,6 @@ describe("Server Actions - Next.js 16 caching", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    mockRequestHost = null;
     process.env = { ...originalEnv };
     process.env.NEXT_PUBLIC_API_URL = "https://api.example.com";
     // Default to a creator session and a matching event.
@@ -309,6 +300,7 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
         authStatus: "403",
         nextAction: "complete-profile",
+        publish_alert: "immediate",
       });
     });
 
@@ -325,8 +317,55 @@ describe("Server Actions - Next.js 16 caching", () => {
       expect(captureException).toHaveBeenCalledTimes(1);
       const [, context] = vi.mocked(captureException).mock.calls[0];
       expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        section: "publica-create",
         authStatus: "401",
         nextAction: "logout-and-relogin",
+        publish_alert: "immediate",
+      });
+    });
+
+    it("downgrades local session-expiry 401 to spike and avoids publica-create section", async () => {
+      const sessionError = Object.assign(new Error("Authentication required"), {
+        status: 401,
+        authSource: "session",
+      });
+      mockCreateEvent.mockRejectedValue(sessionError);
+
+      const result = await createEventAction(toFormData(buildEventData("Test Event")));
+      expect(result).toEqual({ success: false, reason: "stale-session" });
+
+      expect(captureException).toHaveBeenCalledTimes(1);
+      const [, context] = vi.mocked(captureException).mock.calls[0];
+      expect((context as { tags?: Record<string, string> })?.tags).toMatchObject({
+        section: "publica-session",
+        authStatus: "401",
+        nextAction: "logout-and-relogin",
+        publish_alert: "spike",
+      });
+    });
+
+    it("captures immediate publish alert when event payload is missing or invalid JSON", async () => {
+      await expect(createEventAction(new FormData())).rejects.toThrow(
+        "createEventAction: missing event payload",
+      );
+      expect(vi.mocked(captureException).mock.calls[0]?.[1]).toMatchObject({
+        tags: {
+          section: "publica-create",
+          failureKind: "missing-payload",
+          publish_alert: "immediate",
+        },
+      });
+
+      vi.mocked(captureException).mockClear();
+      const badForm = new FormData();
+      badForm.set("event", "{not-json");
+      await expect(createEventAction(badForm)).rejects.toThrow(SyntaxError);
+      expect(vi.mocked(captureException).mock.calls[0]?.[1]).toMatchObject({
+        tags: {
+          section: "publica-create",
+          failureKind: "invalid-payload-json",
+          publish_alert: "immediate",
+        },
       });
     });
 
@@ -362,60 +401,6 @@ describe("Server Actions - Next.js 16 caching", () => {
         expect(result).toEqual({ success: false, reason: expectedReason });
       },
     );
-
-    it("sends the new-event email webhook only when both site URL and request host are production", async () => {
-      mockCreateEvent.mockResolvedValue(
-        buildEvent({ title: "Prod Event", slug: "prod-event" }),
-      );
-      process.env.NEW_EVENT_EMAIL_URL = "https://pipedream.example.com/hook";
-      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-      mockRequestHost = "www.esdeveniments.cat";
-
-      await createEventAction(toFormData(buildEventData("Prod Event")));
-      // Flush after() async callback
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(mockFireAndForgetFetch).toHaveBeenCalledTimes(1);
-      expect(mockFireAndForgetFetch).toHaveBeenCalledWith(
-        "https://pipedream.example.com/hook",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({ title: "Prod Event", slug: "prod-event" }),
-        }),
-      );
-    });
-
-    it("never sends the new-event email webhook from staging even when NODE_ENV=production and NEXT_PUBLIC_VERCEL_ENV is unset", async () => {
-      mockCreateEvent.mockResolvedValue(
-        buildEvent({ title: "Staging Event", slug: "staging-event" }),
-      );
-      process.env.NEW_EVENT_EMAIL_URL = "https://pipedream.example.com/hook";
-      process.env.NEXT_PUBLIC_SITE_URL = "https://staging.esdeveniments.cat";
-      delete process.env.NEXT_PUBLIC_VERCEL_ENV;
-      mockRequestHost = "staging.esdeveniments.cat";
-
-      await createEventAction(toFormData(buildEventData("Staging Event")));
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(mockFireAndForgetFetch).not.toHaveBeenCalled();
-    });
-
-    it("never sends the new-event email webhook when a non-prod host falls back to the production site URL", async () => {
-      mockCreateEvent.mockResolvedValue(
-        buildEvent({ title: "Preview Event", slug: "preview-event" }),
-      );
-      process.env.NEW_EVENT_EMAIL_URL = "https://pipedream.example.com/hook";
-      process.env.NEXT_PUBLIC_SITE_URL = "https://www.esdeveniments.cat";
-      mockRequestHost = "pr-872.esdeveniments.cat";
-
-      await createEventAction(toFormData(buildEventData("Preview Event")));
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(mockFireAndForgetFetch).not.toHaveBeenCalled();
-    });
   });
 
   describe("editEvent", () => {

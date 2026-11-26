@@ -3,7 +3,7 @@ import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { captureException } from "@sentry/nextjs";
 import { createEvent } from "@lib/api/events";
-import { getErrorStatus } from "@utils/error-status";
+import { getErrorStatus, isSessionAuthError } from "@utils/error-status";
 import type { E2EEventExtras } from "types/api/event";
 import type { EventCreateRequestDTO } from "types/api/event";
 import type { CreateEventActionResult } from "types/event";
@@ -11,36 +11,13 @@ import { eventsTag, eventsCategorizedTag, eventTag } from "@lib/cache/tags";
 import { purgeEventPagesFromCdn } from "@lib/cdn/cloudflare-purge";
 import { submitEventsToIndexNow } from "@lib/seo/indexnow";
 import { hubPathsFor } from "@utils/festivity";
-import { fireAndForgetFetch } from "@utils/safe-fetch";
-import { isProductionDeploymentRequest } from "@lib/production-request";
 import { getValidatedImageFile } from "@utils/image-validation";
 import { matchCreateEventFailureReason } from "@utils/publica-analytics";
-
-/**
- * Sends email notification via Pipedream when a new event is published.
- * Only runs in production environment with configured webhook URL.
- * Failures are logged but don't block event creation.
- */
-async function sendNewEventEmail(title: string, slug: string): Promise<void> {
-  const webhookUrl = process.env.NEW_EVENT_EMAIL_URL;
-
-  if (!webhookUrl || !(await isProductionDeploymentRequest())) {
-    return;
-  }
-
-  await fireAndForgetFetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ title, slug }),
-    context: {
-      tags: { section: "publica", action: "send-email" },
-      extra: { title, slug },
-    },
-  });
-}
+import {
+  PUBLISH_ALERT_IMMEDIATE,
+  PUBLISH_ALERT_SPIKE,
+  PUBLISH_ALERT_TAG,
+} from "@utils/sentry-helpers";
 
 /**
  * `formData` carries `event` (EventCreateRequestDTO as a JSON string) and an
@@ -50,12 +27,34 @@ export async function createEventAction(
   formData: FormData,
   e2eExtras?: E2EEventExtras
 ): Promise<CreateEventActionResult> {
+  const capturePublicaCreateError = (
+    error: unknown,
+    tags: Record<string, string>,
+    extra?: Record<string, unknown>,
+  ) =>
+    captureException(error, {
+      tags: {
+        section: "publica-create",
+        [PUBLISH_ALERT_TAG]: PUBLISH_ALERT_IMMEDIATE,
+        ...tags,
+      },
+      ...(extra ? { extra } : {}),
+    });
+
   const rawEvent = formData.get("event");
   if (typeof rawEvent !== "string") {
-    throw new Error("createEventAction: missing event payload");
+    const err = new Error("createEventAction: missing event payload");
+    capturePublicaCreateError(err, { failureKind: "missing-payload" });
+    throw err;
   }
   // The backend validates the fields; this only rejects a malformed payload.
-  const data = JSON.parse(rawEvent) as EventCreateRequestDTO;
+  let data: EventCreateRequestDTO;
+  try {
+    data = JSON.parse(rawEvent) as EventCreateRequestDTO;
+  } catch (err) {
+    capturePublicaCreateError(err, { failureKind: "invalid-payload-json" });
+    throw err;
+  }
   let imageFile: File | null;
   try {
     imageFile = await getValidatedImageFile(formData.get("imageFile"));
@@ -78,21 +77,31 @@ export async function createEventAction(
     const message = err instanceof Error ? err.message : String(err);
 
     if (status === 401 || status === 403) {
+      const isLocalSessionExpiry = status === 401 && isSessionAuthError(err);
       const nextAction =
         status === 401 ? "logout-and-relogin" : "complete-profile";
       console.error(
-        `createEventAction: backend rejected with ${status} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
+        `createEventAction: ${isLocalSessionExpiry ? "local session expired (401)" : `backend rejected with ${status}`} \u2014 ${status === 401 ? "Likely stale Bearer \u2014 user should log out and back in." : "Likely profileCompleted: false \u2014 user should complete profile onboarding."}`,
       );
-      captureException(new Error(`createEvent rejected: ${status}`), {
-        tags: {
-          section: "publica-create",
-          authStatus: String(status),
-          nextAction,
-        },
-        extra: {
-          dataFields: Object.keys(data ?? {}),
-        },
-      });
+      if (isLocalSessionExpiry) {
+        // Use a distinct section so Sentry rule 1542803 (immediate OR section:publica-create)
+        // never pages on one expired browser tab; bursts still trigger spike rule 1542804.
+        captureException(new Error("createEvent session expired: 401"), {
+          tags: {
+            section: "publica-session",
+            [PUBLISH_ALERT_TAG]: PUBLISH_ALERT_SPIKE,
+            authStatus: "401",
+            nextAction,
+          },
+          extra: { dataFields: Object.keys(data ?? {}) },
+        });
+      } else {
+        capturePublicaCreateError(
+          new Error(`createEvent rejected: ${status}`),
+          { authStatus: String(status), nextAction },
+          { dataFields: Object.keys(data ?? {}) },
+        );
+      }
       return {
         success: false,
         reason: status === 401 ? "stale-session" : "profile-incomplete",
@@ -107,15 +116,10 @@ export async function createEventAction(
     throw err;
   }
 
-  // 2. Send email notification (fire-and-forget, non-blocking)
-  // Uses `after` to ensure execution completes in serverless environments
-  if (created?.slug && created?.title) {
-    const { title, slug } = created;
-    after(() => sendNewEventEmail(title, slug));
-  }
-
-  // 3. Immediately expire cache tags for event lists, categorized collections,
+  // 2. Immediately expire cache tags for event lists, categorized collections,
   // and the newly created slug so the redirect destination renders fresh.
+  // Publish notification emails are sent asynchronously by esdeveniments-backend
+  // after transaction commit (EventPublishedEmailListener).
   updateTag(eventsTag);
   updateTag(eventsCategorizedTag);
   if (created?.slug) {
@@ -131,6 +135,6 @@ export async function createEventAction(
     );
   });
 
-  // 4. Return the created event or result for your client
+  // 3. Return the created event or result for your client
   return { success: true, event: created };
 }

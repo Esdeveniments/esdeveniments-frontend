@@ -418,6 +418,15 @@ export type CreateEventFailureReason =
   | "body-limit"
   | "validation";
 
+export type PublishAlertLevel = "immediate" | "spike";
+
+export type PublishErrorCategory =
+  | "image_too_large"
+  | "body_limit"
+  | "form_parsing"
+  | "duplicate"
+  | "generic";
+
 export type CreateEventActionResult =
   | { success: true; event: EventDetailResponseDTO }
   | { success: false; reason: CreateEventFailureReason };

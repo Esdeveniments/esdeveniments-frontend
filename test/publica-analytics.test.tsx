@@ -4,6 +4,9 @@ import type { Option } from "types/common";
 import {
   buildPublishContext,
   classifyPublishError,
+  getClientPublishAlertLevel,
+  getCreateEventHttpAlertLevel,
+  hasServerActionDigest,
   matchCreateEventFailureReason,
 } from "@utils/publica-analytics";
 
@@ -123,5 +126,42 @@ describe("publica analytics helpers", () => {
       matchCreateEventFailureReason('title "Duplicate Festival" crashed', 500),
     ).toBeNull();
     expect(matchCreateEventFailureReason("internal error", 500)).toBeNull();
+  });
+
+  it("getCreateEventHttpAlertLevel classifies immediate, spike, and action-handled auth statuses", () => {
+    expect(getCreateEventHttpAlertLevel(500)).toBe("immediate");
+    expect(getCreateEventHttpAlertLevel(503)).toBe("immediate");
+    expect(getCreateEventHttpAlertLevel(415)).toBe("immediate");
+    expect(getCreateEventHttpAlertLevel(429)).toBe("immediate");
+    expect(getCreateEventHttpAlertLevel(400)).toBe("spike");
+    expect(getCreateEventHttpAlertLevel(409)).toBe("spike");
+    expect(getCreateEventHttpAlertLevel(413)).toBe("spike");
+    expect(getCreateEventHttpAlertLevel(422)).toBe("spike");
+    expect(getCreateEventHttpAlertLevel(401)).toBeNull();
+    expect(getCreateEventHttpAlertLevel(403)).toBeNull();
+  });
+
+  it("getClientPublishAlertLevel avoids double alerts on server-action digests while preserving edge failures", () => {
+    expect(hasServerActionDigest(Object.assign(new Error("redacted"), { digest: "123" }))).toBe(true);
+    expect(hasServerActionDigest(new Error("network"))).toBe(false);
+
+    expect(
+      getClientPublishAlertLevel({ category: "image_too_large", hasServerDigest: false }),
+    ).toBeNull();
+    expect(
+      getClientPublishAlertLevel({ category: "body_limit", hasServerDigest: false }),
+    ).toBe("spike");
+    expect(
+      getClientPublishAlertLevel({ category: "duplicate", hasServerDigest: false }),
+    ).toBe("spike");
+    expect(
+      getClientPublishAlertLevel({ category: "form_parsing", hasServerDigest: false }),
+    ).toBe("immediate");
+    expect(
+      getClientPublishAlertLevel({ category: "generic", hasServerDigest: false }),
+    ).toBe("immediate");
+    expect(
+      getClientPublishAlertLevel({ category: "generic", hasServerDigest: true }),
+    ).toBeNull();
   });
 });

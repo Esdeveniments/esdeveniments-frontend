@@ -64,6 +64,63 @@ describe("throttleEvent", () => {
     }
     expect(helpers.beforeSend(errorEvent("TypeError: real bug"), hint)).not.toBeNull();
   });
+
+  it("never starves immediate publish alerts under the global cap, while still enforcing the per-error cap", () => {
+    for (let i = 0; i < 25; i++) {
+      helpers.throttleEvent(errorEvent(`Unrelated error ${i}`), 0);
+    }
+    const publishEvents = Array.from({ length: 7 }, () =>
+      helpers.throttleEvent(
+        {
+          ...errorEvent("createEvent: HTTP 500"),
+          tags: { publish_alert: "immediate" },
+        },
+        0,
+      ),
+    );
+    expect(publishEvents.filter(Boolean)).toHaveLength(5);
+  });
+
+  it("caps untracked immediate publish alerts even when the per-error map is full", () => {
+    for (let i = 0; i < 500; i++) {
+      helpers.throttleEvent(
+        {
+          ...errorEvent(`createEvent: unique error ${i}`),
+          tags: { publish_alert: "immediate" },
+        },
+        0,
+      );
+    }
+
+    const overflow = Array.from({ length: 8 }, (_, i) =>
+      helpers.throttleEvent(
+        {
+          ...errorEvent(`createEvent: overflow error ${i}`),
+          tags: { publish_alert: "immediate" },
+        },
+        1,
+      ),
+    );
+    expect(overflow.filter(Boolean)).toHaveLength(5);
+  });
+
+  it("preserves immediate publish alerts matching generic non-json or network noise filters", () => {
+    const hint = { originalException: "string-error" };
+    const wafEvent: Event = {
+      ...errorEvent("Unexpected non-JSON response from /publica"),
+      tags: { publish_alert: "immediate" },
+    };
+    const networkEvent: Event = {
+      ...errorEvent("NetworkError when attempting to fetch resource. Failed to fetch"),
+      tags: { publish_alert: "immediate" },
+    };
+
+    expect(helpers.beforeSend(wafEvent, hint)).not.toBeNull();
+    expect(helpers.beforeSend(networkEvent, hint)).not.toBeNull();
+    expect(
+      helpers.beforeSend(errorEvent("Unexpected non-JSON response"), hint),
+    ).toBeNull();
+  });
 });
 
 describe("sentryEnvironment", () => {

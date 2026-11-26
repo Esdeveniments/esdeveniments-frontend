@@ -1,5 +1,14 @@
-import type { CreateEventFailureReason, FormData } from "types/event";
+import type {
+  CreateEventFailureReason,
+  FormData,
+  PublishAlertLevel,
+  PublishErrorCategory,
+} from "types/event";
 import { EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR } from "./constants";
+import {
+  PUBLISH_ALERT_IMMEDIATE,
+  PUBLISH_ALERT_SPIKE,
+} from "./sentry-helpers";
 
 export function buildPublishContext(args: {
   form: FormData;
@@ -77,7 +86,7 @@ export function classifyPublishError(args: {
   isRequestTooLarge: boolean;
   isFormParsingError: boolean;
   isDuplicate: boolean;
-}) {
+}): PublishErrorCategory {
   const {
     isImageUploadLimit,
     isBodyLimit,
@@ -91,5 +100,53 @@ export function classifyPublishError(args: {
   if (isFormParsingError) return "form_parsing";
   if (isDuplicate) return "duplicate";
   return "generic";
+}
+
+/**
+ * Maps a non-OK backend HTTP status from POST /events to its Sentry
+ * publish_alert tag. Returns null for 401/403 because createEventAction
+ * emits the immediate auth alert (preventing duplicate emails per failure).
+ */
+export function getCreateEventHttpAlertLevel(
+  status: number,
+): PublishAlertLevel | null {
+  if (status === 401 || status === 403) return null;
+  if (status === 400 || status === 409 || status === 413 || status === 422) {
+    return PUBLISH_ALERT_SPIKE;
+  }
+  return PUBLISH_ALERT_IMMEDIATE;
+}
+
+export function hasServerActionDigest(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    (error as { digest: string }).digest.length > 0
+  );
+}
+
+/**
+ * Maps a client-side PublishForm error to its Sentry publish_alert level,
+ * or null when no alert tag should be attached.
+ *
+ * - image_too_large: local file size validation (no Sentry capture)
+ * - body_limit / duplicate: spike-only so one user error never pages
+ * - form_parsing: immediate (broken multipart stream or proxy truncation)
+ * - generic with Next.js digest: null (already alerted server-side)
+ * - generic without digest: immediate (WAF 403, network/edge failure)
+ */
+export function getClientPublishAlertLevel(args: {
+  category: PublishErrorCategory;
+  hasServerDigest: boolean;
+}): PublishAlertLevel | null {
+  const { category, hasServerDigest } = args;
+  if (category === "image_too_large") return null;
+  if (category === "body_limit" || category === "duplicate") {
+    return PUBLISH_ALERT_SPIKE;
+  }
+  if (category === "form_parsing") return PUBLISH_ALERT_IMMEDIATE;
+  return hasServerDigest ? null : PUBLISH_ALERT_IMMEDIATE;
 }
 

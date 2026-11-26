@@ -11,3 +11,16 @@ export function getErrorStatus(error: unknown): number | undefined {
   }
   return typeof error.status === "number" ? error.status : undefined;
 }
+
+/**
+ * True when a 401 error was thrown locally by `requireAuth` (missing or expired
+ * session/refresh token) before any backend call was sent.
+ */
+export function isSessionAuthError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "authSource" in error &&
+    error.authSource === "session"
+  );
+}
