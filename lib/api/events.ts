@@ -30,6 +30,11 @@ import {
   EVENT_IMAGE_UPLOAD_TOO_LARGE_ERROR,
   MAX_TOTAL_UPLOAD_BYTES,
 } from "@utils/constants";
+import { getCreateEventHttpAlertLevel } from "@utils/publica-analytics";
+import {
+  PUBLISH_ALERT_IMMEDIATE,
+  PUBLISH_ALERT_TAG,
+} from "@utils/sentry-helpers";
 import { filterActiveEvents } from "@utils/event-helpers";
 import {
   ListEvent,
@@ -338,16 +343,40 @@ export async function createEvent(
     return createE2EEvent(data, imageFile, e2eExtras);
   }
 
-  const { apiUrl, authToken } = await requireAuth();
+  const captureCreateEventFailure = (error: unknown, failureKind: string) =>
+    captureException(error, {
+      tags: {
+        section: "events-mutation",
+        endpoint: "createEvent",
+        failureKind,
+        [PUBLISH_ALERT_TAG]: PUBLISH_ALERT_IMMEDIATE,
+      },
+    });
 
-  const response = await fetchWithHmac(`${apiUrl}/events`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-    body: buildCreateEventFormData(data, imageFile),
-  });
+  let auth: { apiUrl: string; authToken: string };
+  try {
+    auth = await requireAuth();
+  } catch (error) {
+    if (getErrorStatus(error) !== 401) {
+      captureCreateEventFailure(error, "auth-config");
+    }
+    throw error;
+  }
+
+  let response: Response;
+  try {
+    response = await fetchWithHmac(`${auth.apiUrl}/events`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${auth.authToken}`,
+      },
+      body: buildCreateEventFormData(data, imageFile),
+    });
+  } catch (error) {
+    captureCreateEventFailure(error, "network");
+    throw error;
+  }
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "<unreadable>");
@@ -355,7 +384,8 @@ export async function createEvent(
     // server-side logs (and Sentry) expose the redacted JWT iss/aud/exp/sub
     // the backend actually rejected. Lets us tell "stale audience" (401) from
     // "profile incomplete" (403) without a second round-trip.
-    const safeClaims = decodeSafeJwtClaims(authToken);
+    const safeClaims = decodeSafeJwtClaims(auth.authToken);
+    const publishAlert = getCreateEventHttpAlertLevel(response.status);
     // The backend error body can echo back submitted event fields (title,
     // description, url, ...) in validation messages, or leak internal
     // details in an unexpected failure — keep the raw body in the
@@ -365,7 +395,12 @@ export async function createEvent(
     captureException(
       new Error(`createEvent: HTTP ${response.status}`),
       {
-        tags: { section: "events-mutation", endpoint: "createEvent" },
+        tags: {
+          section: "events-mutation",
+          endpoint: "createEvent",
+          httpStatus: String(response.status),
+          ...(publishAlert ? { [PUBLISH_ALERT_TAG]: publishAlert } : {}),
+        },
         extra: {
           status: response.status,
           bodyLength: errorText.length,
@@ -388,7 +423,13 @@ export async function createEvent(
     );
     throw err;
   }
-  return response.json();
+
+  try {
+    return await response.json();
+  } catch (error) {
+    captureCreateEventFailure(error, "invalid-json");
+    throw error;
+  }
 }
 
 /** PUT /events/{uuid}/image — replaces the cover. Owner or admin only. */

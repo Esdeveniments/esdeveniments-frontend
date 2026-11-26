@@ -4,7 +4,16 @@ import type {
   ErrorEvent,
   NodeOptions,
 } from "@sentry/nextjs";
+import type { PublishAlertLevel } from "types/event";
 import { isProductionSiteUrl } from "@utils/production-host";
+
+export const PUBLISH_ALERT_TAG = "publish_alert";
+export const PUBLISH_ALERT_IMMEDIATE: PublishAlertLevel = "immediate";
+export const PUBLISH_ALERT_SPIKE: PublishAlertLevel = "spike";
+
+function isImmediatePublishAlert(event: Event | ErrorEvent): boolean {
+  return event.tags?.[PUBLISH_ALERT_TAG] === PUBLISH_ALERT_IMMEDIATE;
+}
 
 /**
  * Sentry environment from the site URL each Docker build inlines. Staging used
@@ -76,8 +85,10 @@ export function throttleEvent<T extends Event>(
     200,
   );
   // Over the total cap, only count drops for errors already tracked, so a
-  // flood of rejected errors can't fill the map.
-  if (throttleTotal.sent >= THROTTLE_TOTAL) {
+  // flood of rejected errors can't fill the map. Immediate publish alerts
+  // bypass the global total cap (while still honoring the per-error cap) so
+  // unrelated error bursts can never starve publish failure paging.
+  if (throttleTotal.sent >= THROTTLE_TOTAL && !isImmediatePublishAlert(event)) {
     const tracked = throttleByError.get(key);
     if (tracked) tracked.dropped++;
     return null;
@@ -222,8 +233,10 @@ export function beforeSend(
   }
 
   // Fallback: check serialized exception values for edge cases where
-  // hint.originalException is not an Error instance (e.g., thrown strings)
-  if (event.exception?.values?.[0]) {
+  // hint.originalException is not an Error instance (e.g., thrown strings).
+  // Never drop immediate publish alerts (e.g. Cloudflare WAF HTML 403 or
+  // network drop during /publica submit).
+  if (event.exception?.values?.[0] && !isImmediatePublishAlert(event)) {
     const errorMessage = event.exception.values[0].value?.toLowerCase() || "";
 
     // Non-JSON responses (often network/proxy issues)

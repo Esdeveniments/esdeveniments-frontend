@@ -94,6 +94,7 @@ vi.mock("@components/ui/EventForm", () => ({
   ),
 }));
 
+import { captureException } from "@sentry/nextjs";
 import Publica from "@app/[locale]/publica/page";
 import { hasPendingPostPublishUpsell } from "@utils/post-publish-upsell";
 
@@ -183,13 +184,57 @@ describe("Publica submit-time createEventAction result handling", () => {
     expect(screen.queryByText("errorStaleSession")).not.toBeInTheDocument();
   });
 
-  it("keeps the draft on an unknown publication failure", async () => {
+  it("keeps the draft on an unknown publication failure and tags immediate alert when no server digest is present", async () => {
     mockCreateEventAction.mockRejectedValue(new Error("Network failed"));
     await renderAndSubmit();
     await screen.findByText("errorGeneric");
     expect(hasPendingPostPublishUpsell("test-event", authUser.id)).toBe(false);
     expect(storage.discard).not.toHaveBeenCalled();
     expect(storage.push).not.toHaveBeenCalled();
+    expect(captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          section: "publica",
+          category: "generic",
+          publish_alert: "immediate",
+        }),
+      }),
+    );
+  });
+
+  it("omits publish_alert on server-action redacted throws (with digest) so server alert does not double-email", async () => {
+    const redactedError = Object.assign(
+      new Error("An error occurred in the Server Components render."),
+      { digest: "123456789" },
+    );
+    mockCreateEventAction.mockRejectedValue(redactedError);
+
+    await renderAndSubmit();
+    await screen.findByText("errorGeneric");
+
+    const [, context] = vi.mocked(captureException).mock.calls[0] ?? [];
+    const tags = (context as { tags?: Record<string, string> })?.tags;
+    expect(tags).toMatchObject({ section: "publica", category: "generic" });
+    expect(tags?.publish_alert).toBeUndefined();
+  });
+
+  it("tags form parsing errors as immediate and body-limit throws as spike", async () => {
+    mockCreateEventAction.mockRejectedValueOnce(new Error("Unexpected end of form"));
+    const firstView = await renderAndSubmit();
+    await screen.findByText("errorFormParsing");
+    expect(vi.mocked(captureException).mock.calls[0]?.[1]).toMatchObject({
+      tags: { category: "form_parsing", publish_alert: "immediate" },
+    });
+    firstView.unmount();
+
+    vi.mocked(captureException).mockClear();
+    mockCreateEventAction.mockRejectedValueOnce(new Error("Request Entity Too Large"));
+    await renderAndSubmit();
+    await screen.findByText(/supera el límit permès pel servidor/i);
+    expect(vi.mocked(captureException).mock.calls[0]?.[1]).toMatchObject({
+      tags: { category: "body_limit", publish_alert: "spike" },
+    });
   });
 
   it("does not clear storage or call create when the image is missing", async () => {
@@ -223,5 +268,11 @@ describe("Publica submit-time createEventAction result handling", () => {
     await waitFor(() => expect(window.alert).toHaveBeenCalledWith("draftCleanupFailed"));
     expect(storage.push).toHaveBeenCalledWith("/e/created-throw?promote=1");
     expect(screen.queryByText("errorGeneric")).not.toBeInTheDocument();
+    const cleanupTags = (
+      vi.mocked(captureException).mock.calls[0]?.[1] as
+        | { tags?: Record<string, string> }
+        | undefined
+    )?.tags;
+    expect(cleanupTags?.publish_alert).toBeUndefined();
   });
 });
