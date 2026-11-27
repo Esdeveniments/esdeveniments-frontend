@@ -7587,14 +7587,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http_ece@npm:1.2.0":
-  version: 1.2.0
-  resolution: "http_ece@npm:1.2.0"
-  checksum: 10c0/647edb7438a56e028acac8a598a685b9186497b0e30747a65889faa209fdde48d5b525da88e7fdcab2b0ce1840eba737f87fa57e96bfe967015d08759fab1771
+"http_ece@npm:1.2.1":
+  version: 1.2.1
+  resolution: "http_ece@npm:1.2.1"
+  checksum: 10c0/7a5463660053bf559156e173cfd6a60dac10b79de6d90f34aff300fc697875b7fdec1ee550ffc1d271299dd3ec2ee6a0c59f0934af7f3466ab51089dfed5077c
   languageName: node
   linkType: hard
 
-"https-proxy-agent@npm:9.1.0":
+"https-proxy-agent@npm:9.1.0, https-proxy-agent@npm:^9.1.0":
   version: 9.1.0
   resolution: "https-proxy-agent@npm:9.1.0"
   dependencies:
@@ -7605,7 +7605,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"https-proxy-agent@npm:^7.0.0, https-proxy-agent@npm:^7.0.1":
+"https-proxy-agent@npm:^7.0.1":
   version: 7.0.6
   resolution: "https-proxy-agent@npm:7.0.6"
   dependencies:
@@ -8559,7 +8559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jws@npm:^4.0.0":
+"jws@npm:^4.0.1":
   version: 4.0.1
   resolution: "jws@npm:4.0.1"
   dependencies:
@@ -9174,7 +9174,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:^1.2.0, minimist@npm:^1.2.5, minimist@npm:^1.2.6, minimist@npm:^1.2.8":
+"minimist@npm:^1.2.0, minimist@npm:^1.2.6, minimist@npm:^1.2.8":
   version: 1.2.8
   resolution: "minimist@npm:1.2.8"
   checksum: 10c0/19d3fcdca050087b84c2029841a093691a91259a47def2f18222f41e7645a0b7c44ef4b40e88a1e58a40c84d2ef0ee6047c55594d298146d0eb3f6b737c20ce6
@@ -11124,7 +11124,7 @@ __metadata:
     undici: "npm:^8.12.4"
     vite: "npm:^8.3.8"
     vitest: "npm:5.1.0"
-    web-push: "npm:^3.6.7"
+    web-push: "npm:^4.0.0"
     web-vitals: "npm:^6.2.3"
     workbox-broadcast-update: "npm:7.4.1"
     workbox-cacheable-response: "npm:7.4.1"
@@ -12861,18 +12861,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-push@npm:^3.6.7":
-  version: 3.6.7
-  resolution: "web-push@npm:3.6.7"
+"web-push@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "web-push@npm:4.0.0"
   dependencies:
     asn1.js: "npm:^5.3.0"
-    http_ece: "npm:1.2.0"
-    https-proxy-agent: "npm:^7.0.0"
-    jws: "npm:^4.0.0"
-    minimist: "npm:^1.2.5"
+    http_ece: "npm:1.2.1"
+    https-proxy-agent: "npm:^9.1.0"
+    jws: "npm:^4.0.1"
   bin:
     web-push: src/cli.js
-  checksum: 10c0/d6a90dfe12f938396d0bff4e211a73347c3d584591768f6e62d006b5426710b033bae196a39cf28114f14dc0443a714c24ada1528ec8f11dfa5cb92153643c96
+  checksum: 10c0/59e4fdb4b87541ee4f8f141fced7149e8ba6a9e57efa90bf6450546d850a82440e7c1a75d63a79c9e47b312abf6b5a09f158003bdfcebcf371a169efa58ce21d
   languageName: node
   linkType: hard
 

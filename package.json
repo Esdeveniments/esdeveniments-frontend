@@ -78,7 +78,7 @@
     "swr": "^2.5.1",
     "tailwindcss": "3.4.19",
     "undici": "^8.12.4",
-    "web-push": "^3.6.7",
+    "web-push": "^4.0.0",
     "web-vitals": "^6.2.3",
     "zod": "3.25.76"
   },
